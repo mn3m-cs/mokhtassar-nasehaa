@@ -37,6 +37,6 @@ class ThemeStorage {
   }
 
   Future setColor(Color color) async {
-    await box.write(_colorKey, color.toARGB32);
+    await box.write(_colorKey, color.toARGB32());
   }
 }
