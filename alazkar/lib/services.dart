@@ -1,0 +1,104 @@
+import 'package:alazkar/src/core/constants/const.dart';
+import 'package:alazkar/src/core/di/dependency_injection.dart'
+    as service_locator;
+import 'package:alazkar/src/core/di/dependency_injection.dart';
+import 'package:alazkar/src/core/extension/extension_platform.dart';
+import 'package:alazkar/src/core/helpers/azkar_helper.dart';
+import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
+import 'package:alazkar/src/core/storage/kv_storage.dart';
+import 'package:alazkar/src/core/storage/storage_migration_service.dart';
+import 'package:alazkar/src/core/utils/app_bloc_observer.dart';
+import 'package:alazkar/src/core/utils/show_toast.dart';
+import 'package:alazkar/src/features/quran/data/repository/uthmani_repository.dart';
+import 'package:alazkar/src/features/ui/data/repository/ui_repo.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_ce_flutter/adapters.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:window_manager/window_manager.dart';
+
+Future initServices() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  Bloc.observer = AppBlocObserver();
+
+  // Initialize Hive in Application Support directory instead of Documents on Windows
+  final appSupportDir = await getApplicationSupportDirectory();
+  await Hive.initFlutter(path.join(appSupportDir.path, 'storage'));
+  await Hive.openBox(kHiveBoxName);
+
+  service_locator.initSL();
+
+  // Run migration from GetStorage to Hive
+  await StorageMigrationService(sl<KVStorage>()).migrate();
+
+  phoneDeviceBars();
+  final packageInfo = await PackageInfo.fromPlatform();
+  kAppVersion = "${packageInfo.version} (${packageInfo.buildNumber})";
+
+  if (PlatformExtension.isDesktopOrWeb) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
+  await initDBs();
+
+  initWindowsManager();
+
+  // if(kDebugMode) await viewStatistics();
+}
+
+Future phoneDeviceBars() async {
+  // Enable edge-to-edge drawing (Android 15+ compatible)
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+  // Use a light overlay with transparent background
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // Transparent for edge-to-edge
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+      systemStatusBarContrastEnforced: false,
+    ),
+  );
+
+  // Lock to portrait orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+}
+
+Future initWindowsManager() async {
+  if (!PlatformExtension.isDesktop) return;
+
+  await windowManager.ensureInitialized();
+
+  final WindowOptions windowOptions = WindowOptions(
+    size: sl<UIRepo>().desktopWindowSize,
+    center: true,
+  );
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setTitleBarStyle(
+      TitleBarStyle.hidden,
+      windowButtonVisibility: false,
+    );
+    await windowManager.show();
+    await windowManager.focus();
+  });
+}
+
+Future initDBs() async {
+  try {
+    return Future.wait([
+      sl<AzkarDBHelper>().init(),
+      sl<UthmaniRepository>().init(),
+      sl<BookmarksDBHelper>().init(),
+    ]);
+  } catch (e) {
+    showToast(e.toString());
+  }
+}

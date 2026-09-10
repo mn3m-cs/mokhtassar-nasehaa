@@ -1,0 +1,81 @@
+name: alazkar
+description: A new Flutter project.
+
+publish_to: "none"
+
+version: 1.2.01+16
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: "3.32.0"
+
+dependencies:
+  auto_size_text: ^3.0.0
+  bloc: ^9.0.1
+  bot_toast: ^4.1.3
+  capture_widget:
+    path: packages/capture_widget
+  cupertino_icons: ^1.0.8
+  dotted_border: ^3.1.0
+  easy_debounce: ^2.0.3
+  equatable: ^2.0.7
+  file_picker: ^12.0.0-beta.7
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  flutter_colorpicker: ^1.1.0
+  flutter_email_sender: ^10.0.1
+  flutter_localizations:
+    sdk: flutter
+  fluttertoast: ^9.1.0
+  get_it: ^9.2.1
+  get_storage: ^2.1.1
+  hive_ce: ^2.19.3
+  hive_ce_flutter: ^2.3.4
+  infinite_scroll_pagination: ^4.1.0
+  marquee: ^2.3.0
+  material_symbols_icons: ^4.2960.0
+  package_info_plus: ^10.2.1
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  shake: ^3.0.0
+  share_plus: ^13.3.0
+  sqflite: ^2.4.2
+  sqflite_common_ffi: ^2.3.6
+  url_launcher: ^6.3.2
+  window_manager: ^0.5.1
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.3
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  lint: ^2.8.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/db/
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    - family: Uthmanic
+      fonts:
+        - asset: assets/fonts/uthmanic_hafs_ver12.otf
+    - family: Uthmanic2
+      fonts:
+        - asset: assets/fonts/UthmanicHafs_v2-1.ttf
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+    - family: Kitab
+      fonts:
+        - asset: assets/fonts/kitab.ttf
+    - family: djadli_sarkha
+      fonts:
+        - asset: assets/fonts/djadli_sarkha.ttf
+    - family: alhadari-medium
+      fonts:
+        - asset: assets/fonts/alhadari-medium.ttf
