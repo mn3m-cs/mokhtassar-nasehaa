@@ -64,12 +64,6 @@ Future phoneDeviceBars() async {
       systemStatusBarContrastEnforced: false,
     ),
   );
-
-  // Lock to portrait orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
 }
 
 Future initWindowsManager() async {
