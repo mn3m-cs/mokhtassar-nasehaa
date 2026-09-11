@@ -10,7 +10,7 @@ jobs:
     uses: muslimpack/.github/.github/workflows/flutter_release.yaml@main
     with:
       app_directory: alazkar
-      package_name: com.hassaneltantawy.alazkar
+      package_name: com.menemlabs.zaadalthakir
       java_version: '17'
     secrets:
       KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
