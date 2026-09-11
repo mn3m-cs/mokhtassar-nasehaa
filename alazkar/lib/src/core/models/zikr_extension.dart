@@ -94,13 +94,6 @@ extension ZikrExt on Zikr {
 
       final List<String> verse = [];
 
-      // add Estaaza
-      final alhashrFinalAyah =
-          currentVerse.key.startSura == 59 && currentVerse.key.startAyah == 22;
-
-      final bool notHaveEstaaza = alhashrFinalAyah;
-      if (i == 0 && !notHaveEstaaza) verse.addAll([kEstaaza, "\n\n"]);
-
       // add Basmallah
       final notHaveBasmallah =
           currentVerse.key.startSura == 1 && currentVerse.key.startAyah == 1;

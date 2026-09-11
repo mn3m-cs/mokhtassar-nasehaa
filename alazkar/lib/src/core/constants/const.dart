@@ -2,8 +2,6 @@ import 'package:alazkar/src/core/extension/extension_platform.dart';
 
 late final String kAppVersion;
 
-const String kEstaaza =
-    "أَعُوذُ بِاللَّهِ (السَّمِيعِ الْعَلِيمِ) مِنَ الشَّيْطَانِ الرَّجِيمِ (مِنْ هَمْزِهِ وَنَفْخِهِ وَنَفْثِهِ)";
 const String kArBasmallah = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
 const Iterable<int> kArabicDiacriticsChar = [
   1617,
