@@ -62,6 +62,7 @@ extension ZikrExt on Zikr {
             lines.length,
             lineIndex,
             enableDiacritics,
+            hasManualEstaaza(lines, lineIndex),
           ),
         );
       } else {
@@ -81,11 +82,22 @@ extension ZikrExt on Zikr {
     return spans;
   }
 
+  bool hasManualEstaaza(List<String> lines, int lineIndex) {
+    for (var i = 0; i < lineIndex; i++) {
+      final trimmed = lines[i].trim();
+      if (trimmed.startsWith("أَعُوذُ") || trimmed.startsWith("أعوذ")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   List<InlineSpan> _getTextSpanForSingleItem(
     Map<VerseRange, String> verses,
     int linesLength,
     int lineIndex,
     bool enableDiacritics,
+    bool hasManualEstaaza,
   ) {
     final List<InlineSpan> spans = [];
     if (lineIndex != 0) spans.add(const TextSpan(text: "\n\n"));
@@ -98,7 +110,7 @@ extension ZikrExt on Zikr {
       final alhashrFinalAyah =
           currentVerse.key.startSura == 59 && currentVerse.key.startAyah == 22;
 
-      final bool notHaveEstaaza = alhashrFinalAyah;
+      final bool notHaveEstaaza = alhashrFinalAyah || hasManualEstaaza;
       if (i == 0 && !notHaveEstaaza) verse.addAll([kEstaaza, "\n\n"]);
 
       // add Basmallah
