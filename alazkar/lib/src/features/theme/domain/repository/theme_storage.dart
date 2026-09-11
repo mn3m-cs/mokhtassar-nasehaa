@@ -9,9 +9,9 @@ class ThemeStorage {
   static const String _brightnessKey = "ThemeBrightness";
   Brightness get getBrightness {
     final String? brightness = box.read(_brightnessKey);
-    return brightness == Brightness.light.toString()
-        ? Brightness.light
-        : Brightness.dark;
+    return brightness == Brightness.dark.toString()
+        ? Brightness.dark
+        : Brightness.light;
   }
 
   Future setBrightness(Brightness brightness) async {
@@ -33,7 +33,7 @@ class ThemeStorage {
   static const String _colorKey = "ThemeColor";
   Color get getColor {
     final int? colorValue = box.read(_colorKey);
-    return colorValue != null ? Color(colorValue) : Colors.brown;
+    return colorValue != null ? Color(colorValue) : const Color(0xFFFFF9EF);
   }
 
   Future setColor(Color color) async {
