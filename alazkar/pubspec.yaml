@@ -59,6 +59,7 @@ flutter:
     - assets/db/
     - assets/images/
     - assets/icons/
+    - assets/n.png
 
   fonts:
     - family: Uthmanic
@@ -73,9 +74,3 @@ flutter:
     - family: Kitab
       fonts:
         - asset: assets/fonts/kitab.ttf
-    - family: djadli_sarkha
-      fonts:
-        - asset: assets/fonts/djadli_sarkha.ttf
-    - family: alhadari-medium
-      fonts:
-        - asset: assets/fonts/alhadari-medium.ttf
