@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.hassaneltantawy" "\0"
+            VALUE "CompanyName", "Zad Al-Dhakir" "\0"
             VALUE "FileDescription", "زاد الذاكر" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "زاد الذاكر" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.hassaneltantawy. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Zad Al-Dhakir. All rights reserved." "\0"
             VALUE "OriginalFilename", "زاد الذاكر.exe" "\0"
             VALUE "ProductName", "زاد الذاكر" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

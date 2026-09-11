@@ -1,38 +1,56 @@
 <div align="center">
 
-<img width="250" alt="al-azkar" src="https://raw.githubusercontent.com/muslimpack/Al-Azkar/main/alazkar/assets/icons/app.png">
+<img width="250" alt="زاد الذاكر" src="https://raw.githubusercontent.com/mn3m-cs/mokhtassar-nasehaa/main/alazkar/assets/icons/app.png">
 
-# تطبيق الأذكار النووية
+# تطبيق زاد الذاكر
 
-للإمام الحافظ يحيى بن شرف الدين النواوي رحمه الله تعالى
+مختصر النصيحة في الأذكار والأدعية الصحيحة
 
-![Badge](https://img.shields.io/github/v/release/muslimpack/Al-Azkar)
-![GitHub all releases](https://img.shields.io/github/downloads/muslimpack/Al-Azkar/total?color=blue&label=Total%20Downloads)
-[![Downloads](https://PlayBadges.pavi2410.me/badge/downloads?id=com.hassaneltantawy.alazkar)](https://play.google.com/store/apps/details?id=com.hassaneltantawy.alazkar)
+![Badge](https://img.shields.io/github/v/release/mn3m-cs/mokhtassar-nasehaa)
+![GitHub all releases](https://img.shields.io/github/downloads/mn3m-cs/mokhtassar-nasehaa/total?color=blue&label=Total%20Downloads)
 
-
-<a href="https://apps.apple.com/us/app/%D8%A7%D9%84%D8%A3%D8%B0%D9%83%D8%A7%D8%B1-%D8%A7%D9%84%D9%86%D9%88%D9%88%D9%8A%D8%A9/id6756480296" style="display: inline-block;">
-    <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us?releaseDate=1765843200" 
-          alt="Download on the App Store" style="width: 246px; height: 82px; vertical-align: middle; object-fit: contain;" />
-</a>
-
-[<img src="https://user-images.githubusercontent.com/15004217/36810046-fa306856-1cc9-11e8-808e-6eb8a81783c7.png"
-      alt='Get it on Google Play' target=”_blank”
-      height="80">](https://play.google.com/store/apps/details?id=com.hassaneltantawy.alazkar)
-<a href="https://f-droid.org/packages/com.hassaneltantawy.alazkar" target=”_blank”>
-    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-    alt="Get it on F-Droid"
-    height="80">
-</a>
+</div>
 
 <div align="right">
+
+# عن التطبيق
+
+تطبيق «زاد الذاكر» هو تطبيق مجاني مفتوح المصدر يعرض أدعية وأذكار القرآن الكريم والسنة النبوية الصحيحة، ملخصًا من كتاب:
+
+**«مختصر النصيحة في الأذكار والأدعية الصحيحة»**
+
+المؤلف: **د. محمد إسماعيل المقدم** (محمد أحمد إسماعيل المقدم)
+
+الطبعة العاشرة.
 
 # صور التطبيق
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/muslimpack/Al-Azkar/main/screenshots/00.png" height="400" >
-  <img src="https://raw.githubusercontent.com/muslimpack/Al-Azkar/main/screenshots/01.png" height="400" >
-  <img src="https://raw.githubusercontent.com/muslimpack/Al-Azkar/main/screenshots/02.png" height="400" >
-  <img src="https://raw.githubusercontent.com/muslimpack/Al-Azkar/main/screenshots/03.png" height="400" >
+  <img src="https://raw.githubusercontent.com/mn3m-cs/mokhtassar-nasehaa/main/screenshots/00.png" height="400" >
+  <img src="https://raw.githubusercontent.com/mn3m-cs/mokhtassar-nasehaa/main/screenshots/01.png" height="400" >
+  <img src="https://raw.githubusercontent.com/mn3m-cs/mokhtassar-nasehaa/main/screenshots/02.png" height="400" >
+  <img src="https://raw.githubusercontent.com/mn3m-cs/mokhtassar-nasehaa/main/screenshots/03.png" height="400" >
 </p>
 
+# المميزات
+
+- 91 قسمًا من الأذكار والأدعية الصحيحة
+- اثنا عشر وردًا يوميًا يجمع الأذكار
+- عرض المصدر والحكم وعدد مرات الذكر لكل عنصر
+- البحث في نص الأذكار
+- مشاركة الذكر كنص أو كصورة
+- الوضع الليلي وتغيير الألوان
+- يعمل دون اتصال بالإنترنت
+
+# التحميل
+
+- [إصدارات GitHub](https://github.com/mn3m-cs/mokhtassar-nasehaa/releases)
+- الإصدار عبر Google Play (قريبًا)
+
+# حقوق الملكية
+
+المحتوى من كتاب «مختصر النصيحة في الأذكار والأدعية الصحيحة» للدكتور محمد إسماعيل المقدم، الطبعة العاشرة.
+
+تطبيق «زاد الذاكر» تطبيق مجاني مفتوح المصدر برخصة GPL-3.0، مطوّر من مشروع [Al-Azkar](https://github.com/muslimpack/Al-Azkar) الأصلي.
+
+</div>

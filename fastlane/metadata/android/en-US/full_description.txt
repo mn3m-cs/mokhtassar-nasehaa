@@ -1,5 +1,7 @@
-- Search Titles
-- Add titles to favorites
-- Count with app volume keys
+- Search in index and content
+- Add sections to favorites
+- Count zikr with volume keys
 - Share zikr as image or as text
 - Control app theme
+- Light/dark mode
+- Works offline

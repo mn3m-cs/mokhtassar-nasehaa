@@ -1,27 +1,29 @@
 {
-  "info": {
-    "csvFilePath": "تطبيق الأذكار النووية - مرجع.xlsx",
-    "dbFilePath": "Al-Azkar.db"
-  },
-  "mapping": [
-    {
-      "csvSheet": "contents",
-      "dbTable": "contents",
-      "dbConstraints": ["FOREIGN KEY(titleId) REFERENCES titles(id)"],
-      "columns": [
+    "info": {
+        "csvFilePath": "مختصر النصيحة في الأذكار والأدعية الصحيحة - مصدر.xlsx",
+        "dbFilePath": "Al-Azkar.db"
+    },
+    "mapping": [
         {
-          "csvColName": "fadl",
-          "csvColHeader": "",
-          "dbColName": "fadl",
-          "dbType": "TEXT"
-        },
-        {
-          "csvColName": "search",
-          "csvColHeader": "",
-          "dbColName": "search",
-          "dbType": "TEXT"
+            "csvSheet": "contents",
+            "dbTable": "contents",
+            "dbConstraints": [
+                "FOREIGN KEY(titleId) REFERENCES titles(id)"
+            ],
+            "columns": [
+                {
+                    "csvColName": "fadl",
+                    "csvColHeader": "",
+                    "dbColName": "fadl",
+                    "dbType": "TEXT"
+                },
+                {
+                    "csvColName": "search",
+                    "csvColHeader": "",
+                    "dbColName": "search",
+                    "dbType": "TEXT"
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
