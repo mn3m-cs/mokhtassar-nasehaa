@@ -1,4 +1,4 @@
-# دليل التعديل الآمن على بيانات تطبيق Al-Azkar
+# دليل التعديل الآمن على بيانات تطبيق زاد الذاكر
 
 > نسخة معتمدة من طريقة تعديل البيانات دون إفساد التطبيق.
 > **القاعدة الذهبية:** لا تعدّل أبدًا بنية الجداول أو الحقول المطلوبة (NOT NULL)، ولا تكسر الترقيم `order` داخل أي قسم، وارفع `user_version` + `dbVersion` معًا بعد أي تغيير في البيانات.
@@ -18,17 +18,17 @@
 
 ## 2. بنية `Al-Azkar.db`
 
-### جدول `titles` — أقسام الأذكار (حاليًا 358 صفًا)
+### جدول `titles` — أقسام الأذكار (حاليًا 80 صفًا)
 | العمود | النوع | المعنى |
 |---|---|---|
 | `id` | INTEGER PK | مفتاح أساسي |
-| `order` | INTEGER NOT NULL | ترتيب العرض 1..358 (فريد) |
+| `order` | INTEGER NOT NULL | ترتيب العرض 1..80 (فريد) |
 | `name` | TEXT | اسم القسم |
 | `freq` | TEXT | رموز زمنية: `d` يومي، `w` أسبوعي، `m` شهري، `y` سنوي؛ البادئة `e` = قسم «إضافي» يظهر أيضًا ضمن الفئة الأساسية (مثل `ed`، `em`) |
 
 ملاحظة: فلترة التطبيق (`titles_freq_enum.dart`) تتحقق عبر `freq.contains(firstLetterOf(enum))` أي d/w/m/y — لا تُدخل رموزًا أخرى.
 
-### جدول `contents` — نصوص الأذكار (حاليًا 1476 صفًا)
+### جدول `contents` — نصوص الأذكار (حاليًا 786 صفًا)
 | العمود | النوع | المعنى | إلزامي؟ |
 |---|---|---|---|
 | `id` | INTEGER PK | مفتاح أساسي فريد | نعم |
@@ -43,7 +43,7 @@
 | `sourceIndex` | TEXT | رقم الذكر في طبعة دار ابن حزم — عرض فقط | لا |
 
 ### تنسيق `body` الخاص بـ `QuranText`
-152 ذكرًا يضمّن آيات قرآنية تُعرض بخط عثماني. الصيغة الحرفية المطلوبة (تطبيقها في `range_text_formatter.dart`):
+157 ذكرًا يضمّن آيات قرآنية تُعرض بخط عثماني. الصيغة الحرفية المطلوبة (تطبيقها في `range_text_formatter.dart`):
 
 ```
 QuranText[(السورة:من:إلى),(السورة:من:إلى)]
@@ -59,7 +59,7 @@ QuranText[(السورة:من:إلى),(السورة:من:إلى)]
 
 الملفات المرجعية:
 - `lib/src/core/helpers/db_helper.dart` — منطق النسخ/الحذف.
-- `lib/src/core/helpers/azkar_helper.dart` — الثابت `dbVersion = 14` (سطر ~15) وكل استعلامات القراءة.
+- `lib/src/core/helpers/azkar_helper.dart` — الثابت `dbVersion = 101` (سطر ~15) وكل استعلامات القراءة.
 
 السلوك الحالي:
 1. عند أول تشغيل: تُنسخ قاعدة الـ assets إلى مسار قاعدة بيانات التطبيق.
@@ -83,7 +83,7 @@ QuranText[(السورة:من:إلى),(السورة:من:إلى)]
 2. نفّذ التعديل **داخل معاملة**: `BEGIN; ... COMMIT;` مع `PRAGMA foreign_keys=ON;` (تكشف أخطاء `titleId` فورًا).
 3. التزم قواعد منع الفساد في القسم 6.
 4. بعد التعديل، حدّث الإصدار ليلتقطه الجهاز:
-   - في القاعدة: `PRAGMA user_version = N;` حيث `N` أكبر من الإصدار الحالي (14).
+   - في القاعدة: `PRAGMA user_version = N;` حيث `N` أكبر من الإصدار الحالي (101).
    - في الكود: غيّر `AzkarDBHelper.dbVersion` في `lib/src/core/helpers/azkar_helper.dart` إلى **نفس** `N`.
 5. أعد البناء (أدناه) واختبر.
 6. لا تنسَ أن الملفين الجديدين اللذين ولّدهما `flutterfire` (فقط لمشروع noor) يخصان مشروع آخر — لا علاقة لهما بإجراءات هذا المشروع.
@@ -93,11 +93,11 @@ QuranText[(السورة:من:إلى),(السورة:من:إلى)]
 
 ### ج. البناء والاختبار
 ```bash
-cd ~/workspace/azkar-apps/Al-Azkar/alazkar
+cd ~/workspace/azkar-apps/alazkar_naseeha/alazkar
 fvm flutter analyze
 fvm flutter build apk --debug --flavor dev
 adb install -r build/app/outputs/flutter-apk/app-dev-debug.apk
-adb shell am start -n com.hassaneltantawy.alazkar.dev/com.hassaneltantawy.alazkar.MainActivity
+adb shell am start -n com.menemlabs.zaadalthakir.dev/com.menemlabs.zaadalthakir.MainActivity
 ```
 - للمحاكي: شغّله أولًا `emulator -avd pixel_7 &` (لا يعمل حاليًا).
 - إعادة تثبيت الـ APK تمسح قاعدة القاعدة المحلية في الاختبار المحلي، لذا تكفي لاختبار التعديل على المحاكي دون آليات الإصدار.
@@ -123,8 +123,8 @@ adb shell am start -n com.hassaneltantawy.alazkar.dev/com.hassaneltantawy.alazka
 - لا علاقة لأرقام `contents.order` العالمية بأي شيء خارج قسمها؛ لكن استعلام النتائج في البحث يمر عليها، فالالتزام بالترقيم يحفظ اتساق العرض.
 
 ## 7. نقاط تحقق جاهزة (تُستخدم في الاختبار)
-- عدد الأقسام: `SELECT COUNT(*) FROM titles;` → 358
-- عدد الأذكار: `SELECT COUNT(*) FROM contents;` → 1476
+- عدد الأقسام: `SELECT COUNT(*) FROM titles;` → 80
+- عدد الأذكار: `SELECT COUNT(*) FROM contents;` → 786
 - لا صفوف معطوبة:
   ```sql
   SELECT COUNT(*) FROM contents WHERE body IS NULL OR count IS NULL OR titleId IS NULL; -- يجب 0

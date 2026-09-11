@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
             navigatorKey: navigatorKey,
             debugShowCheckedModeBanner: false,
             scrollBehavior: AppScrollBehavior(),
-            title: 'Al-Azkar',
+            title: 'زاد الذاكر',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
                 seedColor: state.color,
