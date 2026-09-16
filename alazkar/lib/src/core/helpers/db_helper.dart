@@ -32,24 +32,21 @@ class DBHelper {
   Future<void> copyFromAssets(String path, String dbAssetPath) async {
     appPrint("$dbName copying new db...");
 
-    try {
-      final ByteData data = await rootBundle.load(dbAssetPath);
-      final List<int> bytes = data.buffer.asUint8List();
-      final File file = File(path);
+    final ByteData assetData = await rootBundle.load(dbAssetPath);
+    final List<int> assetBytes = assetData.buffer.asUint8List();
+    final File databaseFile = File(path);
 
-      await file.writeAsBytes(bytes, flush: true);
+    await databaseFile.writeAsBytes(assetBytes, flush: true);
 
-      // Verify file size after writing (optional, for debugging)
-      final writtenFileSize = await file.length();
-      // Check if the ByteData size matches the expected size (optional, for debugging)
-      appPrint(
-        "$dbName Expected size: ${data.lengthInBytes}, actual size: ${bytes.length} | Written file size: $writtenFileSize",
+    final int writtenBytes = await databaseFile.length();
+    if (writtenBytes != assetBytes.length) {
+      throw FileSystemException(
+        "Incomplete database copy: expected ${assetBytes.length} bytes, wrote $writtenBytes",
+        path,
       );
-
-      appPrint("$dbName copy done");
-    } catch (e) {
-      appPrint("$dbName copy failed: $e");
     }
+
+    appPrint("$dbName copy done");
   }
 
   Future<Database> initDatabase() async {
@@ -63,15 +60,14 @@ class DBHelper {
       await copyFromAssets(path, assetDBPath);
     }
     final Database database = await openDatabase(path);
+    final int currentVersion = await database.getVersion();
+    await database.close();
 
-    await database.getVersion().then((currentVersion) async {
-      if (currentVersion < dbVersion) {
-        appPrint("$dbName detect new version");
-        database.close();
-        await deleteDatabase(path);
-        await copyFromAssets(path, assetDBPath);
-      }
-    });
+    if (currentVersion < dbVersion) {
+      appPrint("$dbName detect new version");
+      await deleteDatabase(path);
+      await copyFromAssets(path, assetDBPath);
+    }
 
     return openDatabase(path, version: dbVersion);
   }

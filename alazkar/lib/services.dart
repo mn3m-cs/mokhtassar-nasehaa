@@ -8,7 +8,6 @@ import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
 import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/core/storage/storage_migration_service.dart';
 import 'package:alazkar/src/core/utils/app_bloc_observer.dart';
-import 'package:alazkar/src/core/utils/show_toast.dart';
 import 'package:alazkar/src/features/quran/data/repository/uthmani_repository.dart';
 import 'package:alazkar/src/features/ui/data/repository/ui_repo.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +20,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
-Future initServices() async {
+Future<void> initServices() async {
   WidgetsFlutterBinding.ensureInitialized();
   Bloc.observer = AppBlocObserver();
 
@@ -51,7 +50,7 @@ Future initServices() async {
   // if(kDebugMode) await viewStatistics();
 }
 
-Future phoneDeviceBars() async {
+Future<void> phoneDeviceBars() async {
   // Enable edge-to-edge drawing (Android 15+ compatible)
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
@@ -66,7 +65,7 @@ Future phoneDeviceBars() async {
   );
 }
 
-Future initWindowsManager() async {
+Future<void> initWindowsManager() async {
   if (!PlatformExtension.isDesktop) return;
 
   await windowManager.ensureInitialized();
@@ -85,14 +84,10 @@ Future initWindowsManager() async {
   });
 }
 
-Future initDBs() async {
-  try {
-    return Future.wait([
-      sl<AzkarDBHelper>().init(),
-      sl<UthmaniRepository>().init(),
-      sl<BookmarksDBHelper>().init(),
-    ]);
-  } catch (e) {
-    showToast(e.toString());
-  }
+Future<void> initDBs() async {
+  await Future.wait([
+    sl<AzkarDBHelper>().init(),
+    sl<UthmaniRepository>().init(),
+    sl<BookmarksDBHelper>().init(),
+  ]);
 }
