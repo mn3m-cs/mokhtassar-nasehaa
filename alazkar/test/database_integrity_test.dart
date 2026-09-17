@@ -19,7 +19,7 @@ void main() {
     final foreignKeyViolations =
         await database.rawQuery('PRAGMA foreign_key_check');
 
-    expect(await database.getVersion(), 102);
+    expect(await database.getVersion(), 103);
     expect(foreignKeyViolations, isEmpty);
   });
 
