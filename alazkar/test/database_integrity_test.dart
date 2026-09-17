@@ -18,9 +18,29 @@ void main() {
 
     final foreignKeyViolations =
         await database.rawQuery('PRAGMA foreign_key_check');
+    final wirdCounts = await database.rawQuery('''
+      SELECT COUNT(contents.id) AS count
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.name LIKE 'الورد %'
+      GROUP BY titles.id
+      ORDER BY titles."order"
+    ''');
+    final unclassifiedWirds = await database.rawQuery('''
+      SELECT contents.id
+      FROM contents
+      JOIN titles ON titles.id = contents.titleId
+      WHERE titles.name LIKE 'الورد %'
+        AND TRIM(COALESCE(contents.hokm, '')) = ''
+    ''');
 
-    expect(await database.getVersion(), 104);
+    expect(await database.getVersion(), 105);
     expect(foreignKeyViolations, isEmpty);
+    expect(
+      wirdCounts.map((row) => row['count']),
+      [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
+    );
+    expect(unclassifiedWirds, isEmpty);
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
