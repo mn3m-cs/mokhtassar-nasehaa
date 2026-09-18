@@ -1,0 +1,65 @@
+<brief>
+<task>
+Implement only package 1 from CONTENT_AUDIT_AGENT_PLAN.md: rebuild the existing "دعاء الاستفتاح" section (`titleId=10`) from the source PDF pages 49-53.
+
+Source PDF:
+/home/mn3m/Downloads/مختصر-النصيحة-في-الأذكار-والأدعية-الصحيحة-حجم-وسط.pdf
+
+Read CONTENT_AUDIT_AGENT_PLAN.md completely before editing. Render PDF pages 49-53 to PNG and inspect every page visually. Extracted Arabic text may help locate passages but is not authoritative.
+
+Known audit findings that must be re-verified against the pages:
+- The book's first opening supplication continues from page 49 to page 50, but the app splits it into two records. Recombine it as one source unit.
+- After "والشر ليس إليك" the current app omits "والمهدي من هديت، أنا بك وإليك". Restore the exact book wording and surrounding order.
+- The current source attribution for the split continuation is wrong; replace unverified claims with precise book section/page references.
+- The book has five regular opening formulas, while the current section has six records because the first was split.
+- Pages 51-53 include five complete opening formulas for night prayer that are absent, including the tenfold tasbih formula and "ذو الملكوت والجبروت...". Add all source units in book order.
+- Page 53 includes the primary ta'awwudh after opening and two alternatives. Add all three in book order and make their context explicit.
+
+Derive the final record count from the rendered pages; do not assume a count from this brief if the visual source contradicts it. Preserve `titleId=10`. Edit only:
+- data_pipeline/sections/dua_alistiftah.json
+- alazkar/assets/db/Al-Azkar.db
+- alazkar/lib/src/core/helpers/azkar_helper.dart
+- alazkar/test/database_integrity_test.dart
+
+Start from database version 112 and raise both SQLite `user_version` and `AzkarDBHelper.dbVersion` to 113. Keep JSON and SQLite exactly synchronized. Do not treat current `source`, `hokm`, or `fadl` as authoritative. Do not independently grade hadith beyond what the book supports.
+</task>
+
+<completeness_contract>
+Inspect all of pages 49-53, including text crossing page boundaries, numbered alternatives, unnumbered continuations, repetition counts, footnotes that change how a formula is represented, and the transition after the section. Do not stop after fixing the two known text errors.
+</completeness_contract>
+
+<missing_context_gating>
+Do not guess unreadable Arabic, sources, rulings, counts, or section boundaries. Re-render at higher resolution when needed. If the PDF remains genuinely ambiguous, leave that point unchanged and report it for orchestrator review instead of inventing content.
+</missing_context_gating>
+
+<verification_loop>
+From the repository root, run and make green:
+  jq empty data_pipeline/sections/dua_alistiftah.json
+  sqlite3 alazkar/assets/db/Al-Azkar.db "PRAGMA integrity_check; PRAGMA foreign_key_check; PRAGMA user_version;"
+  git diff --check
+
+Write and run a read-only comparison proving every JSON item field matches the `titleId=10` SQLite rows in order, including derived `search`. Verify no duplicate body and no empty body/hokm/search.
+
+From alazkar/, run and make green:
+  fvm dart format test/database_integrity_test.dart
+  fvm flutter test
+  fvm flutter analyze
+
+Inspect `git status --short` and confirm only the four authorized files changed.
+</verification_loop>
+
+<action_safety>
+Keep changes strictly within this one section. Do not modify other titles, schemas, app UI, dependencies, documentation, or generated PDF files. Put temporary renders and backups under /tmp. Do not run git add, git commit, git push, GitHub CLI mutations, or merge anything. Leave all intended changes uncommitted for orchestrator review.
+</action_safety>
+
+<structured_output_contract>
+End with exactly these report headings:
+1. Source mapping and decisions
+2. What changed and why
+3. Files touched
+4. Record count before and after
+5. Gate outcomes
+6. Open questions or deviations
+7. Confirmation: no commit or push
+</structured_output_contract>
+</brief>
