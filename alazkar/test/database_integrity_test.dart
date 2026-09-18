@@ -62,8 +62,13 @@ void main() {
       GROUP BY titles.id
       ORDER BY titles."order"
     ''');
+    final mosqueSection = await database.rawQuery('''
+      SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId = 8
+    ''');
 
-    expect(await database.getVersion(), 109);
+    expect(await database.getVersion(), 110);
     expect(foreignKeyViolations, isEmpty);
     expect(
       wirdCounts.map((row) => row['count']),
@@ -86,6 +91,7 @@ void main() {
       },
       {'order': 6, 'name': 'ما يقول إذا خرج من الخلاء', 'count': 1},
     ]);
+    expect(mosqueSection.single, {'count': 13, 'first': 1, 'last': 13});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
