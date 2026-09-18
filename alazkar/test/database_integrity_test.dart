@@ -71,8 +71,13 @@ void main() {
       FROM contents
       WHERE titleId = 8
     ''');
+    final adhanListenerSection = await database.rawQuery('''
+      SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId = 9
+    ''');
 
-    expect(await database.getVersion(), 110);
+    expect(await database.getVersion(), 111);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -97,6 +102,7 @@ void main() {
       {'order': 6, 'name': 'ما يقول إذا خرج من الخلاء', 'count': 1},
     ]);
     expect(mosqueSection.single, {'count': 13, 'first': 1, 'last': 13});
+    expect(adhanListenerSection.single, {'count': 7, 'first': 1, 'last': 7});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
