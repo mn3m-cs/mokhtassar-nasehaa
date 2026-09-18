@@ -86,8 +86,28 @@ void main() {
       FROM contents
       WHERE titleId = 11
     ''');
+    final sujudSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM(search LIKE '%واجعل من فوقي نورا%واجعل خلفي نورا%') AS complete_light_dua
+      FROM contents
+      WHERE titleId = 12
+    ''');
+    final betweenProstrationsSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM(search = 'اللهم اغفر لي وارحمني وعافني واهدني وارزقني') AS correct_between_dua,
+        SUM(search LIKE '%فتبارك الله أحسن الخالقين') AS complete_tilawa_dua,
+        SUM(search LIKE 'اللهم احطط عني بها وزرا واكتب لي بها أجرا%') AS ordered_tilawa_dua
+      FROM contents
+      WHERE titleId = 13
+    ''');
 
-    expect(await database.getVersion(), 114);
+    expect(await database.getVersion(), 115);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -139,6 +159,20 @@ void main() {
     );
     expect(hamdAlternatives.length, 2,
         reason: 'Missing explicit Hamd alternatives');
+    expect(sujudSection.single, {
+      'count': 13,
+      'first': 1,
+      'last': 13,
+      'complete_light_dua': 1,
+    });
+    expect(betweenProstrationsSection.single, {
+      'count': 4,
+      'first': 1,
+      'last': 4,
+      'correct_between_dua': 1,
+      'complete_tilawa_dua': 1,
+      'ordered_tilawa_dua': 1,
+    });
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
