@@ -33,14 +33,20 @@ void main() {
       WHERE titles.name LIKE 'الورد %'
         AND TRIM(COALESCE(contents.hokm, '')) = ''
     ''');
+    final eveningSection = await database.rawQuery('''
+      SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId = 2
+    ''');
 
-    expect(await database.getVersion(), 105);
+    expect(await database.getVersion(), 106);
     expect(foreignKeyViolations, isEmpty);
     expect(
       wirdCounts.map((row) => row['count']),
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
     );
     expect(unclassifiedWirds, isEmpty);
+    expect(eveningSection.single, {'count': 26, 'first': 1, 'last': 26});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
