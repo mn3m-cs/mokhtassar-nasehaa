@@ -81,8 +81,13 @@ void main() {
       FROM contents
       WHERE titleId = 10
     ''');
+    final rukuAndRisingSection = await database.rawQuery('''
+      SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId = 11
+    ''');
 
-    expect(await database.getVersion(), 113);
+    expect(await database.getVersion(), 114);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -115,6 +120,25 @@ void main() {
           'after rebuild from PDF pp. 49-53 (issue #17): '
           '5 regular + 5 tahajjud + 3 taawwudh',
     );
+    expect(
+      rukuAndRisingSection.single,
+      {'count': 16, 'first': 1, 'last': 16},
+      reason: 'azkar_alkuru (titleId=11) must have 16 records in order 1..16 '
+          'after rebuild from PDF pp. 54-56 (issue #19)',
+    );
+
+    // Verify presence of specific formulas as requested in #19
+    final ruku8thFormula = await database.rawQuery(
+      "SELECT 1 FROM contents WHERE titleId=11 AND body LIKE '%وعليك توكلت%دمي ولحمي%'",
+    );
+    expect(ruku8thFormula, isNotEmpty,
+        reason: 'Missing 8th independent ruku formula');
+
+    final hamdAlternatives = await database.rawQuery(
+      "SELECT body FROM contents WHERE titleId=11 AND body IN ('رَبَّنا لك الحمدُ.', 'ربنا ولك الحمدُ.')",
+    );
+    expect(hamdAlternatives.length, 2,
+        reason: 'Missing explicit Hamd alternatives');
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
