@@ -38,14 +38,20 @@ void main() {
       FROM contents
       WHERE titleId = 2
     ''');
+    final morningSection = await database.rawQuery('''
+      SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId = 1
+    ''');
 
-    expect(await database.getVersion(), 106);
+    expect(await database.getVersion(), 107);
     expect(foreignKeyViolations, isEmpty);
     expect(
       wirdCounts.map((row) => row['count']),
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
     );
     expect(unclassifiedWirds, isEmpty);
+    expect(morningSection.single, {'count': 28, 'first': 1, 'last': 28});
     expect(eveningSection.single, {'count': 26, 'first': 1, 'last': 26});
   });
 
