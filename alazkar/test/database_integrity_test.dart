@@ -54,8 +54,16 @@ void main() {
       WHERE titles.id = 3
       GROUP BY titles.id
     ''');
+    final khalaSections = await database.rawQuery('''
+      SELECT titles."order", titles.name, COUNT(contents.id) AS count
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles."order" IN (5, 6)
+      GROUP BY titles.id
+      ORDER BY titles."order"
+    ''');
 
-    expect(await database.getVersion(), 108);
+    expect(await database.getVersion(), 109);
     expect(foreignKeyViolations, isEmpty);
     expect(
       wirdCounts.map((row) => row['count']),
@@ -70,6 +78,14 @@ void main() {
       'first': 1,
       'last': 6,
     });
+    expect(khalaSections, [
+      {
+        'order': 5,
+        'name': 'ما يقول إذا أراد دخول الخلاء',
+        'count': 2,
+      },
+      {'order': 6, 'name': 'ما يقول إذا خرج من الخلاء', 'count': 1},
+    ]);
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
