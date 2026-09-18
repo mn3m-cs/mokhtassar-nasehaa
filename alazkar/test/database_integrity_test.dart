@@ -43,8 +43,19 @@ void main() {
       FROM contents
       WHERE titleId = 1
     ''');
+    final nightSection = await database.rawQuery('''
+      SELECT
+        titles.name,
+        COUNT(contents.id) AS count,
+        MIN(contents."order") AS first,
+        MAX(contents."order") AS last
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id = 3
+      GROUP BY titles.id
+    ''');
 
-    expect(await database.getVersion(), 107);
+    expect(await database.getVersion(), 108);
     expect(foreignKeyViolations, isEmpty);
     expect(
       wirdCounts.map((row) => row['count']),
@@ -53,6 +64,12 @@ void main() {
     expect(unclassifiedWirds, isEmpty);
     expect(morningSection.single, {'count': 28, 'first': 1, 'last': 28});
     expect(eveningSection.single, {'count': 26, 'first': 1, 'last': 26});
+    expect(nightSection.single, {
+      'name': 'ما يُقرأ في الليل',
+      'count': 6,
+      'first': 1,
+      'last': 6,
+    });
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
