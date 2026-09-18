@@ -76,8 +76,13 @@ void main() {
       FROM contents
       WHERE titleId = 9
     ''');
+    final duaAlistiftahSection = await database.rawQuery('''
+      SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId = 10
+    ''');
 
-    expect(await database.getVersion(), 112);
+    expect(await database.getVersion(), 113);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -103,6 +108,12 @@ void main() {
     ]);
     expect(mosqueSection.single, {'count': 13, 'first': 1, 'last': 13});
     expect(adhanListenerSection.single, {'count': 13, 'first': 1, 'last': 13});
+    expect(
+      duaAlistiftahSection.single,
+      {'count': 14, 'first': 1, 'last': 14},
+      reason: 'dua_alistiftah (titleId=10) must have 14 records in order 1..14 '
+          'after rebuild from PDF pp. 49-53 (issue #17)',
+    );
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
