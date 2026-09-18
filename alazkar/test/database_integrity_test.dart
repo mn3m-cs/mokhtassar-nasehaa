@@ -110,9 +110,10 @@ void main() {
     expect(adhanListenerSection.single, {'count': 13, 'first': 1, 'last': 13});
     expect(
       duaAlistiftahSection.single,
-      {'count': 14, 'first': 1, 'last': 14},
-      reason: 'dua_alistiftah (titleId=10) must have 14 records in order 1..14 '
-          'after rebuild from PDF pp. 49-53 (issue #17)',
+      {'count': 13, 'first': 1, 'last': 13},
+      reason: 'dua_alistiftah (titleId=10) must have 13 records in order 1..13 '
+          'after rebuild from PDF pp. 49-53 (issue #17): '
+          '5 regular + 5 tahajjud + 3 taawwudh',
     );
   });
 
