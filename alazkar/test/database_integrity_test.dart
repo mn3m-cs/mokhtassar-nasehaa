@@ -18,6 +18,10 @@ void main() {
 
     final foreignKeyViolations =
         await database.rawQuery('PRAGMA foreign_key_check');
+    final titleCount = await database.rawQuery('''
+      SELECT COUNT(*) AS count
+      FROM titles
+    ''');
     final wirdCounts = await database.rawQuery('''
       SELECT COUNT(contents.id) AS count
       FROM titles
@@ -69,6 +73,7 @@ void main() {
     ''');
 
     expect(await database.getVersion(), 110);
+    expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
       wirdCounts.map((row) => row['count']),
