@@ -106,8 +106,25 @@ void main() {
       FROM contents
       WHERE titleId = 13
     ''');
+    final prayerSectionOrder = await database.rawQuery('''
+      SELECT id, "order", name
+      FROM titles
+      WHERE id IN (13, 14, 15, 16, 17)
+      ORDER BY "order"
+    ''');
+    final qunutSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM(search LIKE 'اللهم قاتل الكفرة%') AS combat_dua,
+        SUM(search LIKE 'اللهم إياك نعبد%لمن عاديت ملحق') AS closing_dua,
+        SUM(search LIKE 'يشرع القنوت في الصلوات الخمس للنازلة%') AS calamity_guidance
+      FROM contents
+      WHERE titleId = 17
+    ''');
 
-    expect(await database.getVersion(), 115);
+    expect(await database.getVersion(), 116);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -172,6 +189,21 @@ void main() {
       'correct_between_dua': 1,
       'complete_tilawa_dua': 1,
       'ordered_tilawa_dua': 1,
+    });
+    expect(prayerSectionOrder, [
+      {'id': 13, 'order': 15, 'name': 'ما يقول بين السجدتين وسجدة التلاوة'},
+      {'id': 17, 'order': 16, 'name': 'قنوت الوتر في رمضان وغيره'},
+      {'id': 14, 'order': 17, 'name': 'التشهد والصلاة على النبي بعد التشهد'},
+      {'id': 15, 'order': 18, 'name': 'الدعاء بعد التشهد الأخير'},
+      {'id': 16, 'order': 19, 'name': 'ما يقول بعد الصلاة'},
+    ]);
+    expect(qunutSection.single, {
+      'count': 4,
+      'first': 1,
+      'last': 4,
+      'combat_dua': 1,
+      'closing_dua': 1,
+      'calamity_guidance': 1,
     });
   });
 
