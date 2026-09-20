@@ -144,8 +144,23 @@ void main() {
       FROM contents
       WHERE titleId = 15
     ''');
+    final afterPrayerSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM("order" = 1 AND search = 'الله أكبر' AND count = 1) AS opening_takbir,
+        SUM("order" = 12 AND search = 'سبحان الله والحمد لله والله أكبر' AND count = 33) AS combined_tasbih,
+        SUM("order" = 22 AND search = 'لا إله إلا الله' AND count = 25) AS fourth_formula_tahlil,
+        SUM("order" = 31 AND count = 10 AND source LIKE '%صلاة الصبح%') AS morning_dhikr,
+        SUM("order" = 32 AND count = 10 AND source LIKE '%صلاة المغرب%') AS sunset_dhikr,
+        SUM("order" = 33 AND search = 'سبحان الملك القدوس' AND count = 3) AS witr_dhikr,
+        SUM(search = 'اللهم لا تخزني يوم القيامة') AS unsupported_dua
+      FROM contents
+      WHERE titleId = 16
+    ''');
 
-    expect(await database.getVersion(), 118);
+    expect(await database.getVersion(), 119);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -240,6 +255,18 @@ void main() {
       'last': 12,
       'prophetic_guidance': 1,
       'closing_dua': 1,
+    });
+    expect(afterPrayerSection.single, {
+      'count': 34,
+      'first': 1,
+      'last': 34,
+      'opening_takbir': 1,
+      'combined_tasbih': 1,
+      'fourth_formula_tahlil': 1,
+      'morning_dhikr': 1,
+      'sunset_dhikr': 1,
+      'witr_dhikr': 1,
+      'unsupported_dua': 0,
     });
   });
 
