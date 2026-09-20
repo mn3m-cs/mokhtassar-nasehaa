@@ -159,8 +159,50 @@ void main() {
       FROM contents
       WHERE titleId = 16
     ''');
+    final sleepSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM("order" = 11 AND search LIKE '%والقرآن%' AND search NOT LIKE '%والفرقان%') AS corrected_revelation,
+        SUM("order" = 13 AND search LIKE '%وثقل ميزاني%') AS unsupported_addition,
+        SUM("order" BETWEEN 15 AND 23) AS tasbih_rows,
+        SUM("order" = 15 AND count = 34) AS first_takbir,
+        SUM("order" = 22 AND count = 34) AS third_tasbih,
+        SUM("order" = 24 AND hokm = 'أثر' AND source LIKE 'موقوف على عائشة%') AS stopped_report
+      FROM contents
+      WHERE titleId = 18
+    ''');
+    final visionSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM("order" = 1 AND search = 'الحمد لله') AS liked_vision,
+        SUM("order" = 3 AND count = 3) AS left_breathing,
+        SUM("order" = 4 AND count = 3) AS satan_refuge
+      FROM contents
+      WHERE titleId = 30
+    ''');
+    final nightAwakeningSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM("order" = 3 AND search LIKE 'باسمك اللهم وضعت جنبي%') AS return_to_bed,
+        SUM("order" = 4 AND search = '3190200') AS al_imran_ending
+      FROM contents
+      WHERE titleId = 31
+    ''');
+    final istikharaSection = await database.rawQuery('''
+      SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId = 32
+        AND search LIKE 'اللهم إني أستخيرك بعلمك%ثم رضني به'
+        AND source LIKE '%ص88–89%'
+    ''');
 
-    expect(await database.getVersion(), 119);
+    expect(await database.getVersion(), 120);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -268,6 +310,33 @@ void main() {
       'witr_dhikr': 1,
       'unsupported_dua': 0,
     });
+    expect(sleepSection.single, {
+      'count': 26,
+      'first': 1,
+      'last': 26,
+      'corrected_revelation': 1,
+      'unsupported_addition': 0,
+      'tasbih_rows': 9,
+      'first_takbir': 1,
+      'third_tasbih': 1,
+      'stopped_report': 1,
+    });
+    expect(visionSection.single, {
+      'count': 7,
+      'first': 1,
+      'last': 7,
+      'liked_vision': 1,
+      'left_breathing': 1,
+      'satan_refuge': 1,
+    });
+    expect(nightAwakeningSection.single, {
+      'count': 4,
+      'first': 1,
+      'last': 4,
+      'return_to_bed': 1,
+      'al_imran_ending': 1,
+    });
+    expect(istikharaSection.single, {'count': 1, 'first': 1, 'last': 1});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
