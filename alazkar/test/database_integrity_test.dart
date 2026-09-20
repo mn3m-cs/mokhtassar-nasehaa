@@ -201,8 +201,50 @@ void main() {
         AND search LIKE 'اللهم إني أستخيرك بعلمك%ثم رضني به'
         AND source LIKE '%ص88–89%'
     ''');
+    final distressSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM("order" = 9 AND search LIKE '%ابن أمتك في قبضتك ناصيتي بيدك%') AS complete_distress_dua
+      FROM contents
+      WHERE titleId = 33
+    ''');
+    final fearSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM("order" = 1 AND search = '282121') AS qasas_dua
+      FROM contents
+      WHERE titleId = 34
+    ''');
+    final satanSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM("order" = 3 AND count = 3) AS repeated_refuge,
+        SUM("order" = 4 AND count = 3) AS repeated_curse
+      FROM contents
+      WHERE titleId = 35
+    ''');
+    final situationalSections = await database.rawQuery('''
+      SELECT titles.id, titles.name, COUNT(contents.id) AS count
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id BETWEEN 36 AND 40
+      GROUP BY titles.id
+      ORDER BY titles.id
+    ''');
+    final unsupportedJudgments = await database.rawQuery('''
+      SELECT id, hokm
+      FROM contents
+      WHERE titleId BETWEEN 33 AND 40
+        AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
+    ''');
 
-    expect(await database.getVersion(), 120);
+    expect(await database.getVersion(), 121);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -337,6 +379,37 @@ void main() {
       'al_imran_ending': 1,
     });
     expect(istikharaSection.single, {'count': 1, 'first': 1, 'last': 1});
+    expect(distressSection.single, {
+      'count': 9,
+      'first': 1,
+      'last': 9,
+      'complete_distress_dua': 1,
+    });
+    expect(fearSection.single, {
+      'count': 9,
+      'first': 1,
+      'last': 9,
+      'qasas_dua': 1,
+    });
+    expect(satanSection.single, {
+      'count': 6,
+      'first': 1,
+      'last': 6,
+      'repeated_refuge': 1,
+      'repeated_curse': 1,
+    });
+    expect(situationalSections, [
+      {'id': 36, 'name': 'ما يقول إذا غلبه أمر', 'count': 1},
+      {'id': 37, 'name': 'ما يقول إذا استصعب عليه أمر', 'count': 1},
+      {'id': 38, 'name': 'ما يقول إذا تطيَّر بشيء', 'count': 1},
+      {
+        'id': 39,
+        'name': 'ما يقول إذا أصابته نكبة قليلة أو كثيرة',
+        'count': 1,
+      },
+      {'id': 40, 'name': 'ما يقول إذا كان عليه دَين عجز عنه', 'count': 1},
+    ]);
+    expect(unsupportedJudgments, isEmpty);
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
