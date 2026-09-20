@@ -134,8 +134,18 @@ void main() {
       FROM contents
       WHERE titleId = 14
     ''');
+    final postTashahhudSection = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS count,
+        MIN("order") AS first,
+        MAX("order") AS last,
+        SUM("order" = 11 AND search LIKE 'أحسن الكلام كلام الله وأحسن الهدي هدي محمد%') AS prophetic_guidance,
+        SUM("order" = 12 AND search LIKE 'اللهم اغفر لي ما قدمت%') AS closing_dua
+      FROM contents
+      WHERE titleId = 15
+    ''');
 
-    expect(await database.getVersion(), 117);
+    expect(await database.getVersion(), 118);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -223,6 +233,13 @@ void main() {
       'fifth_tashahhud': 1,
       'first_salawat': 1,
       'seventh_salawat': 1,
+    });
+    expect(postTashahhudSection.single, {
+      'count': 12,
+      'first': 1,
+      'last': 12,
+      'prophetic_guidance': 1,
+      'closing_dua': 1,
     });
   });
 
