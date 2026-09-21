@@ -278,6 +278,32 @@ void main() {
       FROM contents
       WHERE titleId BETWEEN 48 AND 60
     ''');
+    final foodMarriageAndMajlisSections = await database.rawQuery('''
+      SELECT titles.id, COUNT(contents.id) AS count,
+             MIN(contents."order") AS first, MAX(contents."order") AS last
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id IN (61, 62, 63, 64, 65, 68)
+      GROUP BY titles.id
+      ORDER BY titles.id
+    ''');
+    final foodMarriageAndMajlisRegression = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 61 AND search = 'اللهم إني أسألك من فضلك ورحمتك فإنه لا يملكها إلا أنت') AS guest_dua,
+        SUM(titleId = 62 AND search = 'يرحمنا الله وإياكم ويغفر لنا ولكم') AS ibn_umar_reply,
+        SUM(titleId = 63 AND search LIKE 'اللهم إني أسألك من خيرها%') AS wife_dua,
+        SUM(titleId = 64 AND body = 'QuranText[(2:128:128)]') AS offspring_dua,
+        SUM(titleId = 65 AND body = 'QuranText[(113:1:5),(114:1:6)]') AS severe_weather_surahs,
+        SUM(titleId = 68 AND body = 'QuranText[(103:1:3)]') AS meeting_departure_surah
+      FROM contents
+      WHERE titleId IN (61, 62, 63, 64, 65, 68)
+    ''');
+    final foodMarriageAndMajlisJudgments = await database.rawQuery('''
+      SELECT id, hokm
+      FROM contents
+      WHERE titleId IN (61, 62, 63, 64, 65, 68)
+        AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
+    ''');
     final unsupportedJudgments = await database.rawQuery('''
       SELECT id, hokm
       FROM contents
@@ -285,7 +311,7 @@ void main() {
         AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
 
-    expect(await database.getVersion(), 123);
+    expect(await database.getVersion(), 124);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -509,6 +535,25 @@ void main() {
       'unsupported_grave_dua': 0,
       'misplaced_munkar_verses': 0,
     });
+    expect(
+      foodMarriageAndMajlisSections.map((row) => row['count']),
+      [14, 9, 12, 5, 9, 4],
+    );
+    expect(
+      foodMarriageAndMajlisSections.every(
+        (row) => row['first'] == 1 && row['last'] == row['count'],
+      ),
+      isTrue,
+    );
+    expect(foodMarriageAndMajlisRegression.single, {
+      'guest_dua': 1,
+      'ibn_umar_reply': 1,
+      'wife_dua': 1,
+      'offspring_dua': 1,
+      'severe_weather_surahs': 1,
+      'meeting_departure_surah': 1,
+    });
+    expect(foodMarriageAndMajlisJudgments, isEmpty);
     expect(unsupportedJudgments, isEmpty);
   });
 
