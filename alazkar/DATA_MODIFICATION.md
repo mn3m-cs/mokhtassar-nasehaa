@@ -18,7 +18,7 @@
 
 ## 2. بنية `Al-Azkar.db`
 
-### جدول `titles` — أقسام الأذكار (حاليًا 80 صفًا)
+### جدول `titles` — أقسام الأذكار (حاليًا 82 صفًا)
 | العمود | النوع | المعنى |
 |---|---|---|
 | `id` | INTEGER PK | مفتاح أساسي |
@@ -59,7 +59,7 @@ QuranText[(السورة:من:إلى),(السورة:من:إلى)]
 
 الملفات المرجعية:
 - `lib/src/core/helpers/db_helper.dart` — منطق النسخ/الحذف.
-- `lib/src/core/helpers/azkar_helper.dart` — الثابت `dbVersion = 110` (سطر ~15) وكل استعلامات القراءة.
+- `lib/src/core/helpers/azkar_helper.dart` — الثابت `dbVersion = 125` (سطر ~15) وكل استعلامات القراءة.
 
 السلوك الحالي:
 1. عند أول تشغيل: تُنسخ قاعدة الـ assets إلى مسار قاعدة بيانات التطبيق.
@@ -83,7 +83,7 @@ QuranText[(السورة:من:إلى),(السورة:من:إلى)]
 2. نفّذ التعديل **داخل معاملة**: `BEGIN; ... COMMIT;` مع `PRAGMA foreign_keys=ON;` (تكشف أخطاء `titleId` فورًا).
 3. التزم قواعد منع الفساد في القسم 6.
 4. بعد التعديل، حدّث الإصدار ليلتقطه الجهاز:
-   - في القاعدة: `PRAGMA user_version = N;` حيث `N` أكبر من الإصدار الحالي (110).
+   - في القاعدة: `PRAGMA user_version = N;` حيث `N` أكبر من الإصدار الحالي (125).
    - في الكود: غيّر `AzkarDBHelper.dbVersion` في `lib/src/core/helpers/azkar_helper.dart` إلى **نفس** `N`.
 5. أعد البناء (أدناه) واختبر.
 6. لا تنسَ أن الملفين الجديدين اللذين ولّدهما `flutterfire` (فقط لمشروع noor) يخصان مشروع آخر — لا علاقة لهما بإجراءات هذا المشروع.
@@ -123,8 +123,8 @@ adb shell am start -n com.menemlabs.zaadalthakir.dev/com.menemlabs.zaadalthakir.
 - لا علاقة لأرقام `contents.order` العالمية بأي شيء خارج قسمها؛ لكن استعلام النتائج في البحث يمر عليها، فالالتزام بالترقيم يحفظ اتساق العرض.
 
 ## 7. نقاط تحقق جاهزة (تُستخدم في الاختبار)
-- عدد الأقسام: `SELECT COUNT(*) FROM titles;` → 80
-- عدد الأذكار: `SELECT COUNT(*) FROM contents;` → 786
+- عدد الأقسام: `SELECT COUNT(*) FROM titles;` → 82
+- عدد الأذكار: `SELECT COUNT(*) FROM contents;` → 784
 - لا صفوف معطوبة:
   ```sql
   SELECT COUNT(*) FROM contents WHERE body IS NULL OR count IS NULL OR titleId IS NULL; -- يجب 0

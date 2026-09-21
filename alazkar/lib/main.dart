@@ -4,9 +4,24 @@ import 'package:alazkar/services.dart';
 import 'package:flutter/material.dart';
 
 void main() async {
-  await initServices();
+  WidgetsFlutterBinding.ensureInitialized();
   ErrorWidget.builder = (FlutterErrorDetails details) => ErrorScreen(
         details: details,
       );
-  runApp(const MyApp());
+
+  try {
+    await initServices();
+    runApp(const MyApp());
+  } catch (error, stackTrace) {
+    runApp(
+      MaterialApp(
+        home: ErrorScreen(
+          details: FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+          ),
+        ),
+      ),
+    );
+  }
 }

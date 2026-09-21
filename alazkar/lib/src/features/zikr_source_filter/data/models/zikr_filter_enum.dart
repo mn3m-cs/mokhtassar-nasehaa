@@ -39,7 +39,9 @@ enum ZikrFilter {
 
   hokmMawdue("موضوع", "موضوع", "Fabricated"),
 
-  hokmAthar("أثر", "أثر", "Athar");
+  hokmAthar("أثر", "أثر", "Athar"),
+
+  hokmQuran("قرآني", "قرآني", "Quranic");
 
   const ZikrFilter(this.nameInDatabase, this.arabicName, this.englishName);
   final String nameInDatabase;
@@ -54,6 +56,7 @@ extension ZikrFilterExt on ZikrFilter {
         ZikrFilter.hokmDaeif,
         ZikrFilter.hokmMawdue,
         ZikrFilter.hokmAthar,
+        ZikrFilter.hokmQuran,
       ];
 
   bool get isForHokm => hokmFilters.contains(this);
