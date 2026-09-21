@@ -38,6 +38,7 @@ def normalize_for_search(body: str) -> str:
     body = re.sub(r"[\u064b-\u0652\u0653-\u065f\u0670\u0640]", "", body)
     body = body.replace("ﷺ", "")
     body = body.replace("(", " ").replace(")", " ")
+    body = body.replace("[", " ").replace("]", " ")
     body = body.replace("،", " ").replace("؛", " ").replace(":", " ").replace(".", " ").replace("؟", " ")
     body = body.replace(",", " ").replace("‘", "").replace("’", "")
     body = re.sub(r"\s+", " ", body).strip()
