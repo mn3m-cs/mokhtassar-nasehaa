@@ -237,14 +237,35 @@ void main() {
       GROUP BY titles.id
       ORDER BY titles.id
     ''');
+    final illnessAndDeathSections = await database.rawQuery('''
+      SELECT titles.id, titles.name, COUNT(contents.id) AS count,
+             MIN(contents."order") AS first, MAX(contents."order") AS last
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id BETWEEN 41 AND 47
+      GROUP BY titles.id
+      ORDER BY titles.id
+    ''');
+    final illnessAndDeathRegression = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 42 AND search LIKE 'اللهم أحيني ما كانت الحياة خيرا لي%') AS no_death_wish,
+        SUM(titleId = 42 AND search LIKE 'اللهم ارزقني شهادة في سبيلك%') AS medina_death_dua,
+        SUM(titleId = 43 AND search = 'اللهم اشف فلانا' AND count = 3) AS named_patient_dua,
+        SUM(titleId = 44 AND body = 'QuranText[(1:1:7)]') AS fatiha_ruqya,
+        SUM(titleId = 46 AND search = 'اللهم اجعله لنا سلفا وفرطا وأجرا') AS child_funeral_dua,
+        SUM(titleId = 47 AND search = 'اللهم اجعله لنا سلفا وفرطا وأجرا') AS misplaced_child_dua,
+        SUM(titleId = 47 AND source LIKE 'الصيغة % مما يقول زائر القبور.%') AS grave_visit_forms
+      FROM contents
+      WHERE titleId BETWEEN 41 AND 47
+    ''');
     final unsupportedJudgments = await database.rawQuery('''
       SELECT id, hokm
       FROM contents
-      WHERE titleId BETWEEN 33 AND 40
-        AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
+      WHERE titleId BETWEEN 33 AND 47
+        AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
 
-    expect(await database.getVersion(), 121);
+    expect(await database.getVersion(), 122);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -409,6 +430,48 @@ void main() {
       },
       {'id': 40, 'name': 'ما يقول إذا كان عليه دَين عجز عنه', 'count': 1},
     ]);
+    expect(illnessAndDeathSections, [
+      {'id': 41, 'name': 'أذكار المرض', 'count': 6, 'first': 1, 'last': 6},
+      {
+        'id': 42,
+        'name': 'ما يقوله المريض',
+        'count': 10,
+        'first': 1,
+        'last': 10
+      },
+      {
+        'id': 43,
+        'name': 'ما يقال عند المريض، ويُقرأ عليه',
+        'count': 7,
+        'first': 1,
+        'last': 7,
+      },
+      {'id': 44, 'name': 'رقية المريض', 'count': 5, 'first': 1, 'last': 5},
+      {'id': 45, 'name': 'أذكار الموت', 'count': 13, 'first': 1, 'last': 13},
+      {
+        'id': 46,
+        'name': 'أذكار الصلاة على الميت',
+        'count': 8,
+        'first': 1,
+        'last': 8,
+      },
+      {
+        'id': 47,
+        'name': 'ما يقول في الجنازة والدفن والقبور',
+        'count': 8,
+        'first': 1,
+        'last': 8,
+      },
+    ]);
+    expect(illnessAndDeathRegression.single, {
+      'no_death_wish': 1,
+      'medina_death_dua': 1,
+      'named_patient_dua': 1,
+      'fatiha_ruqya': 1,
+      'child_funeral_dua': 1,
+      'misplaced_child_dua': 0,
+      'grave_visit_forms': 4,
+    });
     expect(unsupportedJudgments, isEmpty);
   });
 
