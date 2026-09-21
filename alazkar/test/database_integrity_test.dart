@@ -258,14 +258,34 @@ void main() {
       FROM contents
       WHERE titleId BETWEEN 41 AND 47
     ''');
+    final fastingTravelAndPilgrimageSections = await database.rawQuery('''
+      SELECT titles.id, COUNT(contents.id) AS count,
+             MIN(contents."order") AS first, MAX(contents."order") AS last
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id BETWEEN 48 AND 60
+      GROUP BY titles.id
+      ORDER BY titles.id
+    ''');
+    final fastingTravelAndPilgrimageRegression = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 48 AND search = 'اللهم لك صمت وعلى رزقك أفطرت') AS second_iftar_dua,
+        SUM(titleId = 50 AND search LIKE 'لبيك اللهم بحجة وعمرة%') AS qiran_intention,
+        SUM(titleId = 50 AND search = 'لبيك ذا الفواضل') AS talbiya_variant,
+        SUM(titleId = 52 AND search LIKE 'الله أكبر الله أكبر الله أكبر لا إله إلا الله وحده%هزم الأحزاب وحده') AS complete_safa_dhikr,
+        SUM(titleId = 57 AND search LIKE 'اللهم صل على محمد%') AS unsupported_grave_dua,
+        SUM(titleId = 60 AND body IN ('QuranText[(17:81:81)]', 'QuranText[(34:49:49)]')) AS misplaced_munkar_verses
+      FROM contents
+      WHERE titleId BETWEEN 48 AND 60
+    ''');
     final unsupportedJudgments = await database.rawQuery('''
       SELECT id, hokm
       FROM contents
-      WHERE titleId BETWEEN 33 AND 47
+      WHERE titleId BETWEEN 33 AND 60
         AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
 
-    expect(await database.getVersion(), 122);
+    expect(await database.getVersion(), 123);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -471,6 +491,23 @@ void main() {
       'child_funeral_dua': 1,
       'misplaced_child_dua': 0,
       'grave_visit_forms': 4,
+    });
+    expect(
+      fastingTravelAndPilgrimageSections.map((row) => row['count']),
+      [6, 24, 11, 3, 11, 4, 2, 3, 4, 3, 4, 4, 15],
+    );
+    expect(
+      fastingTravelAndPilgrimageSections
+          .every((row) => row['first'] == 1 && row['last'] == row['count']),
+      isTrue,
+    );
+    expect(fastingTravelAndPilgrimageRegression.single, {
+      'second_iftar_dua': 1,
+      'qiran_intention': 1,
+      'talbiya_variant': 1,
+      'complete_safa_dhikr': 1,
+      'unsupported_grave_dua': 0,
+      'misplaced_munkar_verses': 0,
     });
     expect(unsupportedJudgments, isEmpty);
   });
