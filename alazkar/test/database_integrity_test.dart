@@ -304,6 +304,33 @@ void main() {
       WHERE titleId IN (61, 62, 63, 64, 65, 68)
         AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
+    final absoluteDhikrAndWirdSections = await database.rawQuery('''
+      SELECT titles."order", COUNT(contents.id) AS count,
+             MIN(contents."order") AS first, MAX(contents."order") AS last
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles."order" BETWEEN 68 AND 93 AND titles."order" != 70
+      GROUP BY titles.id
+      ORDER BY titles."order"
+    ''');
+    final absoluteDhikrAndWirdRegression = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 70) AS salawat_forms,
+        SUM(titleId = 70 AND search LIKE '%وعلى أهل بيته%') AS household_salawat,
+        SUM(titleId = 92 AND "order" = 1) AS first_wird_starts_at_one,
+        SUM(titleId = 91 AND "order" = 15) AS eleventh_wird_ends_at_fifteen
+      FROM contents
+      WHERE titleId IN (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+                        79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
+    ''');
+    final absoluteDhikrAndWirdJudgments = await database.rawQuery('''
+      SELECT contents.id, contents.hokm
+      FROM contents
+      JOIN titles ON titles.id = contents.titleId
+      WHERE titles."order" BETWEEN 68 AND 93 AND titles."order" != 70
+        AND contents.hokm NOT IN
+            ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
+    ''');
     final unsupportedJudgments = await database.rawQuery('''
       SELECT id, hokm
       FROM contents
@@ -311,7 +338,7 @@ void main() {
         AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
 
-    expect(await database.getVersion(), 124);
+    expect(await database.getVersion(), 125);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -554,6 +581,49 @@ void main() {
       'meeting_departure_surah': 1,
     });
     expect(foodMarriageAndMajlisJudgments, isEmpty);
+    expect(
+      absoluteDhikrAndWirdSections.map((row) => row['count']),
+      [
+        21,
+        43,
+        5,
+        7,
+        18,
+        11,
+        3,
+        22,
+        9,
+        6,
+        1,
+        13,
+        8,
+        3,
+        13,
+        9,
+        11,
+        13,
+        15,
+        14,
+        10,
+        12,
+        6,
+        10,
+        15,
+      ],
+    );
+    expect(
+      absoluteDhikrAndWirdSections.every(
+        (row) => row['first'] == 1 && row['last'] == row['count'],
+      ),
+      isTrue,
+    );
+    expect(absoluteDhikrAndWirdRegression.single, {
+      'salawat_forms': 7,
+      'household_salawat': 1,
+      'first_wird_starts_at_one': 1,
+      'eleventh_wird_ends_at_fifteen': 1,
+    });
+    expect(absoluteDhikrAndWirdJudgments, isEmpty);
     expect(unsupportedJudgments, isEmpty);
   });
 
