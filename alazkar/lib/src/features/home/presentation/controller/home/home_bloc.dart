@@ -63,7 +63,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final freq = zikrFilterStorage.getTitlesFreqFilterStatus();
 
     /// Filters
-    titlesToSet = await applyFiltersOnTitels(dbTitles, freq);
+    titlesToSet = await applyFiltersOnTitles(dbTitles, freq);
 
     emit(
       HomeLoadedState(
@@ -76,34 +76,51 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     );
   }
 
-  Future<List<ZikrTitle>> applyFiltersOnTitels(
+  Future<List<ZikrTitle>> applyFiltersOnTitles(
     List<ZikrTitle> titles,
     List<TitlesFreqEnum> titleFreqList, {
     List<Filter>? zikrFilters,
   }) async {
-    final List<ZikrTitle> titlesToSet;
+    final frequencyFilteredTitles = titles
+        .where(
+          (title) =>
+              title.nodeType == ZikrTitleNodeType.content &&
+              titleFreqList.validate(title.freq),
+        )
+        .toList();
+    final matchingContentTitles = await _contentTitlesMatchingFilters(
+      frequencyFilteredTitles,
+      zikrFilters ?? zikrFilterStorage.getAllFilters(),
+    );
+    return _titlesWithAncestors(titles, matchingContentTitles);
+  }
 
-    /// Handle Freq Filter
-    final List<ZikrTitle> filterdFreqTitles;
-
-    filterdFreqTitles =
-        titles.where((x) => titleFreqList.validate(x.freq)).toList();
-
-    /// Handle titles with no content after applying zikr filters
-    final List<ZikrTitle> reducedTitles = List.of([]);
-    final List<Filter> filters =
-        zikrFilters ?? zikrFilterStorage.getAllFilters();
-    for (var i = 0; i < filterdFreqTitles.length; i++) {
-      final title = filterdFreqTitles[i];
+  Future<List<ZikrTitle>> _contentTitlesMatchingFilters(
+    List<ZikrTitle> titles,
+    List<Filter> filters,
+  ) async {
+    final matchingTitles = <ZikrTitle>[];
+    for (final title in titles) {
       final azkarFromDB = await azkarDBHelper.getContentByTitleId(title.id);
       final azkarToSet = filters.getFilteredZikr(azkarFromDB);
-      if (azkarToSet.isNotEmpty) reducedTitles.add(title);
+      if (azkarToSet.isNotEmpty) matchingTitles.add(title);
     }
+    return matchingTitles;
+  }
 
-    // ignore: join_return_with_assignment
-    titlesToSet = reducedTitles;
-
-    return titlesToSet;
+  List<ZikrTitle> _titlesWithAncestors(
+    List<ZikrTitle> allTitles,
+    List<ZikrTitle> contentTitles,
+  ) {
+    final titlesById = {for (final title in allTitles) title.id: title};
+    final visibleIds = contentTitles.map((title) => title.id).toSet();
+    for (final title in contentTitles) {
+      var parentId = title.parentId;
+      while (parentId != null && visibleIds.add(parentId)) {
+        parentId = titlesById[parentId]?.parentId;
+      }
+    }
+    return allTitles.where((title) => visibleIds.contains(title.id)).toList();
   }
 
   Future<void> _search(
@@ -177,7 +194,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
 
     /// Handle titles change
-    final List<ZikrTitle> titleToView = await applyFiltersOnTitels(
+    final List<ZikrTitle> titleToView = await applyFiltersOnTitles(
       List.of(state.titles),
       newFreq,
     );
@@ -215,7 +232,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final state = this.state;
     if (state is! HomeLoadedState) return;
 
-    final List<ZikrTitle> titleToView = await applyFiltersOnTitels(
+    final List<ZikrTitle> titleToView = await applyFiltersOnTitles(
       List.of(state.titles),
       state.freqFilters,
       zikrFilters: event.filters,
