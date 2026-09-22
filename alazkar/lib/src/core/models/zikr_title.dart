@@ -3,16 +3,37 @@ import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
 
+enum ZikrTitleNodeType {
+  category,
+  content;
+
+  static ZikrTitleNodeType fromDatabase(String value) {
+    return ZikrTitleNodeType.values.firstWhere(
+      (type) => type.name == value,
+      orElse: () => throw ArgumentError.value(
+        value,
+        'value',
+        'Unsupported title node type',
+      ),
+    );
+  }
+}
+
 class ZikrTitle extends Equatable {
   final int id;
   final int order;
   final String name;
   final String freq;
+  final int? parentId;
+  final ZikrTitleNodeType nodeType;
+
   const ZikrTitle({
     required this.id,
     required this.order,
     required this.name,
     required this.freq,
+    this.parentId,
+    this.nodeType = ZikrTitleNodeType.content,
   });
 
   Map<String, dynamic> toMap() {
@@ -21,6 +42,8 @@ class ZikrTitle extends Equatable {
       'order': order,
       'name': name,
       'freq': freq,
+      'parentId': parentId,
+      'nodeType': nodeType.name,
     };
   }
 
@@ -30,6 +53,10 @@ class ZikrTitle extends Equatable {
       order: map['order'] as int,
       name: map['name'] as String,
       freq: map['freq'] as String,
+      parentId: map['parentId'] as int?,
+      nodeType: ZikrTitleNodeType.fromDatabase(
+        map['nodeType'] as String,
+      ),
     );
   }
 
@@ -43,15 +70,20 @@ class ZikrTitle extends Equatable {
     int? order,
     String? name,
     String? freq,
+    int? parentId,
+    bool clearParent = false,
+    ZikrTitleNodeType? nodeType,
   }) {
     return ZikrTitle(
       id: id ?? this.id,
       order: order ?? this.order,
       name: name ?? this.name,
       freq: freq ?? this.freq,
+      parentId: clearParent ? null : parentId ?? this.parentId,
+      nodeType: nodeType ?? this.nodeType,
     );
   }
 
   @override
-  List<Object?> get props => [id, order, name, freq];
+  List<Object?> get props => [id, order, name, freq, parentId, nodeType];
 }

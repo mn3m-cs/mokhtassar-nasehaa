@@ -22,6 +22,37 @@ void main() {
       SELECT COUNT(*) AS count
       FROM titles
     ''');
+    final hierarchyColumns = await database.rawQuery('''
+      SELECT name
+      FROM pragma_table_info('titles')
+      WHERE name IN ('parentId', 'nodeType')
+      ORDER BY name
+    ''');
+    final invalidHierarchyNodes = await database.rawQuery('''
+      SELECT id
+      FROM titles
+      WHERE nodeType NOT IN ('category', 'content')
+         OR (nodeType = 'category' AND EXISTS (
+           SELECT 1 FROM contents WHERE contents.titleId = titles.id
+         ))
+         OR (nodeType = 'content' AND EXISTS (
+           SELECT 1 FROM titles AS children WHERE children.parentId = titles.id
+         ))
+    ''');
+    final duplicateSiblingOrder = await database.rawQuery('''
+      SELECT parentId, "order"
+      FROM titles
+      WHERE parentId IS NOT NULL
+      GROUP BY parentId, "order"
+      HAVING COUNT(*) > 1
+    ''');
+    final duplicateRootOrder = await database.rawQuery('''
+      SELECT "order"
+      FROM titles
+      WHERE parentId IS NULL
+      GROUP BY "order"
+      HAVING COUNT(*) > 1
+    ''');
     final wirdCounts = await database.rawQuery('''
       SELECT COUNT(contents.id) AS count
       FROM titles
@@ -338,9 +369,14 @@ void main() {
         AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
 
-    expect(await database.getVersion(), 125);
+    expect(await database.getVersion(), 126);
     expect(titleCount.single, {'count': 82});
     expect(foreignKeyViolations, isEmpty);
+    expect(
+        hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
+    expect(invalidHierarchyNodes, isEmpty);
+    expect(duplicateSiblingOrder, isEmpty);
+    expect(duplicateRootOrder, isEmpty);
     expect(
       wirdCounts.map((row) => row['count']),
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],

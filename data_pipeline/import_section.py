@@ -3,7 +3,7 @@
 import_section.py — generic importer for Al-Azkar.db sections.
 
 Reads a section scheme (JSON) and inserts it into assets/db/Al-Azkar.db:
-  - one row in `titles` (name/freq, next id & order)
+  - one stable row in `titles` (name/freq/hierarchy metadata)
   - one row in `contents` per item (contiguous `order` 1..N within section)
   - `search` is derived exactly like the original xlsx tool:
         strip tashkeel, strip hamza-ish/unused, collapse spaces;
@@ -74,6 +74,137 @@ def backup(db_path: str) -> str:
     return bak
 
 
+def validate_node(title: dict, items: list) -> str:
+    node_type = title.get("nodeType", "content")
+    if node_type not in {"category", "content"}:
+        raise ValueError("title.nodeType must be 'category' or 'content'")
+    if node_type == "content" and not items:
+        raise ValueError("content titles require at least one item")
+    if node_type == "category" and items:
+        raise ValueError("category titles cannot contain items")
+    return node_type
+
+
+def validate_parent(cur: sqlite3.Cursor, parent_id: int | None) -> None:
+    if parent_id is None:
+        return
+    parent = cur.execute(
+        "SELECT nodeType FROM titles WHERE id = ?", (parent_id,)
+    ).fetchone()
+    if parent is None:
+        raise ValueError(f"parentId {parent_id} does not exist")
+    if parent[0] != "category":
+        raise ValueError(f"parentId {parent_id} is not a category")
+
+
+def next_title_order(cur: sqlite3.Cursor, parent_id: int | None) -> int:
+    if parent_id is None:
+        return cur.execute(
+            "SELECT COALESCE(MAX(`order`),0)+1 FROM titles WHERE parentId IS NULL"
+        ).fetchone()[0]
+    return cur.execute(
+        "SELECT COALESCE(MAX(`order`),0)+1 FROM titles WHERE parentId = ?",
+        (parent_id,),
+    ).fetchone()[0]
+
+
+def upsert_title(cur: sqlite3.Cursor, title: dict) -> tuple[int, int, list[int]]:
+    existing = cur.execute(
+        "SELECT id, `order` FROM titles WHERE name = ?", (title["name"],)
+    ).fetchall()
+    if len(existing) > 1:
+        raise ValueError(f"duplicate title name: {title['name']}")
+    if existing:
+        return update_title(cur, title, existing[0])
+    return insert_title(cur, title)
+
+
+def update_title(
+    cur: sqlite3.Cursor,
+    title: dict,
+    existing: tuple[int, int],
+) -> tuple[int, int, list[int]]:
+    title_id, current_order = existing
+    content_ids = [
+        row[0]
+        for row in cur.execute(
+            "SELECT id FROM contents WHERE titleId = ? ORDER BY `order`",
+            (title_id,),
+        ).fetchall()
+    ]
+    deleted_contents = cur.execute(
+        "DELETE FROM contents WHERE titleId = ?", (title_id,)
+    ).rowcount
+    title_order = title.get("order", current_order)
+    cur.execute(
+        """UPDATE titles
+           SET `order` = ?, name = ?, freq = ?, parentId = ?, nodeType = ?
+           WHERE id = ?""",
+        (
+            title_order,
+            title["name"],
+            title["freq"],
+            title["parentId"],
+            title["nodeType"],
+            title_id,
+        ),
+    )
+    print(f"updated existing title id {title_id} ({deleted_contents} contents removed)")
+    return title_id, title_order, content_ids
+
+
+def insert_title(cur: sqlite3.Cursor, title: dict) -> tuple[int, int, list[int]]:
+    title_id = title.get("id") or cur.execute(
+        "SELECT COALESCE(MAX(id),0)+1 FROM titles"
+    ).fetchone()[0]
+    title_order = title.get("order") or next_title_order(cur, title["parentId"])
+    cur.execute(
+        """INSERT INTO titles (id, `order`, name, freq, parentId, nodeType)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (
+            title_id,
+            title_order,
+            title["name"],
+            title["freq"],
+            title["parentId"],
+            title["nodeType"],
+        ),
+    )
+    return title_id, title_order, []
+
+
+def replace_contents(
+    cur: sqlite3.Cursor, title_id: int, existing_ids: list[int], items: list
+) -> None:
+    next_id = cur.execute("SELECT COALESCE(MAX(id),0)+1 FROM contents").fetchone()[0]
+    for content_order, item in enumerate(items, start=1):
+        if item.get("id") is not None:
+            content_id = int(item["id"])
+        elif content_order <= len(existing_ids):
+            content_id = existing_ids[content_order - 1]
+        else:
+            content_id = next_id
+            next_id += 1
+        body = item["body"].strip()
+        cur.execute(
+            """INSERT INTO contents
+               (id, titleId, `order`, body, count, source, hokm, fadl, search, sourceIndex)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                content_id,
+                title_id,
+                content_order,
+                body,
+                int(item.get("count") or 1),
+                (item.get("source") or "").strip(),
+                (item.get("hokm") or "").strip(),
+                (item.get("fadl") or "").strip(),
+                build_search(body),
+                "",
+            ),
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("scheme", help="path to section scheme JSON")
@@ -83,9 +214,11 @@ def main() -> int:
 
     scheme = read_scheme(args.scheme)
     title = scheme["title"]
-    items = scheme["items"]
-    if not items:
-        print("ERROR: no items in scheme")
+    items = scheme.get("items", [])
+    try:
+        node_type = validate_node(title, items)
+    except ValueError as error:
+        print(f"ERROR: {error}")
         return 1
 
     bak = backup(args.db)
@@ -96,43 +229,13 @@ def main() -> int:
     try:
         cur.execute("BEGIN")
 
-        # idempotent: replace an existing section with the same name
-        existing = cur.execute(
-            "SELECT id FROM titles WHERE name = ?", (title["name"],)
-        ).fetchall()
-        for (old_id,) in existing:
-            deleted_contents = cur.execute(
-                "DELETE FROM contents WHERE titleId = ?", (old_id,)
-            ).rowcount
-            cur.execute("DELETE FROM titles WHERE id = ?", (old_id,))
-            print(f"replaced existing title id {old_id} ({deleted_contents} contents)")
-
-        # title id & order
-        next_title_id = cur.execute("SELECT COALESCE(MAX(id),0)+1 FROM titles").fetchone()[0]
-        next_title_order = cur.execute("SELECT COALESCE(MAX(`order`),0)+1 FROM titles").fetchone()[0]
-        cur.execute(
-            "INSERT INTO titles (id, `order`, name, freq) VALUES (?, ?, ?, ?)",
-            (next_title_id, next_title_order, title["name"], title["freq"]),
-        )
+        parent_id = title.get("parentId")
+        validate_parent(cur, parent_id)
+        title["parentId"] = parent_id
+        title["nodeType"] = node_type
+        next_title_id, next_title_order, existing_content_ids = upsert_title(cur, title)
         print(f"title {next_title_id}: {title['name']} (order {next_title_order}, freq {title['freq']})")
-
-        # contents
-        content_id = cur.execute("SELECT COALESCE(MAX(id),0)+1 FROM contents").fetchone()[0]
-        for i, item in enumerate(items, start=1):
-            body = item["body"].strip()
-            count = int(item.get("count") or 1)
-            source = (item.get("source") or "").strip()
-            hokm = (item.get("hokm") or "").strip()
-            fadl = (item.get("fadl") or "").strip()
-            search = build_search(body)
-            source_index = ""
-            cur.execute(
-                """INSERT INTO contents
-                   (id, titleId, `order`, body, count, source, hokm, fadl, search, sourceIndex)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (content_id, next_title_id, i, body, count, source, hokm, fadl, search, source_index),
-            )
-            content_id += 1
+        replace_contents(cur, next_title_id, existing_content_ids, items)
 
         # version
         if args.new_version is not None:
@@ -162,9 +265,12 @@ def main() -> int:
     print("orphan titleId:",
           cur.execute("SELECT COUNT(*) FROM contents WHERE titleId NOT IN (SELECT id FROM titles)").fetchone()[0])
     print("hokm outside set:",
-          cur.execute("SELECT COUNT(*) FROM contents WHERE hokm IS NULL OR (hokm NOT IN ('صحيح','حسن','ضعيف','موضوع','أثر') AND hokm <> '')").fetchone()[0])
+          cur.execute("SELECT COUNT(*) FROM contents WHERE hokm IS NULL OR (hokm NOT IN ('صحيح','حسن','ضعيف','موضوع','أثر','قرآني') AND hokm <> '')").fetchone()[0])
     print("user_version:", cur.execute("PRAGMA user_version").fetchone()[0])
-    cur.execute("SELECT id, `order`, name, freq FROM titles WHERE id=?", (next_title_id,))
+    cur.execute(
+        "SELECT id, `order`, name, freq, parentId, nodeType FROM titles WHERE id=?",
+        (next_title_id,),
+    )
     print("title row:", cur.fetchone())
     cur.execute("SELECT `order`, COUNT(*), substr(REPLACE(body,'\n',' '), 1, 42) FROM contents WHERE titleId=? GROUP BY `order`", (next_title_id,))
     for r in cur.fetchall():
