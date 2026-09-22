@@ -200,7 +200,7 @@ class AzkarDBHelper {
 
     /// Pagination
     final String qurey =
-        '''SELECT * FROM titles ${whereFilters.query} ORDER BY `id` LIMIT ? OFFSET ?''';
+        '''SELECT * FROM titles ${whereFilters.query} AND nodeType = 'content' ORDER BY `id` LIMIT ? OFFSET ?''';
 
     final List<Map<String, dynamic>> maps = await db.rawQuery(
       qurey,
@@ -209,7 +209,7 @@ class AzkarDBHelper {
 
     /// Total Count
     final String totalCountQurey =
-        '''SELECT COUNT(*) as count FROM titles ${whereFilters.query} ''';
+        '''SELECT COUNT(*) as count FROM titles ${whereFilters.query} AND nodeType = 'content' ''';
     final List<Map<String, dynamic>> countResult =
         await db.rawQuery(totalCountQurey, [...whereFilters.args]);
     final int count = countResult.first["count"] as int? ?? 0;

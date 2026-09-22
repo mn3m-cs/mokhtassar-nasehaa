@@ -9,11 +9,13 @@ class SearchContentCard extends StatelessWidget {
   final int index;
   final Zikr zikr;
   final String searchText;
+  final String path;
   const SearchContentCard({
     super.key,
     required this.index,
     required this.zikr,
     required this.searchText,
+    required this.path,
   });
 
   @override
@@ -31,6 +33,7 @@ class SearchContentCard extends StatelessWidget {
           ),
         ),
       ),
+      title: Text(path),
       subtitle: FutureBuilder(
         future: zikr.toPlainText(),
         builder: (context, snap) {
