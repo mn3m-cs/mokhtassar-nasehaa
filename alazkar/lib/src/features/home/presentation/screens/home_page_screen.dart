@@ -1,4 +1,5 @@
 import 'package:alazkar/src/core/widgets/loading.dart';
+import 'package:alazkar/src/features/home/presentation/components/favorite_titles_screen.dart';
 import 'package:alazkar/src/features/home/presentation/components/fehrs_screen.dart';
 import 'package:alazkar/src/features/home/presentation/components/home_app_bar.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
@@ -39,7 +40,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                       physics: const BouncingScrollPhysics(),
                       children: [
                         FehrsScreen(titles: state.titlesToShow),
-                        FehrsScreen(
+                        FavoriteTitlesScreen(
                           titles: state.favouriteTitles(),
                         ),
                       ],

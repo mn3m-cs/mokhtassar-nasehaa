@@ -5,9 +5,14 @@ import 'package:flutter/material.dart';
 
 class FehrsItemCard extends StatelessWidget {
   final ZikrTitle zikrTitle;
+  final int? displayOrder;
+  final VoidCallback? onCategoryTap;
+
   const FehrsItemCard({
     super.key,
     required this.zikrTitle,
+    this.displayOrder,
+    this.onCategoryTap,
   });
 
   @override
@@ -21,15 +26,28 @@ class FehrsItemCard extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 25),
-                child: Text(zikrTitle.order.toString()),
+                child: Text((displayOrder ?? zikrTitle.order).toString()),
               ),
             ),
           ),
-          BookmarkTitleButton(titleId: zikrTitle.id),
+          if (zikrTitle.nodeType == ZikrTitleNodeType.category)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              child: Icon(Icons.folder_outlined),
+            )
+          else
+            BookmarkTitleButton(titleId: zikrTitle.id),
         ],
       ),
       title: Text(zikrTitle.name),
+      trailing: zikrTitle.nodeType == ZikrTitleNodeType.category
+          ? const Icon(Icons.chevron_left)
+          : null,
       onTap: () {
+        if (zikrTitle.nodeType == ZikrTitleNodeType.category) {
+          onCategoryTap?.call();
+          return;
+        }
         Navigator.push(
           context,
           ZikrContentViewerScreen.route(zikrTitleId: zikrTitle.id),
