@@ -3,8 +3,10 @@ import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
+import 'package:alazkar/src/features/search/data/models/located_search_result.dart';
 import 'package:alazkar/src/features/search/data/models/search_for.dart';
 import 'package:alazkar/src/features/search/data/models/search_type.dart';
+import 'package:alazkar/src/features/search/data/models/title_paths.dart';
 import 'package:alazkar/src/features/search/domain/repository/search_repo.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/repository/zikr_filter_storage.dart';
 import 'package:bloc/bloc.dart';
@@ -17,8 +19,11 @@ part 'search_state.dart';
 
 class SearchCubit extends Cubit<SearchState> {
   final TextEditingController searchController = TextEditingController();
-  late final PagingController<int, ZikrTitle> titlePagingController;
-  late final PagingController<int, Zikr> contentPagingController;
+  late final PagingController<int, LocatedSearchResult<ZikrTitle>>
+      titlePagingController;
+  late final PagingController<int, LocatedSearchResult<Zikr>>
+      contentPagingController;
+  Map<int, String> _titlePaths = const {};
 
   ///
   final HomeBloc homeBloc;
@@ -58,6 +63,7 @@ class SearchCubit extends Cubit<SearchState> {
   }
 
   Future start() async {
+    _titlePaths = buildTitlePaths(await azkarDBHelper.getAllTitles());
     final state = SearchLoadedState(
       searchText: "",
       searchType: searchRepo.searchType,
@@ -91,12 +97,20 @@ class SearchCubit extends Cubit<SearchState> {
 
       emit(state.copyWith(searchResultCount: count));
 
-      final isLastPage = content.length < state.pageSize;
+      final locatedContent = content
+          .map(
+            (zikr) => LocatedSearchResult(
+              value: zikr,
+              path: _titlePaths[zikr.titleId] ?? '',
+            ),
+          )
+          .toList();
+      final isLastPage = locatedContent.length < state.pageSize;
       if (isLastPage) {
-        contentPagingController.appendLastPage(content);
+        contentPagingController.appendLastPage(locatedContent);
       } else {
-        final nextPageKey = offset + content.length;
-        contentPagingController.appendPage(content, nextPageKey);
+        final nextPageKey = offset + locatedContent.length;
+        contentPagingController.appendPage(locatedContent, nextPageKey);
       }
     } catch (e) {
       contentPagingController.error = e;
@@ -114,12 +128,20 @@ class SearchCubit extends Cubit<SearchState> {
 
       emit(state.copyWith(searchResultCount: count));
 
+      final locatedTitles = titles
+          .map(
+            (title) => LocatedSearchResult(
+              value: title,
+              path: _titlePaths[title.id] ?? title.name,
+            ),
+          )
+          .toList();
       final isLastPage = titles.length < state.pageSize;
       if (isLastPage) {
-        titlePagingController.appendLastPage(titles);
+        titlePagingController.appendLastPage(locatedTitles);
       } else {
         final nextPageKey = offset + titles.length;
-        titlePagingController.appendPage(titles, nextPageKey);
+        titlePagingController.appendPage(locatedTitles, nextPageKey);
       }
     } catch (e) {
       titlePagingController.error = e;
