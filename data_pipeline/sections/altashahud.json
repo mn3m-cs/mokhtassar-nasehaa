@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "التشهد والصلاة على النبي بعد التشهد",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 97,
+    "order": 6
   },
   "items": [
     {

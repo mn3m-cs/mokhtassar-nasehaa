@@ -93,7 +93,7 @@ void main() {
       SELECT titles."order", titles.name, COUNT(contents.id) AS count
       FROM titles
       JOIN contents ON contents.titleId = titles.id
-      WHERE titles."order" IN (5, 6)
+      WHERE titles.id IN (94, 95)
       GROUP BY titles.id
       ORDER BY titles."order"
     ''');
@@ -141,7 +141,9 @@ void main() {
       SELECT id, "order", name
       FROM titles
       WHERE id IN (13, 14, 15, 16, 17)
-      ORDER BY "order"
+      ORDER BY CASE id
+        WHEN 13 THEN 1 WHEN 17 THEN 2 WHEN 14 THEN 3
+        WHEN 15 THEN 4 WHEN 16 THEN 5 END
     ''');
     final qunutSection = await database.rawQuery('''
       SELECT
@@ -368,15 +370,40 @@ void main() {
       WHERE titleId BETWEEN 33 AND 60
         AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
+    final prayerPilot = await database.rawQuery('''
+      SELECT
+        (SELECT parentId FROM titles WHERE id = 10) AS opening_parent,
+        (SELECT parentId FROM titles WHERE id = 16) AS after_prayer_parent,
+        (SELECT nodeType FROM titles WHERE id = 96) AS prayer_type,
+        (SELECT nodeType FROM titles WHERE id = 97) AS inside_prayer_type,
+        (SELECT count FROM contents WHERE id = 1006) AS introduction_count,
+        (SELECT hokm FROM contents WHERE id = 1006) AS introduction_judgment,
+        (SELECT source FROM contents WHERE id = 1006) AS introduction_source,
+        (SELECT body FROM contents WHERE id = 1006) AS introduction_body,
+        (SELECT search LIKE '%فيستحب الجمع بينها كلها%'
+         FROM contents WHERE id = 1006) AS introduction_searchable
+    ''');
 
-    expect(await database.getVersion(), 126);
-    expect(titleCount.single, {'count': 82});
+    expect(await database.getVersion(), 127);
+    expect(titleCount.single, {'count': 85});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
     expect(invalidHierarchyNodes, isEmpty);
     expect(duplicateSiblingOrder, isEmpty);
     expect(duplicateRootOrder, isEmpty);
+    expect(prayerPilot.single, {
+      'opening_parent': 97,
+      'after_prayer_parent': 96,
+      'prayer_type': 'category',
+      'inside_prayer_type': 'category',
+      'introduction_count': 0,
+      'introduction_judgment': '',
+      'introduction_source': 'تمهيد أذكار الصلاة. (ص49)',
+      'introduction_body':
+          'هذا ما ورد من الأذكار في دعاء التوجه، فيستحب الجمع بينها كلها لمن صلى منفردًا، وللإمام إذا أذن له المأمومون، فأما إذا لم يأذنوا له فلا يطول عليهم، بل يقتصر على بعض ذلك.',
+      'introduction_searchable': 1,
+    });
     expect(
       wirdCounts.map((row) => row['count']),
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
@@ -441,11 +468,11 @@ void main() {
       'ordered_tilawa_dua': 1,
     });
     expect(prayerSectionOrder, [
-      {'id': 13, 'order': 15, 'name': 'ما يقول بين السجدتين وسجدة التلاوة'},
-      {'id': 17, 'order': 16, 'name': 'قنوت الوتر في رمضان وغيره'},
-      {'id': 14, 'order': 17, 'name': 'التشهد والصلاة على النبي بعد التشهد'},
-      {'id': 15, 'order': 18, 'name': 'الدعاء بعد التشهد الأخير'},
-      {'id': 16, 'order': 19, 'name': 'ما يقول بعد الصلاة'},
+      {'id': 13, 'order': 4, 'name': 'ما يقول بين السجدتين وسجدة التلاوة'},
+      {'id': 17, 'order': 5, 'name': 'قنوت الوتر في رمضان وغيره'},
+      {'id': 14, 'order': 6, 'name': 'التشهد والصلاة على النبي بعد التشهد'},
+      {'id': 15, 'order': 7, 'name': 'الدعاء بعد التشهد الأخير'},
+      {'id': 16, 'order': 3, 'name': 'ما يقول بعد الصلاة'},
     ]);
     expect(qunutSection.single, {
       'count': 4,

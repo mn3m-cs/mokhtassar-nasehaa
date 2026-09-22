@@ -195,7 +195,7 @@ def replace_contents(
                 title_id,
                 content_order,
                 body,
-                int(item.get("count") or 1),
+                1 if item.get("count") is None else int(item["count"]),
                 (item.get("source") or "").strip(),
                 (item.get("hokm") or "").strip(),
                 (item.get("fadl") or "").strip(),

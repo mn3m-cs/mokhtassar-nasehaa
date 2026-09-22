@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار السجود",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 97,
+    "order": 3
   },
   "items": [
     {
