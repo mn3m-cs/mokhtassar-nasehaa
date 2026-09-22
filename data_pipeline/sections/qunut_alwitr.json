@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "قنوت الوتر في رمضان وغيره",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 97,
+    "order": 5
   },
   "items": [
     {

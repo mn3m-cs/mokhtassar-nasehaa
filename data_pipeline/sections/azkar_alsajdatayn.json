@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "ما يقول بين السجدتين وسجدة التلاوة",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 97,
+    "order": 4
   },
   "items": [
     {

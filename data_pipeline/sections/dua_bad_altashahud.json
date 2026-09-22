@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "الدعاء بعد التشهد الأخير",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 97,
+    "order": 7
   },
   "items": [
     {

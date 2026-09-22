@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "دعاء الاستفتاح",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 97,
+    "order": 1
   },
   "items": [
     {

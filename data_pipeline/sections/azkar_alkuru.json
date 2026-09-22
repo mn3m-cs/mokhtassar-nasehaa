@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار الركوع والرفع منه",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 97,
+    "order": 2
   },
   "items": [
     {

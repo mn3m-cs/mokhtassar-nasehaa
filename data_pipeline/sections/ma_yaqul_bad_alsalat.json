@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "ما يقول بعد الصلاة",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 96,
+    "order": 3
   },
   "items": [
     {
