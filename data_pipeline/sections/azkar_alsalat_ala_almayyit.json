@@ -1,7 +1,11 @@
 {
   "title": {
+    "id": 46,
+    "order": 2,
     "name": "أذكار الصلاة على الميت",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 101,
+    "nodeType": "content"
   },
   "items": [
     {

@@ -1,7 +1,11 @@
 {
   "title": {
+    "id": 47,
+    "order": 3,
     "name": "ما يقول في الجنازة والدفن والقبور",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 101,
+    "nodeType": "content"
   },
   "items": [
     {

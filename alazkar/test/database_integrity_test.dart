@@ -383,9 +383,22 @@ void main() {
         (SELECT search LIKE '%فيستحب الجمع بينها كلها%'
          FROM contents WHERE id = 1006) AS introduction_searchable
     ''');
+    final guidanceNotes = await database.rawQuery('''
+      SELECT
+        (SELECT COUNT(*) FROM titles
+         WHERE id BETWEEN 99 AND 101 AND nodeType = 'category') AS categories,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId BETWEEN 102 AND 104 AND count = 0) AS prose_rows,
+        (SELECT parentId FROM titles WHERE id = 18) AS sleep_parent,
+        (SELECT parentId FROM titles WHERE id = 41) AS illness_parent,
+        (SELECT parentId FROM titles WHERE id = 45) AS death_parent,
+        (SELECT search LIKE '%يراجع الطبيب النفسي المختص%لا يتعارضان بل يتعاضدان%'
+         FROM contents WHERE id = 1008) AS complete_health_guidance,
+        (SELECT source FROM contents WHERE id = 1009) AS condolence_source
+    ''');
 
-    expect(await database.getVersion(), 127);
-    expect(titleCount.single, {'count': 85});
+    expect(await database.getVersion(), 128);
+    expect(titleCount.single, {'count': 91});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -403,6 +416,15 @@ void main() {
       'introduction_body':
           'هذا ما ورد من الأذكار في دعاء التوجه، فيستحب الجمع بينها كلها لمن صلى منفردًا، وللإمام إذا أذن له المأمومون، فأما إذا لم يأذنوا له فلا يطول عليهم، بل يقتصر على بعض ذلك.',
       'introduction_searchable': 1,
+    });
+    expect(guidanceNotes.single, {
+      'categories': 3,
+      'prose_rows': 3,
+      'sleep_parent': 99,
+      'illness_parent': 100,
+      'death_parent': 101,
+      'complete_health_guidance': 1,
+      'condolence_source': 'تنبيه في ألفاظ التعزية. (ص107)',
     });
     expect(
       wirdCounts.map((row) => row['count']),

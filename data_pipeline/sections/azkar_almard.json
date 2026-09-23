@@ -1,7 +1,11 @@
 {
   "title": {
+    "id": 41,
+    "order": 1,
     "name": "أذكار المرض",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 100,
+    "nodeType": "content"
   },
   "items": [
     {
