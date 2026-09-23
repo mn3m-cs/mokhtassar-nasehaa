@@ -383,9 +383,37 @@ void main() {
         (SELECT search LIKE '%فيستحب الجمع بينها كلها%'
          FROM contents WHERE id = 1006) AS introduction_searchable
     ''');
+    final prayerSupplementCategories = await database.rawQuery('''
+      SELECT id, name, parentId, "order", nodeType
+      FROM titles
+      WHERE id BETWEEN 99 AND 102
+      ORDER BY id
+    ''');
+    final prayerSupplementSections = await database.rawQuery('''
+      SELECT titles.id, titles.name, titles.parentId,
+             COUNT(contents.id) AS count,
+             MIN(contents."order") AS first,
+             MAX(contents."order") AS last
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id BETWEEN 103 AND 110
+      GROUP BY titles.id
+      ORDER BY titles.id
+    ''');
+    final prayerSupplementRegression = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 103 AND count != 0) AS counted_imam_guidance,
+        SUM(titleId = 104 AND "order" <= 2 AND count != 0) AS counted_eid_guidance,
+        SUM(titleId = 104 AND "order" BETWEEN 3 AND 7 AND hokm = 'أثر') AS eid_reports,
+        SUM(titleId = 108 AND "order" <= 2 AND count != 0) AS counted_rain_guidance,
+        SUM(titleId = 109 AND "order" = 2 AND source LIKE 'حاشية صلاة التسبيح%') AS tasbih_note,
+        SUM(titleId = 110 AND "order" = 2 AND count = 0) AS repentance_note
+      FROM contents
+      WHERE titleId BETWEEN 103 AND 110
+    ''');
 
-    expect(await database.getVersion(), 127);
-    expect(titleCount.single, {'count': 85});
+    expect(await database.getVersion(), 128);
+    expect(titleCount.single, {'count': 97});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -403,6 +431,54 @@ void main() {
       'introduction_body':
           'هذا ما ورد من الأذكار في دعاء التوجه، فيستحب الجمع بينها كلها لمن صلى منفردًا، وللإمام إذا أذن له المأمومون، فأما إذا لم يأذنوا له فلا يطول عليهم، بل يقتصر على بعض ذلك.',
       'introduction_searchable': 1,
+    });
+    expect(prayerSupplementCategories, [
+      {
+        'id': 99,
+        'name': 'صلاة العيد',
+        'parentId': 96,
+        'order': 4,
+        'nodeType': 'category',
+      },
+      {
+        'id': 100,
+        'name': 'صلاة الكسوف',
+        'parentId': 96,
+        'order': 5,
+        'nodeType': 'category',
+      },
+      {
+        'id': 101,
+        'name': 'صلاة الاستسقاء',
+        'parentId': 96,
+        'order': 6,
+        'nodeType': 'category',
+      },
+      {
+        'id': 102,
+        'name': 'صلوات متفرقة',
+        'parentId': 96,
+        'order': 7,
+        'nodeType': 'category',
+      },
+    ]);
+    expect(
+      prayerSupplementSections.map((row) => row['count']),
+      [8, 7, 2, 1, 2, 7, 2, 2],
+    );
+    expect(
+      prayerSupplementSections.every(
+        (row) => row['first'] == 1 && row['last'] == row['count'],
+      ),
+      isTrue,
+    );
+    expect(prayerSupplementRegression.single, {
+      'counted_imam_guidance': 0,
+      'counted_eid_guidance': 0,
+      'eid_reports': 5,
+      'counted_rain_guidance': 0,
+      'tasbih_note': 1,
+      'repentance_note': 1,
     });
     expect(
       wirdCounts.map((row) => row['count']),

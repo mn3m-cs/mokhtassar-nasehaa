@@ -1,0 +1,11 @@
+{
+  "title": {
+    "id": 101,
+    "order": 6,
+    "name": "صلاة الاستسقاء",
+    "freq": "d",
+    "parentId": 96,
+    "nodeType": "category"
+  },
+  "items": []
+}

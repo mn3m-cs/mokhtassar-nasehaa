@@ -1,0 +1,11 @@
+{
+  "title": {
+    "id": 102,
+    "order": 7,
+    "name": "صلوات متفرقة",
+    "freq": "d",
+    "parentId": 96,
+    "nodeType": "category"
+  },
+  "items": []
+}
