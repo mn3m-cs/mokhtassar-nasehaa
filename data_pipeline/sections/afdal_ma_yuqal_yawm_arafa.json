@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "أفضل ما يقال يوم عرفة",
-    "freq": "d"
+    "freq": "d",
+    "id": 54,
+    "order": 2,
+    "parentId": 102,
+    "nodeType": "content"
   },
   "items": [
     {

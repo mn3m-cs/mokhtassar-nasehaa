@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ما يقول عند زيارة قبر النبي ﷺ",
-    "freq": "d"
+    "freq": "d",
+    "id": 57,
+    "order": 3,
+    "parentId": 103,
+    "nodeType": "content"
   },
   "items": [
     {

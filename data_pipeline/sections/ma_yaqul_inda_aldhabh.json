@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ما يقول عند الذبح أو النحر",
-    "freq": "d"
+    "freq": "d",
+    "id": 55,
+    "order": 4,
+    "parentId": 102,
+    "nodeType": "content"
   },
   "items": [
     {

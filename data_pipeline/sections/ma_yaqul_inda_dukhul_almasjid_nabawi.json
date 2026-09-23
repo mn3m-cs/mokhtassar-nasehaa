@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ما يقول عند دخول المسجد النبوي",
-    "freq": "d"
+    "freq": "d",
+    "id": 56,
+    "order": 2,
+    "parentId": 103,
+    "nodeType": "content"
   },
   "items": [
     {

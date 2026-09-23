@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ما يقول عند دخول المسجد الحرام",
-    "freq": "d"
+    "freq": "d",
+    "id": 51,
+    "order": 1,
+    "parentId": 101,
+    "nodeType": "content"
   },
   "items": [
     {

@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ما يقول عند الخروج من المسجد الحرام",
-    "freq": "d"
+    "freq": "d",
+    "id": 53,
+    "order": 4,
+    "parentId": 101,
+    "nodeType": "content"
   },
   "items": [
     {

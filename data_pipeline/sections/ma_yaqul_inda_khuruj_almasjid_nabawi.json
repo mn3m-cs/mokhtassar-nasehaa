@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ما يقول عند الخروج من المسجد النبوي",
-    "freq": "d"
+    "freq": "d",
+    "id": 58,
+    "order": 4,
+    "parentId": 103,
+    "nodeType": "content"
   },
   "items": [
     {
