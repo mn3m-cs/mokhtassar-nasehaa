@@ -383,9 +383,30 @@ void main() {
         (SELECT search LIKE '%فيستحب الجمع بينها كلها%'
          FROM contents WHERE id = 1006) AS introduction_searchable
     ''');
+    final bookContext = await database.rawQuery('''
+      SELECT
+        (SELECT nodeType FROM titles WHERE id = 99) AS about_book_type,
+        (SELECT nodeType FROM titles WHERE id = 100) AS morning_evening_type,
+        (SELECT nodeType FROM titles WHERE id = 108) AS mosque_type,
+        (SELECT parentId FROM titles WHERE id = 1) AS morning_parent,
+        (SELECT parentId FROM titles WHERE id = 2) AS evening_parent,
+        (SELECT parentId FROM titles WHERE id = 8) AS mosque_parent,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 99) AS about_book_children,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 100) AS morning_evening_children,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 108) AS mosque_children,
+        (SELECT COUNT(*) FROM contents
+         WHERE id BETWEEN 1007 AND 1014 AND count = 0) AS zero_count_prose,
+        (SELECT COUNT(*) FROM contents
+         WHERE id BETWEEN 1007 AND 1014) AS prose_count,
+        (SELECT search LIKE '%فهذا مختصر%الأذكار والأدعية الصحيحة%'
+         FROM contents WHERE id = 1008) AS introduction_searchable,
+        (SELECT search LIKE '%كل يوم يعيشه المؤمن غنيمة%'
+         FROM contents WHERE id = 1013) AS etiquette_searchable,
+        (SELECT hokm FROM contents WHERE id = 1014) AS salaf_judgment
+    ''');
 
-    expect(await database.getVersion(), 127);
-    expect(titleCount.single, {'count': 85});
+    expect(await database.getVersion(), 128);
+    expect(titleCount.single, {'count': 96});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -403,6 +424,22 @@ void main() {
       'introduction_body':
           'هذا ما ورد من الأذكار في دعاء التوجه، فيستحب الجمع بينها كلها لمن صلى منفردًا، وللإمام إذا أذن له المأمومون، فأما إذا لم يأذنوا له فلا يطول عليهم، بل يقتصر على بعض ذلك.',
       'introduction_searchable': 1,
+    });
+    expect(bookContext.single, {
+      'about_book_type': 'category',
+      'morning_evening_type': 'category',
+      'mosque_type': 'category',
+      'morning_parent': 100,
+      'evening_parent': 100,
+      'mosque_parent': 108,
+      'about_book_children': 4,
+      'morning_evening_children': 5,
+      'mosque_children': 2,
+      'zero_count_prose': 8,
+      'prose_count': 8,
+      'introduction_searchable': 1,
+      'etiquette_searchable': 1,
+      'salaf_judgment': '',
     });
     expect(
       wirdCounts.map((row) => row['count']),
