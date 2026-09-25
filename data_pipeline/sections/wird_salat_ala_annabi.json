@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ورد الصلاة والسلام على النبي ﷺ",
-    "freq": "d"
+    "freq": "d",
+    "id": 70,
+    "order": 2,
+    "parentId": 101,
+    "nodeType": "content"
   },
   "items": [
     {

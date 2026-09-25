@@ -1,0 +1,11 @@
+{
+  "title": {
+    "id": 101,
+    "order": 3,
+    "name": "الصلاة على النبي ﷺ — تصنيف تنظيمي",
+    "freq": "d",
+    "parentId": 99,
+    "nodeType": "category"
+  },
+  "items": []
+}

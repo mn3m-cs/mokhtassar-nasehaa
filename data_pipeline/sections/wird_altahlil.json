@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ورد التهليل",
-    "freq": "d"
+    "freq": "d",
+    "id": 69,
+    "order": 2,
+    "parentId": 102,
+    "nodeType": "content"
   },
   "items": [
     {

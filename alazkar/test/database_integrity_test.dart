@@ -338,13 +338,14 @@ void main() {
         AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
     final absoluteDhikrAndWirdSections = await database.rawQuery('''
-      SELECT titles."order", COUNT(contents.id) AS count,
+      SELECT titles.id, COUNT(contents.id) AS count,
              MIN(contents."order") AS first, MAX(contents."order") AS last
       FROM titles
       JOIN contents ON contents.titleId = titles.id
-      WHERE titles."order" BETWEEN 68 AND 93 AND titles."order" != 70
+      WHERE titles.id IN (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+                          79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
       GROUP BY titles.id
-      ORDER BY titles."order"
+      ORDER BY titles.id
     ''');
     final absoluteDhikrAndWirdRegression = await database.rawQuery('''
       SELECT
@@ -359,10 +360,51 @@ void main() {
     final absoluteDhikrAndWirdJudgments = await database.rawQuery('''
       SELECT contents.id, contents.hokm
       FROM contents
-      JOIN titles ON titles.id = contents.titleId
-      WHERE titles."order" BETWEEN 68 AND 93 AND titles."order" != 70
+      WHERE contents.titleId IN
+            (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+             79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
         AND contents.hokm NOT IN
             ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
+    ''');
+    final absoluteDhikrHierarchy = await database.rawQuery('''
+      WITH RECURSIVE descendants(id, depth) AS (
+        SELECT id, 0 FROM titles WHERE id = 99
+        UNION ALL
+        SELECT titles.id, descendants.depth + 1
+        FROM titles
+        JOIN descendants ON titles.parentId = descendants.id
+      )
+      SELECT COUNT(*) AS nodes, MAX(depth) AS max_depth
+      FROM descendants
+    ''');
+    final absoluteDhikrContent = await database.rawQuery('''
+      SELECT titleId, COUNT(*) AS count,
+             SUM(count = 0) AS zero_count,
+             MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId BETWEEN 108 AND 116
+      GROUP BY titleId
+      ORDER BY titleId
+    ''');
+    final absoluteDhikrParents = await database.rawQuery('''
+      SELECT id, parentId, "order"
+      FROM titles
+      WHERE id BETWEEN 69 AND 77
+      ORDER BY id
+    ''');
+    final absoluteDhikrSamples = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 108 AND body LIKE '%ولا يستطيعها البطلة%') AS quran,
+        SUM(titleId = 109 AND body LIKE '%خواتيم سورة البقرة%') AS surahs,
+        SUM(titleId = 110 AND body LIKE '%تكفى همك%') AS salawat,
+        SUM(titleId = 111 AND body LIKE '%عدل أربع رقاب%') AS tahlil,
+        SUM(titleId = 112 AND body LIKE '%سيد الاستغفار%') AS istighfar,
+        SUM(titleId = 113 AND body LIKE '%الباقيات الصالحات%') AS baqiyat,
+        SUM(titleId = 114 AND body LIKE '%لا حول في دفع شر%') AS meaning,
+        SUM(titleId = 115 AND body LIKE '%كنز من كنوز الجنة%') AS hawqala,
+        SUM(titleId = 116 AND body LIKE '%كلمة استعانة%') AS notice
+      FROM contents
+      WHERE titleId BETWEEN 108 AND 116
     ''');
     final unsupportedJudgments = await database.rawQuery('''
       SELECT id, hokm
@@ -384,8 +426,8 @@ void main() {
          FROM contents WHERE id = 1006) AS introduction_searchable
     ''');
 
-    expect(await database.getVersion(), 127);
-    expect(titleCount.single, {'count': 85});
+    expect(await database.getVersion(), 128);
+    expect(titleCount.single, {'count': 103});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -661,16 +703,16 @@ void main() {
         13,
         8,
         3,
-        13,
         9,
         11,
         13,
-        15,
         14,
         10,
         12,
         6,
         10,
+        15,
+        13,
         15,
       ],
     );
@@ -687,6 +729,43 @@ void main() {
       'eleventh_wird_ends_at_fifteen': 1,
     });
     expect(absoluteDhikrAndWirdJudgments, isEmpty);
+    expect(absoluteDhikrHierarchy.single, {'nodes': 27, 'max_depth': 2});
+    expect(
+      absoluteDhikrContent,
+      [
+        {'titleId': 108, 'count': 12, 'zero_count': 12, 'first': 1, 'last': 12},
+        {'titleId': 109, 'count': 18, 'zero_count': 18, 'first': 1, 'last': 18},
+        {'titleId': 110, 'count': 20, 'zero_count': 20, 'first': 1, 'last': 20},
+        {'titleId': 111, 'count': 9, 'zero_count': 9, 'first': 1, 'last': 9},
+        {'titleId': 112, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
+        {'titleId': 113, 'count': 17, 'zero_count': 17, 'first': 1, 'last': 17},
+        {'titleId': 114, 'count': 8, 'zero_count': 8, 'first': 1, 'last': 8},
+        {'titleId': 115, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
+        {'titleId': 116, 'count': 2, 'zero_count': 2, 'first': 1, 'last': 2},
+      ],
+    );
+    expect(absoluteDhikrParents, [
+      {'id': 69, 'parentId': 102, 'order': 2},
+      {'id': 70, 'parentId': 101, 'order': 2},
+      {'id': 71, 'parentId': 103, 'order': 2},
+      {'id': 72, 'parentId': 103, 'order': 3},
+      {'id': 73, 'parentId': 104, 'order': 2},
+      {'id': 74, 'parentId': 104, 'order': 3},
+      {'id': 75, 'parentId': 104, 'order': 4},
+      {'id': 76, 'parentId': 104, 'order': 5},
+      {'id': 77, 'parentId': 105, 'order': 4},
+    ]);
+    expect(absoluteDhikrSamples.single, {
+      'quran': 1,
+      'surahs': 1,
+      'salawat': 1,
+      'tahlil': 1,
+      'istighfar': 1,
+      'baqiyat': 4,
+      'meaning': 1,
+      'hawqala': 2,
+      'notice': 1,
+    });
     expect(unsupportedJudgments, isEmpty);
   });
 

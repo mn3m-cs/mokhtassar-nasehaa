@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "صيغ الحمد",
-    "freq": "d"
+    "freq": "d",
+    "id": 75,
+    "order": 4,
+    "parentId": 104,
+    "nodeType": "content"
   },
   "items": [
     {

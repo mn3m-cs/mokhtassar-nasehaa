@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ورد الحوقلة",
-    "freq": "d"
+    "freq": "d",
+    "id": 77,
+    "order": 4,
+    "parentId": 105,
+    "nodeType": "content"
   },
   "items": [
     {
