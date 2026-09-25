@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار الصباح",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 100,
+    "order": 1
   },
   "items": [
     {
