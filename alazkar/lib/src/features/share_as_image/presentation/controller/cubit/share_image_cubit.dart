@@ -56,7 +56,8 @@ class ShareImageCubit extends Cubit<ShareImageState> {
     required Zikr zikr,
     required ZikrTitle zikrTitle,
   }) async {
-    final settings = const ShareableImageCardSettings.defaultSettings().copyWith(
+    final settings =
+        const ShareableImageCardSettings.defaultSettings().copyWith(
       wordsCountPerSize: 120,
     );
 
@@ -70,14 +71,16 @@ class ShareImageCubit extends Cubit<ShareImageState> {
 
     appPrint(proccessedText.split(" ").length);
 
-    final charsPerChunk = charPer1080(settings.wordsCountPerSize, proccessedText);
+    final charsPerChunk =
+        charPer1080(settings.wordsCountPerSize, proccessedText);
 
     final List<TextRange> splittedMatnRanges = splitStringIntoChunksRange(
       proccessedText,
       charsPerChunk,
     );
 
-    imageKeys = List.generate(splittedMatnRanges.length, (index) => GlobalKey());
+    imageKeys =
+        List.generate(splittedMatnRanges.length, (index) => GlobalKey());
 
     emit(
       ShareImageLoadedState(
@@ -133,7 +136,8 @@ class ShareImageCubit extends Cubit<ShareImageState> {
 
   /// MARK: share Image
 
-  Future<void> shareImage(BuildContext context, {required bool shareAll}) async {
+  Future<void> shareImage(BuildContext context,
+      {required bool shareAll}) async {
     final state = this.state;
     if (state is! ShareImageLoadedState) return;
 
@@ -147,7 +151,8 @@ class ShareImageCubit extends Cubit<ShareImageState> {
 
       if (shareAll) {
         for (var i = 0; i < state.splittedMatn.length; i++) {
-          final captureWidgetController = CaptureWidgetController(imageKey: imageKeys[i]);
+          final captureWidgetController =
+              CaptureWidgetController(imageKey: imageKeys[i]);
           final image = await captureWidgetController.getImage(pixelRatio);
           final byteData = await image?.toByteData(format: ImageByteFormat.png);
 
@@ -235,7 +240,8 @@ class ShareImageCubit extends Cubit<ShareImageState> {
 
     final List<XFile> xFiles = [];
     for (int i = 0; i < filesData.length; i++) {
-      final File file = await File('${tempDir.path}/SharedImage$i.png').create();
+      final File file =
+          await File('${tempDir.path}/SharedImage$i.png').create();
       await file.writeAsBytes(filesData[i].buffer.asUint8List());
       xFiles.add(XFile(file.path));
     }

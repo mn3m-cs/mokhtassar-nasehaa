@@ -31,7 +31,8 @@ class ShareAsImageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<ShareImageCubit>()..start(zikr: zikr, zikrTitle: zikrTitle),
+      create: (context) =>
+          sl<ShareImageCubit>()..start(zikr: zikr, zikrTitle: zikrTitle),
       child: BlocBuilder<ShareImageCubit, ShareImageState>(
         builder: (context, state) {
           if (state is! ShareImageLoadedState) {
