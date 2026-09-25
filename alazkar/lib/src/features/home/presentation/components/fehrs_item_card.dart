@@ -4,55 +4,82 @@ import 'package:alazkar/src/features/zikr_content_viewer/presentation/screens/zi
 import 'package:flutter/material.dart';
 
 class FehrsItemCard extends StatelessWidget {
+  static const double _indentPerLevel = 24;
+  static const double _expanderWidth = 24;
+
   final ZikrTitle zikrTitle;
   final int? displayOrder;
   final VoidCallback? onCategoryTap;
+
+  /// Tree depth of the row; null when the card is shown outside the index tree.
+  final int? depth;
+  final bool isExpanded;
 
   const FehrsItemCard({
     super.key,
     required this.zikrTitle,
     this.displayOrder,
     this.onCategoryTap,
+    this.depth,
+    this.isExpanded = false,
   });
+
+  bool get _isCategory => zikrTitle.nodeType == ZikrTitleNodeType.category;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 25),
-                child: Text((displayOrder ?? zikrTitle.order).toString()),
+    final inTree = depth != null;
+    return Padding(
+      padding: EdgeInsetsDirectional.only(
+        start: (depth ?? 0) * _indentPerLevel,
+      ),
+      child: ListTile(
+        leading: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (inTree)
+              SizedBox(
+                width: _expanderWidth,
+                child: _isCategory
+                    ? Icon(
+                        isExpanded ? Icons.expand_more : Icons.chevron_right,
+                      )
+                    : null,
+              ),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 25),
+                  child: Text((displayOrder ?? zikrTitle.order).toString()),
+                ),
               ),
             ),
-          ),
-          if (zikrTitle.nodeType == ZikrTitleNodeType.category)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              child: Icon(Icons.folder_outlined),
-            )
-          else
-            BookmarkTitleButton(titleId: zikrTitle.id),
-        ],
+            if (_isCategory)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(
+                  isExpanded
+                      ? Icons.folder_open_outlined
+                      : Icons.folder_outlined,
+                ),
+              )
+            else
+              BookmarkTitleButton(titleId: zikrTitle.id),
+          ],
+        ),
+        title: Text(zikrTitle.name),
+        onTap: () {
+          if (_isCategory) {
+            onCategoryTap?.call();
+            return;
+          }
+          Navigator.push(
+            context,
+            ZikrContentViewerScreen.route(zikrTitleId: zikrTitle.id),
+          );
+        },
       ),
-      title: Text(zikrTitle.name),
-      trailing: zikrTitle.nodeType == ZikrTitleNodeType.category
-          ? const Icon(Icons.chevron_left)
-          : null,
-      onTap: () {
-        if (zikrTitle.nodeType == ZikrTitleNodeType.category) {
-          onCategoryTap?.call();
-          return;
-        }
-        Navigator.push(
-          context,
-          ZikrContentViewerScreen.route(zikrTitleId: zikrTitle.id),
-        );
-      },
     );
   }
 }
