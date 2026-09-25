@@ -386,19 +386,70 @@ void main() {
     final guidanceNotes = await database.rawQuery('''
       SELECT
         (SELECT COUNT(*) FROM titles
-         WHERE id BETWEEN 99 AND 101 AND nodeType = 'category') AS categories,
+         WHERE id BETWEEN 122 AND 124 AND nodeType = 'category') AS categories,
         (SELECT COUNT(*) FROM contents
-         WHERE titleId BETWEEN 102 AND 104 AND count = 0) AS prose_rows,
+         WHERE titleId BETWEEN 125 AND 127 AND count = 0) AS prose_rows,
         (SELECT parentId FROM titles WHERE id = 18) AS sleep_parent,
         (SELECT parentId FROM titles WHERE id = 41) AS illness_parent,
         (SELECT parentId FROM titles WHERE id = 45) AS death_parent,
         (SELECT search LIKE '%يراجع الطبيب النفسي المختص%لا يتعارضان بل يتعاضدان%'
-         FROM contents WHERE id = 1008) AS complete_health_guidance,
-        (SELECT source FROM contents WHERE id = 1009) AS condolence_source
+         FROM contents WHERE id = 1047) AS complete_health_guidance,
+        (SELECT source FROM contents WHERE id = 1048) AS condolence_source
     ''');
 
-    expect(await database.getVersion(), 128);
-    expect(titleCount.single, {'count': 91});
+    final prayerSupplementCategories = await database.rawQuery('''
+      SELECT id, name, parentId, "order", nodeType
+      FROM titles
+      WHERE id BETWEEN 110 AND 113
+      ORDER BY id
+    ''');
+    final prayerSupplementSections = await database.rawQuery('''
+      SELECT titles.id, titles.name, titles.parentId,
+             COUNT(contents.id) AS count,
+             MIN(contents."order") AS first,
+             MAX(contents."order") AS last
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id BETWEEN 114 AND 121
+      GROUP BY titles.id
+      ORDER BY titles.id
+    ''');
+    final prayerSupplementRegression = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 114 AND count != 0) AS counted_imam_guidance,
+        SUM(titleId = 115 AND "order" <= 2 AND count != 0) AS counted_eid_guidance,
+        SUM(titleId = 115 AND "order" BETWEEN 3 AND 7 AND hokm = 'أثر') AS eid_reports,
+        SUM(titleId = 119 AND "order" <= 2 AND count != 0) AS counted_rain_guidance,
+        SUM(titleId = 120 AND "order" = 2 AND source LIKE 'حاشية صلاة التسبيح%') AS tasbih_note,
+        SUM(titleId = 121 AND "order" = 2 AND count = 0) AS repentance_note
+      FROM contents
+      WHERE titleId BETWEEN 114 AND 121
+    ''');
+
+    final bookContext = await database.rawQuery('''
+      SELECT
+        (SELECT nodeType FROM titles WHERE id = 99) AS about_book_type,
+        (SELECT nodeType FROM titles WHERE id = 100) AS morning_evening_type,
+        (SELECT nodeType FROM titles WHERE id = 108) AS mosque_type,
+        (SELECT parentId FROM titles WHERE id = 1) AS morning_parent,
+        (SELECT parentId FROM titles WHERE id = 2) AS evening_parent,
+        (SELECT parentId FROM titles WHERE id = 8) AS mosque_parent,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 99) AS about_book_children,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 100) AS morning_evening_children,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 108) AS mosque_children,
+        (SELECT COUNT(*) FROM contents
+         WHERE id BETWEEN 1007 AND 1014 AND count = 0) AS zero_count_prose,
+        (SELECT COUNT(*) FROM contents
+         WHERE id BETWEEN 1007 AND 1014) AS prose_count,
+        (SELECT search LIKE '%فهذا مختصر%الأذكار والأدعية الصحيحة%'
+         FROM contents WHERE id = 1008) AS introduction_searchable,
+        (SELECT search LIKE '%كل يوم يعيشه المؤمن غنيمة%'
+         FROM contents WHERE id = 1013) AS etiquette_searchable,
+        (SELECT hokm FROM contents WHERE id = 1014) AS salaf_judgment
+    ''');
+
+    expect(await database.getVersion(), 130);
+    expect(titleCount.single, {'count': 114});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -420,11 +471,75 @@ void main() {
     expect(guidanceNotes.single, {
       'categories': 3,
       'prose_rows': 3,
-      'sleep_parent': 99,
-      'illness_parent': 100,
-      'death_parent': 101,
+      'sleep_parent': 122,
+      'illness_parent': 123,
+      'death_parent': 124,
       'complete_health_guidance': 1,
       'condolence_source': 'تنبيه في ألفاظ التعزية. (ص107)',
+    });
+    expect(prayerSupplementCategories, [
+      {
+        'id': 110,
+        'name': 'صلاة العيد',
+        'parentId': 96,
+        'order': 4,
+        'nodeType': 'category',
+      },
+      {
+        'id': 111,
+        'name': 'صلاة الكسوف',
+        'parentId': 96,
+        'order': 5,
+        'nodeType': 'category',
+      },
+      {
+        'id': 112,
+        'name': 'صلاة الاستسقاء',
+        'parentId': 96,
+        'order': 6,
+        'nodeType': 'category',
+      },
+      {
+        'id': 113,
+        'name': 'صلوات متفرقة',
+        'parentId': 96,
+        'order': 7,
+        'nodeType': 'category',
+      },
+    ]);
+    expect(
+      prayerSupplementSections.map((row) => row['count']),
+      [8, 7, 2, 1, 2, 7, 2, 2],
+    );
+    expect(
+      prayerSupplementSections.every(
+        (row) => row['first'] == 1 && row['last'] == row['count'],
+      ),
+      isTrue,
+    );
+    expect(prayerSupplementRegression.single, {
+      'counted_imam_guidance': 0,
+      'counted_eid_guidance': 0,
+      'eid_reports': 5,
+      'counted_rain_guidance': 0,
+      'tasbih_note': 1,
+      'repentance_note': 1,
+    });
+    expect(bookContext.single, {
+      'about_book_type': 'category',
+      'morning_evening_type': 'category',
+      'mosque_type': 'category',
+      'morning_parent': 100,
+      'evening_parent': 100,
+      'mosque_parent': 108,
+      'about_book_children': 4,
+      'morning_evening_children': 5,
+      'mosque_children': 2,
+      'zero_count_prose': 8,
+      'prose_count': 8,
+      'introduction_searchable': 1,
+      'etiquette_searchable': 1,
+      'salaf_judgment': '',
     });
     expect(
       wirdCounts.map((row) => row['count']),

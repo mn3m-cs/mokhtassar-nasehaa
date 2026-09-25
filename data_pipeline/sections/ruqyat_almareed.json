@@ -4,7 +4,7 @@
     "order": 4,
     "name": "رقية المريض",
     "freq": "d",
-    "parentId": 100,
+    "parentId": 123,
     "nodeType": "content"
   },
   "items": [
