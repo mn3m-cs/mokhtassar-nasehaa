@@ -1,7 +1,11 @@
 {
   "title": {
+    "id": 18,
+    "order": 1,
     "name": "أذكار النوم",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 122,
+    "nodeType": "content"
   },
   "items": [
     {

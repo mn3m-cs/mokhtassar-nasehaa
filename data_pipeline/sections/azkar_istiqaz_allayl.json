@@ -1,7 +1,11 @@
 {
   "title": {
+    "id": 31,
+    "order": 3,
     "name": "ما يقول إذا استيقظ في الليل",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 122,
+    "nodeType": "content"
   },
   "items": [
     {

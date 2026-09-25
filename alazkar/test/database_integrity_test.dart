@@ -383,6 +383,20 @@ void main() {
         (SELECT search LIKE '%فيستحب الجمع بينها كلها%'
          FROM contents WHERE id = 1006) AS introduction_searchable
     ''');
+    final guidanceNotes = await database.rawQuery('''
+      SELECT
+        (SELECT COUNT(*) FROM titles
+         WHERE id BETWEEN 122 AND 124 AND nodeType = 'category') AS categories,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId BETWEEN 125 AND 127 AND count = 0) AS prose_rows,
+        (SELECT parentId FROM titles WHERE id = 18) AS sleep_parent,
+        (SELECT parentId FROM titles WHERE id = 41) AS illness_parent,
+        (SELECT parentId FROM titles WHERE id = 45) AS death_parent,
+        (SELECT search LIKE '%يراجع الطبيب النفسي المختص%لا يتعارضان بل يتعاضدان%'
+         FROM contents WHERE id = 1047) AS complete_health_guidance,
+        (SELECT source FROM contents WHERE id = 1048) AS condolence_source
+    ''');
+
     final prayerSupplementCategories = await database.rawQuery('''
       SELECT id, name, parentId, "order", nodeType
       FROM titles
@@ -434,8 +448,8 @@ void main() {
         (SELECT hokm FROM contents WHERE id = 1014) AS salaf_judgment
     ''');
 
-    expect(await database.getVersion(), 129);
-    expect(titleCount.single, {'count': 108});
+    expect(await database.getVersion(), 130);
+    expect(titleCount.single, {'count': 114});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -453,6 +467,15 @@ void main() {
       'introduction_body':
           'هذا ما ورد من الأذكار في دعاء التوجه، فيستحب الجمع بينها كلها لمن صلى منفردًا، وللإمام إذا أذن له المأمومون، فأما إذا لم يأذنوا له فلا يطول عليهم، بل يقتصر على بعض ذلك.',
       'introduction_searchable': 1,
+    });
+    expect(guidanceNotes.single, {
+      'categories': 3,
+      'prose_rows': 3,
+      'sleep_parent': 122,
+      'illness_parent': 123,
+      'death_parent': 124,
+      'complete_health_guidance': 1,
+      'condolence_source': 'تنبيه في ألفاظ التعزية. (ص107)',
     });
     expect(prayerSupplementCategories, [
       {
