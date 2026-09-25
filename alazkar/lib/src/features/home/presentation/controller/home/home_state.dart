@@ -29,7 +29,8 @@ final class HomeLoadedState extends HomeState {
     return titlesToShow.fold<List<ZikrTitle>>(
       <ZikrTitle>[],
       (previousValue, element) {
-        if (favouriteTitlesIds.contains(element.id)) {
+        if (element.nodeType == ZikrTitleNodeType.content &&
+            favouriteTitlesIds.contains(element.id)) {
           return previousValue..add(element);
         }
         return previousValue;

@@ -10,7 +10,15 @@ class BookmarksDBHelper {
   /* ************* Variables ************* */
 
   static const String dbName = "Bookmarks.db";
-  static const int dbVersion = 2;
+  static const int dbVersion = 3;
+
+  /// Default favourites, in book order: morning, evening, waking up,
+  /// after prayer, sleep, travelling.
+  static const List<int> defaultTitleIds = [1, 2, 4, 16, 18, 49];
+
+  /// Defaults shipped before version 3; they were ids of the upstream app and
+  /// point to unrelated sections here.
+  static const List<int> legacyDefaultTitleIds = [2, 84, 89, 94, 99, 191, 254];
 
   /* ************* Singleton Constructor ************* */
 
@@ -83,17 +91,27 @@ class BookmarksDBHelper {
   }
 
   /// default favourite titles
-  Future addDefaultTitles(Database db) async {
-    await db.execute('''
-    INSERT OR IGNORE INTO favourite_titles(titleId) VALUES
-    (2),     --  أذكار الاستيقاظ
-    (84),    --  أذكار بعد السلام الصلاة
-    (89),    --  الصباح
-    (94),    --  المساء
-    (99),    --  النوم
-    (191),   --  السفر
-    (254);   --  دخول السوق
-    ''');
+  static Future<void> addDefaultTitles(Database db) async {
+    final batch = db.batch();
+    for (final titleId in defaultTitleIds) {
+      batch.rawInsert(
+        'INSERT OR IGNORE INTO favourite_titles(titleId) VALUES(?)',
+        [titleId],
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  /// Replaces the legacy defaults when the user never added a favourite of
+  /// their own; any personal choice leaves the table untouched.
+  static Future<void> replaceLegacyDefaults(Database db) async {
+    final rows = await db.rawQuery('SELECT titleId FROM favourite_titles');
+    final titleIds = rows.map((row) => row['titleId']! as int).toSet();
+    if (titleIds.isEmpty || !titleIds.every(legacyDefaultTitleIds.contains)) {
+      return;
+    }
+    await db.delete('favourite_titles');
+    await addDefaultTitles(db);
   }
 
   /// On upgrade database version
@@ -104,6 +122,9 @@ class BookmarksDBHelper {
   ) async {
     if (oldVersion < 2) {
       await addDefaultTitles(db);
+    }
+    if (oldVersion < 3) {
+      await replaceLegacyDefaults(db);
     }
   }
 
