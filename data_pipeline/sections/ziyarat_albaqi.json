@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ما يقول عند زيارة البقيع وشهداء أحد",
-    "freq": "d"
+    "freq": "d",
+    "id": 59,
+    "order": 5,
+    "parentId": 132,
+    "nodeType": "content"
   },
   "items": [
     {

@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "أذكار الإحرام والتلبية",
-    "freq": "d"
+    "freq": "d",
+    "id": 50,
+    "order": 2,
+    "parentId": 129,
+    "nodeType": "content"
   },
   "items": [
     {

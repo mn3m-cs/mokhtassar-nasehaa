@@ -1,7 +1,11 @@
 {
   "title": {
+    "id": 30,
+    "order": 2,
     "name": "من آداب الرؤيا",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 122,
+    "nodeType": "content"
   },
   "items": [
     {

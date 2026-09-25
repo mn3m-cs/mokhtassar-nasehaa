@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار المسجد",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 108,
+    "order": 1
   },
   "items": [
     {
