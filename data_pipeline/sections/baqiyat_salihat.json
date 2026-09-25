@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ورد الباقيات الصالحات",
-    "freq": "d"
+    "freq": "d",
+    "id": 73,
+    "order": 2,
+    "parentId": 145,
+    "nodeType": "content"
   },
   "items": [
     {

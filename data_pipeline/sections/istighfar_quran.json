@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "صيغ الاستغفار من القرآن الكريم",
-    "freq": "d"
+    "freq": "d",
+    "id": 71,
+    "order": 2,
+    "parentId": 144,
+    "nodeType": "content"
   },
   "items": [
     {
