@@ -383,6 +383,29 @@ void main() {
         (SELECT search LIKE '%فيستحب الجمع بينها كلها%'
          FROM contents WHERE id = 1006) AS introduction_searchable
     ''');
+    final pilgrimageGuide = await database.rawQuery('''
+      WITH RECURSIVE ancestry(id, depth) AS (
+        SELECT id, 1 FROM titles WHERE parentId IS NULL
+        UNION ALL
+        SELECT child.id, ancestry.depth + 1
+        FROM titles AS child
+        JOIN ancestry ON child.parentId = ancestry.id
+      )
+      SELECT
+        (SELECT MAX(depth) FROM ancestry WHERE id BETWEEN 50 AND 59 OR id BETWEEN 128 AND 139) AS depth,
+        (SELECT COUNT(*) FROM titles
+         WHERE id BETWEEN 128 AND 133 AND nodeType = 'category') AS categories,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId BETWEEN 134 AND 139 AND count = 0) AS prose_rows,
+        (SELECT parentId FROM titles WHERE id = 49) AS traveler_parent,
+        (SELECT parentId FROM titles WHERE id = 50) AS ihram_parent,
+        (SELECT parentId FROM titles WHERE id = 52) AS tawaf_parent,
+        (SELECT parentId FROM titles WHERE id = 54) AS arafah_parent,
+        (SELECT parentId FROM titles WHERE id = 57) AS prophet_grave_parent,
+        (SELECT search LIKE '%للطواف ذكر خاص%'
+         FROM contents WHERE id = 1050) AS tawaf_guidance
+    ''');
+
     final guidanceNotes = await database.rawQuery('''
       SELECT
         (SELECT COUNT(*) FROM titles
@@ -448,8 +471,8 @@ void main() {
         (SELECT hokm FROM contents WHERE id = 1014) AS salaf_judgment
     ''');
 
-    expect(await database.getVersion(), 130);
-    expect(titleCount.single, {'count': 114});
+    expect(await database.getVersion(), 131);
+    expect(titleCount.single, {'count': 126});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -467,6 +490,17 @@ void main() {
       'introduction_body':
           'هذا ما ورد من الأذكار في دعاء التوجه، فيستحب الجمع بينها كلها لمن صلى منفردًا، وللإمام إذا أذن له المأمومون، فأما إذا لم يأذنوا له فلا يطول عليهم، بل يقتصر على بعض ذلك.',
       'introduction_searchable': 1,
+    });
+    expect(pilgrimageGuide.single, {
+      'depth': 3,
+      'categories': 6,
+      'prose_rows': 8,
+      'traveler_parent': 133,
+      'ihram_parent': 129,
+      'tawaf_parent': 130,
+      'arafah_parent': 131,
+      'prophet_grave_parent': 132,
+      'tawaf_guidance': 1,
     });
     expect(guidanceNotes.single, {
       'categories': 3,

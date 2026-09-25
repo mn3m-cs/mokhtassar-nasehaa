@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "أذكار المسافر",
-    "freq": "d"
+    "freq": "d",
+    "id": 49,
+    "order": 2,
+    "parentId": 133,
+    "nodeType": "content"
   },
   "items": [
     {
