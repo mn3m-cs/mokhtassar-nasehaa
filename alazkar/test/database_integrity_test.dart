@@ -338,13 +338,14 @@ void main() {
         AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
     final absoluteDhikrAndWirdSections = await database.rawQuery('''
-      SELECT titles."order", COUNT(contents.id) AS count,
+      SELECT titles.id, COUNT(contents.id) AS count,
              MIN(contents."order") AS first, MAX(contents."order") AS last
       FROM titles
       JOIN contents ON contents.titleId = titles.id
-      WHERE titles."order" BETWEEN 68 AND 93 AND titles."order" != 70
+      WHERE titles.id IN (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+                          79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
       GROUP BY titles.id
-      ORDER BY titles."order"
+      ORDER BY titles.id
     ''');
     final absoluteDhikrAndWirdRegression = await database.rawQuery('''
       SELECT
@@ -359,8 +360,9 @@ void main() {
     final absoluteDhikrAndWirdJudgments = await database.rawQuery('''
       SELECT contents.id, contents.hokm
       FROM contents
-      JOIN titles ON titles.id = contents.titleId
-      WHERE titles."order" BETWEEN 68 AND 93 AND titles."order" != 70
+      WHERE contents.titleId IN
+            (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+             79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
         AND contents.hokm NOT IN
             ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
@@ -404,9 +406,32 @@ void main() {
          FROM contents WHERE id = 1013) AS etiquette_searchable,
         (SELECT hokm FROM contents WHERE id = 1014) AS salaf_judgment
     ''');
+    final absoluteDuaContext = await database.rawQuery('''
+      SELECT
+        (SELECT nodeType FROM titles WHERE id = 110) AS root_type,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 110) AS child_count,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId IN (111, 112) AND count = 0) AS zero_count,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 111) AS introduction_count,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 112) AS virtues_count,
+        (SELECT search LIKE '%آخر ساعة بعد العصر%'
+         FROM contents WHERE id = 1016) AS friday_time,
+        (SELECT search LIKE '%أحد عشر وردا%'
+         FROM contents WHERE id = 1031) AS eleven_wirds,
+        (SELECT search LIKE '%الدعاء هو العبادة%'
+         FROM contents WHERE id = 1034) AS worship_hadith,
+        (SELECT search LIKE '%السادس القدرة%'
+         FROM contents WHERE id = 1042) AS six_meanings
+    ''');
+    final absoluteDuaWirds = await database.rawQuery('''
+      SELECT id, parentId, "order"
+      FROM titles
+      WHERE id IN (92, 82, 83, 84, 93, 86, 87, 88, 89, 90, 91)
+      ORDER BY "order"
+    ''');
 
-    expect(await database.getVersion(), 128);
-    expect(titleCount.single, {'count': 96});
+    expect(await database.getVersion(), 129);
+    expect(titleCount.single, {'count': 99});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -441,6 +466,30 @@ void main() {
       'etiquette_searchable': 1,
       'salaf_judgment': '',
     });
+    expect(absoluteDuaContext.single, {
+      'root_type': 'category',
+      'child_count': 13,
+      'zero_count': 28,
+      'introduction_count': 17,
+      'virtues_count': 11,
+      'friday_time': 1,
+      'eleven_wirds': 1,
+      'worship_hadith': 1,
+      'six_meanings': 1,
+    });
+    expect(absoluteDuaWirds, [
+      {'id': 92, 'parentId': 110, 'order': 3},
+      {'id': 82, 'parentId': 110, 'order': 4},
+      {'id': 83, 'parentId': 110, 'order': 5},
+      {'id': 84, 'parentId': 110, 'order': 6},
+      {'id': 93, 'parentId': 110, 'order': 7},
+      {'id': 86, 'parentId': 110, 'order': 8},
+      {'id': 87, 'parentId': 110, 'order': 9},
+      {'id': 88, 'parentId': 110, 'order': 10},
+      {'id': 89, 'parentId': 110, 'order': 11},
+      {'id': 90, 'parentId': 110, 'order': 12},
+      {'id': 91, 'parentId': 110, 'order': 13},
+    ]);
     expect(
       wirdCounts.map((row) => row['count']),
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
@@ -698,16 +747,16 @@ void main() {
         13,
         8,
         3,
-        13,
         9,
         11,
         13,
-        15,
         14,
         10,
         12,
         6,
         10,
+        15,
+        13,
         15,
       ],
     );

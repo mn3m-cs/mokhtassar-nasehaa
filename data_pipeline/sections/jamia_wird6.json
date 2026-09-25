@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "الورد السادس",
-    "freq": "d"
+    "freq": "d",
+    "id": 86,
+    "order": 8,
+    "parentId": 110,
+    "nodeType": "content"
   },
   "items": [
     {

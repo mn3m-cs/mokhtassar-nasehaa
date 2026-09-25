@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "الورد الثامن",
-    "freq": "d"
+    "freq": "d",
+    "id": 88,
+    "order": 10,
+    "parentId": 110,
+    "nodeType": "content"
   },
   "items": [
     {

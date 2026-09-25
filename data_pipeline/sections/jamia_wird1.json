@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "الورد الأول",
-    "freq": "d"
+    "freq": "d",
+    "id": 92,
+    "order": 3,
+    "parentId": 110,
+    "nodeType": "content"
   },
   "items": [
     {

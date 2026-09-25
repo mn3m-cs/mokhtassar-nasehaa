@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "الورد العاشر",
-    "freq": "d"
+    "freq": "d",
+    "id": 90,
+    "order": 12,
+    "parentId": 110,
+    "nodeType": "content"
   },
   "items": [
     {

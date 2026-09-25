@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "الورد الثاني",
-    "freq": "d"
+    "freq": "d",
+    "id": 82,
+    "order": 4,
+    "parentId": 110,
+    "nodeType": "content"
   },
   "items": [
     {
