@@ -366,6 +366,46 @@ void main() {
         AND contents.hokm NOT IN
             ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
+    final absoluteDhikrHierarchy = await database.rawQuery('''
+      WITH RECURSIVE descendants(id, depth) AS (
+        SELECT id, 0 FROM titles WHERE id = 140
+        UNION ALL
+        SELECT titles.id, descendants.depth + 1
+        FROM titles
+        JOIN descendants ON titles.parentId = descendants.id
+      )
+      SELECT COUNT(*) AS nodes, MAX(depth) AS max_depth
+      FROM descendants
+    ''');
+    final absoluteDhikrContent = await database.rawQuery('''
+      SELECT titleId, COUNT(*) AS count,
+             SUM(count = 0) AS zero_count,
+             MIN("order") AS first, MAX("order") AS last
+      FROM contents
+      WHERE titleId BETWEEN 149 AND 157
+      GROUP BY titleId
+      ORDER BY titleId
+    ''');
+    final absoluteDhikrParents = await database.rawQuery('''
+      SELECT id, parentId, "order"
+      FROM titles
+      WHERE id BETWEEN 69 AND 77
+      ORDER BY id
+    ''');
+    final absoluteDhikrSamples = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 149 AND body LIKE '%ولا يستطيعها البطلة%') AS quran,
+        SUM(titleId = 150 AND body LIKE '%خواتيم سورة البقرة%') AS surahs,
+        SUM(titleId = 151 AND body LIKE '%تكفى همك%') AS salawat,
+        SUM(titleId = 152 AND body LIKE '%عدل أربع رقاب%') AS tahlil,
+        SUM(titleId = 153 AND body LIKE '%سيد الاستغفار%') AS istighfar,
+        SUM(titleId = 154 AND body LIKE '%الباقيات الصالحات%') AS baqiyat,
+        SUM(titleId = 155 AND body LIKE '%لا حول في دفع شر%') AS meaning,
+        SUM(titleId = 156 AND body LIKE '%كنز من كنوز الجنة%') AS hawqala,
+        SUM(titleId = 157 AND body LIKE '%كلمة استعانة%') AS notice
+      FROM contents
+      WHERE titleId BETWEEN 149 AND 157
+    ''');
     final unsupportedJudgments = await database.rawQuery('''
       SELECT id, hokm
       FROM contents
@@ -385,6 +425,72 @@ void main() {
         (SELECT search LIKE '%فيستحب الجمع بينها كلها%'
          FROM contents WHERE id = 1006) AS introduction_searchable
     ''');
+    final pilgrimageGuide = await database.rawQuery('''
+      WITH RECURSIVE ancestry(id, depth) AS (
+        SELECT id, 1 FROM titles WHERE parentId IS NULL
+        UNION ALL
+        SELECT child.id, ancestry.depth + 1
+        FROM titles AS child
+        JOIN ancestry ON child.parentId = ancestry.id
+      )
+      SELECT
+        (SELECT MAX(depth) FROM ancestry WHERE id BETWEEN 50 AND 59 OR id BETWEEN 128 AND 139) AS depth,
+        (SELECT COUNT(*) FROM titles
+         WHERE id BETWEEN 128 AND 133 AND nodeType = 'category') AS categories,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId BETWEEN 134 AND 139 AND count = 0) AS prose_rows,
+        (SELECT parentId FROM titles WHERE id = 49) AS traveler_parent,
+        (SELECT parentId FROM titles WHERE id = 50) AS ihram_parent,
+        (SELECT parentId FROM titles WHERE id = 52) AS tawaf_parent,
+        (SELECT parentId FROM titles WHERE id = 54) AS arafah_parent,
+        (SELECT parentId FROM titles WHERE id = 57) AS prophet_grave_parent,
+        (SELECT search LIKE '%للطواف ذكر خاص%'
+         FROM contents WHERE id = 1050) AS tawaf_guidance
+    ''');
+
+    final guidanceNotes = await database.rawQuery('''
+      SELECT
+        (SELECT COUNT(*) FROM titles
+         WHERE id BETWEEN 122 AND 124 AND nodeType = 'category') AS categories,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId BETWEEN 125 AND 127 AND count = 0) AS prose_rows,
+        (SELECT parentId FROM titles WHERE id = 18) AS sleep_parent,
+        (SELECT parentId FROM titles WHERE id = 41) AS illness_parent,
+        (SELECT parentId FROM titles WHERE id = 45) AS death_parent,
+        (SELECT search LIKE '%يراجع الطبيب النفسي المختص%لا يتعارضان بل يتعاضدان%'
+         FROM contents WHERE id = 1047) AS complete_health_guidance,
+        (SELECT source FROM contents WHERE id = 1048) AS condolence_source
+    ''');
+
+    final prayerSupplementCategories = await database.rawQuery('''
+      SELECT id, name, parentId, "order", nodeType
+      FROM titles
+      WHERE id BETWEEN 110 AND 113
+      ORDER BY id
+    ''');
+    final prayerSupplementSections = await database.rawQuery('''
+      SELECT titles.id, titles.name, titles.parentId,
+             COUNT(contents.id) AS count,
+             MIN(contents."order") AS first,
+             MAX(contents."order") AS last
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id BETWEEN 114 AND 121
+      GROUP BY titles.id
+      ORDER BY titles.id
+    ''');
+    final prayerSupplementRegression = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 114 AND count != 0) AS counted_imam_guidance,
+        SUM(titleId = 115 AND "order" <= 2 AND count != 0) AS counted_eid_guidance,
+        SUM(titleId = 115 AND "order" BETWEEN 3 AND 7 AND hokm = 'أثر') AS eid_reports,
+        SUM(titleId = 119 AND "order" <= 2 AND count != 0) AS counted_rain_guidance,
+        SUM(titleId = 120 AND "order" = 2 AND source LIKE 'حاشية صلاة التسبيح%') AS tasbih_note,
+        SUM(titleId = 121 AND "order" = 2 AND count = 0) AS repentance_note
+      FROM contents
+      WHERE titleId BETWEEN 114 AND 121
+    ''');
+
     final bookContext = await database.rawQuery('''
       SELECT
         (SELECT nodeType FROM titles WHERE id = 99) AS about_book_type,
@@ -408,20 +514,20 @@ void main() {
     ''');
     final absoluteDuaContext = await database.rawQuery('''
       SELECT
-        (SELECT nodeType FROM titles WHERE id = 110) AS root_type,
-        (SELECT COUNT(*) FROM titles WHERE parentId = 110) AS child_count,
+        (SELECT nodeType FROM titles WHERE id = 158) AS root_type,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 158) AS child_count,
         (SELECT COUNT(*) FROM contents
-         WHERE titleId IN (111, 112) AND count = 0) AS zero_count,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 111) AS introduction_count,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 112) AS virtues_count,
+         WHERE titleId IN (159, 160) AND count = 0) AS zero_count,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 159) AS introduction_count,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 160) AS virtues_count,
         (SELECT search LIKE '%آخر ساعة بعد العصر%'
-         FROM contents WHERE id = 1016) AS friday_time,
+         FROM contents WHERE id = 1160) AS friday_time,
         (SELECT search LIKE '%أحد عشر وردا%'
-         FROM contents WHERE id = 1031) AS eleven_wirds,
+         FROM contents WHERE id = 1175) AS eleven_wirds,
         (SELECT search LIKE '%الدعاء هو العبادة%'
-         FROM contents WHERE id = 1034) AS worship_hadith,
+         FROM contents WHERE id = 1178) AS worship_hadith,
         (SELECT search LIKE '%السادس القدرة%'
-         FROM contents WHERE id = 1042) AS six_meanings
+         FROM contents WHERE id = 1186) AS six_meanings
     ''');
     final absoluteDuaWirds = await database.rawQuery('''
       SELECT id, parentId, "order"
@@ -430,8 +536,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 129);
-    expect(titleCount.single, {'count': 99});
+    expect(await database.getVersion(), 133);
+    expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -449,6 +555,74 @@ void main() {
       'introduction_body':
           'هذا ما ورد من الأذكار في دعاء التوجه، فيستحب الجمع بينها كلها لمن صلى منفردًا، وللإمام إذا أذن له المأمومون، فأما إذا لم يأذنوا له فلا يطول عليهم، بل يقتصر على بعض ذلك.',
       'introduction_searchable': 1,
+    });
+    expect(pilgrimageGuide.single, {
+      'depth': 3,
+      'categories': 6,
+      'prose_rows': 8,
+      'traveler_parent': 133,
+      'ihram_parent': 129,
+      'tawaf_parent': 130,
+      'arafah_parent': 131,
+      'prophet_grave_parent': 132,
+      'tawaf_guidance': 1,
+    });
+    expect(guidanceNotes.single, {
+      'categories': 3,
+      'prose_rows': 3,
+      'sleep_parent': 122,
+      'illness_parent': 123,
+      'death_parent': 124,
+      'complete_health_guidance': 1,
+      'condolence_source': 'تنبيه في ألفاظ التعزية. (ص107)',
+    });
+    expect(prayerSupplementCategories, [
+      {
+        'id': 110,
+        'name': 'صلاة العيد',
+        'parentId': 96,
+        'order': 4,
+        'nodeType': 'category',
+      },
+      {
+        'id': 111,
+        'name': 'صلاة الكسوف',
+        'parentId': 96,
+        'order': 5,
+        'nodeType': 'category',
+      },
+      {
+        'id': 112,
+        'name': 'صلاة الاستسقاء',
+        'parentId': 96,
+        'order': 6,
+        'nodeType': 'category',
+      },
+      {
+        'id': 113,
+        'name': 'صلوات متفرقة',
+        'parentId': 96,
+        'order': 7,
+        'nodeType': 'category',
+      },
+    ]);
+    expect(
+      prayerSupplementSections.map((row) => row['count']),
+      [8, 7, 2, 1, 2, 7, 2, 2],
+    );
+    expect(
+      prayerSupplementSections.every(
+        (row) => row['first'] == 1 && row['last'] == row['count'],
+      ),
+      isTrue,
+    );
+    expect(prayerSupplementRegression.single, {
+      'counted_imam_guidance': 0,
+      'counted_eid_guidance': 0,
+      'eid_reports': 5,
+      'counted_rain_guidance': 0,
+      'tasbih_note': 1,
+      'repentance_note': 1,
     });
     expect(bookContext.single, {
       'about_book_type': 'category',
@@ -478,17 +652,17 @@ void main() {
       'six_meanings': 1,
     });
     expect(absoluteDuaWirds, [
-      {'id': 92, 'parentId': 110, 'order': 3},
-      {'id': 82, 'parentId': 110, 'order': 4},
-      {'id': 83, 'parentId': 110, 'order': 5},
-      {'id': 84, 'parentId': 110, 'order': 6},
-      {'id': 93, 'parentId': 110, 'order': 7},
-      {'id': 86, 'parentId': 110, 'order': 8},
-      {'id': 87, 'parentId': 110, 'order': 9},
-      {'id': 88, 'parentId': 110, 'order': 10},
-      {'id': 89, 'parentId': 110, 'order': 11},
-      {'id': 90, 'parentId': 110, 'order': 12},
-      {'id': 91, 'parentId': 110, 'order': 13},
+      {'id': 92, 'parentId': 158, 'order': 3},
+      {'id': 82, 'parentId': 158, 'order': 4},
+      {'id': 83, 'parentId': 158, 'order': 5},
+      {'id': 84, 'parentId': 158, 'order': 6},
+      {'id': 93, 'parentId': 158, 'order': 7},
+      {'id': 86, 'parentId': 158, 'order': 8},
+      {'id': 87, 'parentId': 158, 'order': 9},
+      {'id': 88, 'parentId': 158, 'order': 10},
+      {'id': 89, 'parentId': 158, 'order': 11},
+      {'id': 90, 'parentId': 158, 'order': 12},
+      {'id': 91, 'parentId': 158, 'order': 13},
     ]);
     expect(
       wirdCounts.map((row) => row['count']),
@@ -773,6 +947,43 @@ void main() {
       'eleventh_wird_ends_at_fifteen': 1,
     });
     expect(absoluteDhikrAndWirdJudgments, isEmpty);
+    expect(absoluteDhikrHierarchy.single, {'nodes': 27, 'max_depth': 2});
+    expect(
+      absoluteDhikrContent,
+      [
+        {'titleId': 149, 'count': 12, 'zero_count': 12, 'first': 1, 'last': 12},
+        {'titleId': 150, 'count': 18, 'zero_count': 18, 'first': 1, 'last': 18},
+        {'titleId': 151, 'count': 20, 'zero_count': 20, 'first': 1, 'last': 20},
+        {'titleId': 152, 'count': 9, 'zero_count': 9, 'first': 1, 'last': 9},
+        {'titleId': 153, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
+        {'titleId': 154, 'count': 17, 'zero_count': 17, 'first': 1, 'last': 17},
+        {'titleId': 155, 'count': 8, 'zero_count': 8, 'first': 1, 'last': 8},
+        {'titleId': 156, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
+        {'titleId': 157, 'count': 2, 'zero_count': 2, 'first': 1, 'last': 2},
+      ],
+    );
+    expect(absoluteDhikrParents, [
+      {'id': 69, 'parentId': 143, 'order': 2},
+      {'id': 70, 'parentId': 142, 'order': 2},
+      {'id': 71, 'parentId': 144, 'order': 2},
+      {'id': 72, 'parentId': 144, 'order': 3},
+      {'id': 73, 'parentId': 145, 'order': 2},
+      {'id': 74, 'parentId': 145, 'order': 3},
+      {'id': 75, 'parentId': 145, 'order': 4},
+      {'id': 76, 'parentId': 145, 'order': 5},
+      {'id': 77, 'parentId': 146, 'order': 4},
+    ]);
+    expect(absoluteDhikrSamples.single, {
+      'quran': 1,
+      'surahs': 1,
+      'salawat': 1,
+      'tahlil': 1,
+      'istighfar': 1,
+      'baqiyat': 4,
+      'meaning': 1,
+      'hawqala': 2,
+      'notice': 1,
+    });
     expect(unsupportedJudgments, isEmpty);
   });
 

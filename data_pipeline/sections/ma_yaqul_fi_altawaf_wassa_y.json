@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "ما يقول في الطواف والسعي",
-    "freq": "d"
+    "freq": "d",
+    "id": 52,
+    "order": 3,
+    "parentId": 130,
+    "nodeType": "content"
   },
   "items": [
     {

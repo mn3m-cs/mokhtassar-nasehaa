@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "صيغ الاستغفار من السنة",
-    "freq": "d"
+    "freq": "d",
+    "id": 72,
+    "order": 3,
+    "parentId": 144,
+    "nodeType": "content"
   },
   "items": [
     {

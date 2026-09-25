@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "صيغ التسبيح",
-    "freq": "d"
+    "freq": "d",
+    "id": 74,
+    "order": 3,
+    "parentId": 145,
+    "nodeType": "content"
   },
   "items": [
     {

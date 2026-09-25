@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "صيغ التكبير",
-    "freq": "d"
+    "freq": "d",
+    "id": 76,
+    "order": 5,
+    "parentId": 145,
+    "nodeType": "content"
   },
   "items": [
     {
