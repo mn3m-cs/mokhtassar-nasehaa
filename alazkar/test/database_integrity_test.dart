@@ -536,7 +536,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 136);
+    expect(await database.getVersion(), 137);
     expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1093,6 +1093,18 @@ void main() {
       ],
       reason: 'only virtues verified in the book (#83)',
     );
+
+    final distressFootnotes = await database.rawQuery('''
+      SELECT (LENGTH(source) - LENGTH(REPLACE(source, 'حاشية:', ''))) / 6
+        AS notes
+      FROM contents WHERE id = 225
+    ''');
+    final recordsWithFootnotes = await database.rawQuery('''
+      SELECT COUNT(*) AS count FROM contents WHERE source LIKE '%حاشية:%'
+    ''');
+    expect(distressFootnotes.single, {'notes': 4},
+        reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
+    expect(recordsWithFootnotes.single, {'count': 107});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
