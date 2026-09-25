@@ -65,7 +65,7 @@ class _ZikrShareDialogState extends State<ZikrShareDialog> {
     sb.writeln(
       "${proccessedText.replaceAll("، ،", "،").replaceAll("  ", " ")}\n",
     );
-    sb.writeln("🔢عدد المرات: ${zikr.count}");
+    if (zikr.count > 0) sb.writeln("🔢عدد المرات: ${zikr.count}");
     if (shareFadl && zikr.fadl.isNotEmpty) {
       sb.writeln();
       sb.writeln("🏆الفضل: ${zikr.fadl}");
