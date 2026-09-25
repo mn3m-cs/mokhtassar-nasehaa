@@ -512,9 +512,32 @@ void main() {
          FROM contents WHERE id = 1013) AS etiquette_searchable,
         (SELECT hokm FROM contents WHERE id = 1014) AS salaf_judgment
     ''');
+    final absoluteDuaContext = await database.rawQuery('''
+      SELECT
+        (SELECT nodeType FROM titles WHERE id = 158) AS root_type,
+        (SELECT COUNT(*) FROM titles WHERE parentId = 158) AS child_count,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId IN (159, 160) AND count = 0) AS zero_count,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 159) AS introduction_count,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 160) AS virtues_count,
+        (SELECT search LIKE '%آخر ساعة بعد العصر%'
+         FROM contents WHERE id = 1160) AS friday_time,
+        (SELECT search LIKE '%أحد عشر وردا%'
+         FROM contents WHERE id = 1175) AS eleven_wirds,
+        (SELECT search LIKE '%الدعاء هو العبادة%'
+         FROM contents WHERE id = 1178) AS worship_hadith,
+        (SELECT search LIKE '%السادس القدرة%'
+         FROM contents WHERE id = 1186) AS six_meanings
+    ''');
+    final absoluteDuaWirds = await database.rawQuery('''
+      SELECT id, parentId, "order"
+      FROM titles
+      WHERE id IN (92, 82, 83, 84, 93, 86, 87, 88, 89, 90, 91)
+      ORDER BY "order"
+    ''');
 
-    expect(await database.getVersion(), 132);
-    expect(titleCount.single, {'count': 144});
+    expect(await database.getVersion(), 133);
+    expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -617,6 +640,30 @@ void main() {
       'etiquette_searchable': 1,
       'salaf_judgment': '',
     });
+    expect(absoluteDuaContext.single, {
+      'root_type': 'category',
+      'child_count': 13,
+      'zero_count': 28,
+      'introduction_count': 17,
+      'virtues_count': 11,
+      'friday_time': 1,
+      'eleven_wirds': 1,
+      'worship_hadith': 1,
+      'six_meanings': 1,
+    });
+    expect(absoluteDuaWirds, [
+      {'id': 92, 'parentId': 158, 'order': 3},
+      {'id': 82, 'parentId': 158, 'order': 4},
+      {'id': 83, 'parentId': 158, 'order': 5},
+      {'id': 84, 'parentId': 158, 'order': 6},
+      {'id': 93, 'parentId': 158, 'order': 7},
+      {'id': 86, 'parentId': 158, 'order': 8},
+      {'id': 87, 'parentId': 158, 'order': 9},
+      {'id': 88, 'parentId': 158, 'order': 10},
+      {'id': 89, 'parentId': 158, 'order': 11},
+      {'id': 90, 'parentId': 158, 'order': 12},
+      {'id': 91, 'parentId': 158, 'order': 13},
+    ]);
     expect(
       wirdCounts.map((row) => row['count']),
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],

@@ -1,7 +1,11 @@
 {
   "title": {
     "name": "الورد التاسع",
-    "freq": "d"
+    "freq": "d",
+    "id": 89,
+    "order": 11,
+    "parentId": 158,
+    "nodeType": "content"
   },
   "items": [
     {
