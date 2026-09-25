@@ -1,7 +1,18 @@
-- Search in index and content
-- Add sections to favorites
-- Count zikr with volume keys
-- Share zikr as image or as text
-- Control app theme
-- Light/dark mode
-- Works offline
+Zad Al-Dhakir brings together the authentic adhkar and supplications of the book "Mukhtasar al-Nasiha fi al-Adhkar wa al-Ad'iya al-Sahiha" by Dr. Muhammad Ismail al-Muqaddam, transcribed as they appear in the book, with the source and page of every entry.
+
+Contents:
+• Morning and evening adhkar, sleep and waking, prayer, adhan and the mosque, food, travel, Hajj and Umrah, illness and death, and the book's other chapters.
+• Unrestricted adhkar and their virtues: the Quran, sending blessings on the Prophet ﷺ, tahlil, istighfar, al-baqiyat al-salihat and hawqala.
+• Unrestricted supplications, the times they are answered, and the eleven wirds.
+• The chapters' introductions, explanations, notes and footnotes, where the book places them.
+
+Features:
+• A hierarchical index in the book's order that expands in place.
+• Search across the index and the text, showing where each result sits.
+• A counter for every dhikr, including counting with the volume keys.
+• Favourites.
+• Share a dhikr as text or as an image, or copy it.
+• Font, colour and dark-mode settings.
+• Works fully offline, with no ads and no data collection.
+
+Free and open source under the GPL-3.0 licence.
