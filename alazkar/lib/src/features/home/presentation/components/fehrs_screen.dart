@@ -17,11 +17,13 @@ class FehrsScreen extends StatelessWidget {
         Expanded(
           child: SectionBrowser(
             titles: titles,
-            itemBuilder: (context, title, localOrder, openCategory) {
+            itemBuilder: (context, row) {
               return FehrsItemCard(
-                zikrTitle: title,
-                displayOrder: localOrder,
-                onCategoryTap: openCategory,
+                zikrTitle: row.title,
+                displayOrder: row.localOrder,
+                onCategoryTap: row.toggle,
+                depth: row.depth,
+                isExpanded: row.isExpanded,
               );
             },
           ),
