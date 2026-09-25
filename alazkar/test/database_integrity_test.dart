@@ -536,7 +536,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 135);
+    expect(await database.getVersion(), 136);
     expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1080,6 +1080,19 @@ void main() {
         reason: 'book footnotes belong in the source as «حاشية» (#81)');
     expect(editorialNotes, isEmpty);
     expect(ubayyComment.single, {'id': 1193});
+
+    final virtueRecords = await database.rawQuery('''
+      SELECT id FROM contents WHERE TRIM(fadl) <> '' ORDER BY id
+    ''');
+    expect(
+      virtueRecords.map((row) => row['id']),
+      [
+        2, 4, 6, 7, 13, 14, 17, 18, 19, 21, 22, 24, 25, 26, 27, 28, 33, 35, //
+        36, 40, 45, 46, 47, 49, 50, 52, 61, 63, 65, 70, 74, 274, 277, 334,
+        883, 884, 885, 886, 903, 905, 906,
+      ],
+      reason: 'only virtues verified in the book (#83)',
+    );
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
