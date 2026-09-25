@@ -536,7 +536,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 134);
+    expect(await database.getVersion(), 135);
     expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -950,7 +950,7 @@ void main() {
       [
         {'titleId': 149, 'count': 12, 'zero_count': 12, 'first': 1, 'last': 12},
         {'titleId': 150, 'count': 18, 'zero_count': 18, 'first': 1, 'last': 18},
-        {'titleId': 151, 'count': 20, 'zero_count': 20, 'first': 1, 'last': 20},
+        {'titleId': 151, 'count': 21, 'zero_count': 21, 'first': 1, 'last': 21},
         {'titleId': 152, 'count': 9, 'zero_count': 9, 'first': 1, 'last': 9},
         {'titleId': 153, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
         {'titleId': 154, 'count': 17, 'zero_count': 17, 'first': 1, 'last': 17},
@@ -1060,6 +1060,26 @@ void main() {
     });
     expect(paraphrasedSummaries, isEmpty);
     expect(salawatVirtuesOpening.single, {'id': 1192});
+
+    final footnotesAsVirtues = await database.rawQuery('''
+      SELECT id FROM contents WHERE id > 1006 AND TRIM(fadl) <> ''
+    ''');
+    final editorialNotes = await database.rawQuery('''
+      SELECT id FROM contents
+      WHERE body || source || fadl LIKE '%نقل المؤلف%'
+         OR body || source || fadl LIKE '%نقل الكتاب%'
+         OR body || source || fadl LIKE '%ذكر الكتاب%'
+    ''');
+    final ubayyComment = await database.rawQuery('''
+      SELECT id FROM contents
+      WHERE titleId = 151
+        AND "order" = (SELECT "order" + 1 FROM contents WHERE id = 1094)
+    ''');
+
+    expect(footnotesAsVirtues, isEmpty,
+        reason: 'book footnotes belong in the source as «حاشية» (#81)');
+    expect(editorialNotes, isEmpty);
+    expect(ubayyComment.single, {'id': 1193});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
