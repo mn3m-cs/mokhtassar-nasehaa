@@ -4,7 +4,7 @@ abstract class KVStorage {
   bool hasData(String key);
   Future<void> remove(String key);
   Future<void> clear();
-  
+
   /// Returns all keys in the storage.
   /// This is used for migration.
   Iterable<String> get keys;

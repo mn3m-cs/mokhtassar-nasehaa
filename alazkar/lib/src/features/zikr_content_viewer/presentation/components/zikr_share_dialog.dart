@@ -55,15 +55,17 @@ class _ZikrShareDialogState extends State<ZikrShareDialog> {
 
   Future<String> sharedText() async {
     final StringBuffer sb = StringBuffer();
-    final content = (await zikr.getTextSpan()).map((e) => e.toPlainText()).join("\n");
-    final proccessedText =
-        sl<SettingsStorage>().showTextInBrackets() ? content : content.removeTextInBrackets;
+    final content =
+        (await zikr.getTextSpan()).map((e) => e.toPlainText()).join("\n");
+    final proccessedText = sl<SettingsStorage>().showTextInBrackets()
+        ? content
+        : content.removeTextInBrackets;
 
     //TDOD remove after database update
     sb.writeln(
       "${proccessedText.replaceAll("، ،", "،").replaceAll("  ", " ")}\n",
     );
-    sb.writeln("🔢عدد المرات: ${zikr.count}");
+    if (zikr.count > 0) sb.writeln("🔢عدد المرات: ${zikr.count}");
     if (shareFadl && zikr.fadl.isNotEmpty) {
       sb.writeln();
       sb.writeln("🏆الفضل: ${zikr.fadl}");
@@ -73,7 +75,7 @@ class _ZikrShareDialogState extends State<ZikrShareDialog> {
       sb.writeln("📚المصدر:\n${zikr.source}");
     }
     sb.writeln();
-    sb.writeln("#الأذكار_النووية");
+    sb.writeln("#زاد_الذاكر");
     return sb.toString();
   }
 
@@ -140,7 +142,8 @@ class _ZikrShareDialogState extends State<ZikrShareDialog> {
             tooltip: "مشاركة كصورة",
             icon: const Icon(Icons.camera_alt_outlined),
             onPressed: () async {
-              final ZikrTitle zikrTitle = await sl<AzkarDBHelper>().getTitlesById(zikr.titleId);
+              final ZikrTitle zikrTitle =
+                  await sl<AzkarDBHelper>().getTitlesById(zikr.titleId);
               if (!context.mounted) return;
               context.push(
                 ShareAsImageScreen(
@@ -170,7 +173,8 @@ class _ZikrShareDialogState extends State<ZikrShareDialog> {
                   await SharePlus.instance.share(
                     ShareParams(
                       text: shareText,
-                      sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
+                      sharePositionOrigin:
+                          box.localToGlobal(Offset.zero) & box.size,
                     ),
                   );
                 } catch (e) {
