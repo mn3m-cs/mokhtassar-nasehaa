@@ -75,7 +75,7 @@ class _ZikrShareDialogState extends State<ZikrShareDialog> {
       sb.writeln("📚المصدر:\n${zikr.source}");
     }
     sb.writeln();
-    sb.writeln("#الأذكار_النووية");
+    sb.writeln("#زاد_الذاكر");
     return sb.toString();
   }
 
