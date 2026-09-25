@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "دعاء الكرب، والدعاء عند الأمور المهمة",
-    "freq": "d"
+    "freq": "d",
+    "order": 2,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {

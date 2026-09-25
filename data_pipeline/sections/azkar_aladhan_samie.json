@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار الأذان",
-    "freq": "d"
+    "freq": "d",
+    "order": 10,
+    "nodeType": "content"
   },
   "items": [
     {

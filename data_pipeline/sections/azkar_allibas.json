@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار اللباس",
-    "freq": "d"
+    "freq": "d",
+    "order": 7,
+    "nodeType": "content"
   },
   "items": [
     {

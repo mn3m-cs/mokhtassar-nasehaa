@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار الأكل والشرب",
-    "freq": "d"
+    "freq": "d",
+    "order": 21,
+    "nodeType": "content"
   },
   "items": [
     {

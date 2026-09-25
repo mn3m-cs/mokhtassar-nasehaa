@@ -3,7 +3,8 @@
     "name": "أذكار المساء",
     "freq": "d",
     "parentId": 100,
-    "order": 2
+    "order": 2,
+    "nodeType": "content"
   },
   "items": [
     {

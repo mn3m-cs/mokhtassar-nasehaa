@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "ما يقول إذا خرج من الخلاء",
-    "freq": "d"
+    "freq": "d",
+    "order": 5,
+    "nodeType": "content"
   },
   "items": [
     {

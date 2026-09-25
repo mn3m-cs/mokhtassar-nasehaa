@@ -3,7 +3,8 @@
     "name": "دعاء الاستفتاح",
     "freq": "d",
     "parentId": 97,
-    "order": 1
+    "order": 1,
+    "nodeType": "content"
   },
   "items": [
     {

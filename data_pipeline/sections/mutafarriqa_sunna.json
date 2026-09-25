@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "الأذكار المتفرقة من السنة",
-    "freq": "d"
+    "freq": "d",
+    "order": 2,
+    "nodeType": "content",
+    "parentId": 163
   },
   "items": [
     {

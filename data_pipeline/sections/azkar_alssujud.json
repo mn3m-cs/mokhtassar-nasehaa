@@ -3,7 +3,8 @@
     "name": "أذكار السجود",
     "freq": "d",
     "parentId": 97,
-    "order": 3
+    "order": 3,
+    "nodeType": "content"
   },
   "items": [
     {

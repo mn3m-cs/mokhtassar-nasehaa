@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "ما يقول إذا استصعب عليه أمر",
-    "freq": "d"
+    "freq": "d",
+    "order": 6,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {

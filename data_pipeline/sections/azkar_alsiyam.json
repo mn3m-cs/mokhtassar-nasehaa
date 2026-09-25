@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار الصيام",
-    "freq": "d"
+    "freq": "d",
+    "order": 17,
+    "nodeType": "content"
   },
   "items": [
     {

@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "ما يُقرأ في الليل",
-    "freq": "d"
+    "freq": "d",
+    "order": 3,
+    "nodeType": "content",
+    "parentId": 113
   },
   "items": [
     {

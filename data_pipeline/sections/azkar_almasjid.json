@@ -3,7 +3,8 @@
     "name": "أذكار المسجد",
     "freq": "d",
     "parentId": 108,
-    "order": 1
+    "order": 1,
+    "nodeType": "content"
   },
   "items": [
     {

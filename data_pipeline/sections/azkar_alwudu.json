@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار الوضوء",
-    "freq": "d"
+    "freq": "d",
+    "order": 6,
+    "nodeType": "content"
   },
   "items": [
     {

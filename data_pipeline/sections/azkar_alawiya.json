@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار تتعلق بالأمور العلوية",
-    "freq": "d"
+    "freq": "d",
+    "order": 25,
+    "nodeType": "content"
   },
   "items": [
     {

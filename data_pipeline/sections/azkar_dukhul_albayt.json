@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار دخول البيت والخروج منه",
-    "freq": "d"
+    "freq": "d",
+    "order": 8,
+    "nodeType": "content"
   },
   "items": [
     {

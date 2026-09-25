@@ -342,8 +342,8 @@ void main() {
              MIN(contents."order") AS first, MAX(contents."order") AS last
       FROM titles
       JOIN contents ON contents.titleId = titles.id
-      WHERE titles.id IN (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
-                          79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
+      WHERE titles.id IN (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 82,
+                           83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
       GROUP BY titles.id
       ORDER BY titles.id
     ''');
@@ -354,15 +354,15 @@ void main() {
         SUM(titleId = 92 AND "order" = 1) AS first_wird_starts_at_one,
         SUM(titleId = 91 AND "order" = 15) AS eleventh_wird_ends_at_fifteen
       FROM contents
-      WHERE titleId IN (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
-                        79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
+      WHERE titleId IN (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 82,
+                         83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
     ''');
     final absoluteDhikrAndWirdJudgments = await database.rawQuery('''
       SELECT contents.id, contents.hokm
       FROM contents
       WHERE contents.titleId IN
-            (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
-             79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
+            (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 82,
+              83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
         AND contents.hokm NOT IN
             ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
     ''');
@@ -536,7 +536,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 133);
+    expect(await database.getVersion(), 134);
     expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -679,11 +679,11 @@ void main() {
     });
     expect(khalaSections, [
       {
-        'order': 5,
+        'order': 4,
         'name': 'ما يقول إذا أراد دخول الخلاء',
         'count': 2,
       },
-      {'order': 6, 'name': 'ما يقول إذا خرج من الخلاء', 'count': 1},
+      {'order': 5, 'name': 'ما يقول إذا خرج من الخلاء', 'count': 1},
     ]);
     expect(mosqueSection.single, {'count': 13, 'first': 1, 'last': 13});
     expect(adhanListenerSection.single, {'count': 13, 'first': 1, 'last': 13});
@@ -918,9 +918,6 @@ void main() {
         9,
         6,
         1,
-        13,
-        8,
-        3,
         9,
         11,
         13,
@@ -947,7 +944,7 @@ void main() {
       'eleventh_wird_ends_at_fifteen': 1,
     });
     expect(absoluteDhikrAndWirdJudgments, isEmpty);
-    expect(absoluteDhikrHierarchy.single, {'nodes': 27, 'max_depth': 2});
+    expect(absoluteDhikrHierarchy.single, {'nodes': 28, 'max_depth': 2});
     expect(
       absoluteDhikrContent,
       [
@@ -964,7 +961,7 @@ void main() {
     );
     expect(absoluteDhikrParents, [
       {'id': 69, 'parentId': 143, 'order': 2},
-      {'id': 70, 'parentId': 142, 'order': 2},
+      {'id': 70, 'parentId': 142, 'order': 3},
       {'id': 71, 'parentId': 144, 'order': 2},
       {'id': 72, 'parentId': 144, 'order': 3},
       {'id': 73, 'parentId': 145, 'order': 2},
@@ -985,6 +982,84 @@ void main() {
       'notice': 1,
     });
     expect(unsupportedJudgments, isEmpty);
+  });
+
+  test('bundled azkar database follows the book (quality gate #52)', () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    Future<List<Object?>> childIds(String parentFilter) async {
+      final rows = await database.rawQuery('''
+        SELECT id FROM titles WHERE $parentFilter ORDER BY "order"
+      ''');
+      return rows.map((row) => row['id']).toList();
+    }
+
+    final removedSections = await database.rawQuery('''
+      SELECT
+        (SELECT COUNT(*) FROM titles WHERE id IN (78, 79, 80)) AS titles,
+        (SELECT COUNT(*) FROM contents WHERE titleId IN (78, 79, 80))
+          AS contents
+    ''');
+    final editorialSuffixes = await database.rawQuery('''
+      SELECT id FROM titles WHERE name LIKE '%تنظيمي%'
+    ''');
+    final salawatIntroduction = await database.rawQuery('''
+      SELECT id FROM contents WHERE titleId = 161 ORDER BY "order"
+    ''');
+    final salawatIntroductionText = await database.rawQuery('''
+      SELECT
+        SUM(body LIKE 'ذكر الواحدي عن الأصمعي%') AS mahdi_report,
+        SUM(body LIKE 'وقال سهل بن عبد الله%') AS sahl,
+        SUM(body LIKE 'وقال العز بن عبد السلام%') AS izz,
+        SUM(body LIKE 'وقال ابن قيم الجوزية%') AS ibn_qayyim,
+        SUM(body LIKE 'ثم قال رحمه الله%') AS ibn_qayyim_follow_up,
+        SUM(count = 0 AND hokm = '') AS prose
+      FROM contents
+      WHERE titleId = 161
+    ''');
+    final paraphrasedSummaries = await database.rawQuery('''
+      SELECT id FROM contents WHERE body LIKE '%وقد ذكر الكتاب%'
+    ''');
+    final salawatVirtuesOpening = await database.rawQuery('''
+      SELECT id FROM contents WHERE titleId = 151 AND "order" = 1
+    ''');
+
+    expect(removedSections.single, {'titles': 0, 'contents': 0});
+    expect(editorialSuffixes, isEmpty);
+    expect(
+      await childIds('parentId IS NULL'),
+      [
+        99, 100, 4, 94, 95, 5, 6, 7, 108, 9, 114, 96, 122, 162, 123, 124, //
+        48, 128, 133, 60, 61, 62, 63, 64, 65, 163, 68, 140, 158,
+      ],
+      reason: 'root order follows the book index (pp. 228-239)',
+    );
+    expect(await childIds('parentId = 113'), [120, 121, 3]);
+    expect(
+      await childIds('parentId = 162'),
+      [32, 33, 34, 35, 36, 37, 38, 39, 40],
+    );
+    expect(await childIds('parentId = 163'), [66, 67]);
+    expect(await childIds('parentId = 142'), [161, 151, 70]);
+    expect(
+      salawatIntroduction.map((row) => row['id']),
+      [1089, 1187, 1188, 1189, 1190, 1191],
+    );
+    expect(salawatIntroductionText.single, {
+      'mahdi_report': 1,
+      'sahl': 1,
+      'izz': 1,
+      'ibn_qayyim': 1,
+      'ibn_qayyim_follow_up': 1,
+      'prose': 6,
+    });
+    expect(paraphrasedSummaries, isEmpty);
+    expect(salawatVirtuesOpening.single, {'id': 1192});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {

@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "دعاء الاستخارة",
-    "freq": "d"
+    "freq": "d",
+    "order": 1,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {
