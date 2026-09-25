@@ -1,7 +1,11 @@
 {
   "title": {
+    "id": 42,
+    "order": 2,
     "name": "ما يقوله المريض",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 123,
+    "nodeType": "content"
   },
   "items": [
     {

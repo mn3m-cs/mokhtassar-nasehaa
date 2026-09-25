@@ -1,7 +1,11 @@
 {
   "title": {
+    "id": 45,
+    "order": 1,
     "name": "أذكار الموت",
-    "freq": "d"
+    "freq": "d",
+    "parentId": 124,
+    "nodeType": "content"
   },
   "items": [
     {
