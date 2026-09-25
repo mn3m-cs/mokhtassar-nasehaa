@@ -3,7 +3,8 @@
     "name": "أذكار الركوع والرفع منه",
     "freq": "d",
     "parentId": 97,
-    "order": 2
+    "order": 2,
+    "nodeType": "content"
   },
   "items": [
     {

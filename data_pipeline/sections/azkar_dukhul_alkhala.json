@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "ما يقول إذا أراد دخول الخلاء",
-    "freq": "d"
+    "freq": "d",
+    "order": 4,
+    "nodeType": "content"
   },
   "items": [
     {

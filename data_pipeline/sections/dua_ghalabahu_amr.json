@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "ما يقول إذا غلبه أمر",
-    "freq": "d"
+    "freq": "d",
+    "order": 5,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {

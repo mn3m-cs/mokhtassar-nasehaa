@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "ما يقول إذا كان عليه دَين عجز عنه",
-    "freq": "d"
+    "freq": "d",
+    "order": 9,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {

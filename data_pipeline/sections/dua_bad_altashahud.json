@@ -3,7 +3,8 @@
     "name": "الدعاء بعد التشهد الأخير",
     "freq": "d",
     "parentId": 97,
-    "order": 7
+    "order": 7,
+    "nodeType": "content"
   },
   "items": [
     {

@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "ما يقول إذا أصابته نكبة قليلة أو كثيرة",
-    "freq": "d"
+    "freq": "d",
+    "order": 8,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {

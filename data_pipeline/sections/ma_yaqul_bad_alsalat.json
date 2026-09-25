@@ -3,7 +3,8 @@
     "name": "ما يقول بعد الصلاة",
     "freq": "d",
     "parentId": 96,
-    "order": 3
+    "order": 3,
+    "nodeType": "content"
   },
   "items": [
     {

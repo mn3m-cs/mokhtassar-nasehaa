@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار المجلس",
-    "freq": "d"
+    "freq": "d",
+    "order": 27,
+    "nodeType": "content"
   },
   "items": [
     {

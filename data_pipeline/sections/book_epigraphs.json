@@ -2,7 +2,7 @@
   "title": {
     "id": 101,
     "order": 1,
-    "name": "تمهيد الكتاب — عنوان تنظيمي",
+    "name": "تمهيد الكتاب",
     "freq": "d",
     "parentId": 99,
     "nodeType": "content"

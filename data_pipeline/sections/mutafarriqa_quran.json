@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "الأذكار المتفرقة من القرآن",
-    "freq": "d"
+    "freq": "d",
+    "order": 1,
+    "nodeType": "content",
+    "parentId": 163
   },
   "items": [
     {

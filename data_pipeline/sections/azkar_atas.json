@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار العطاس",
-    "freq": "d"
+    "freq": "d",
+    "order": 22,
+    "nodeType": "content"
   },
   "items": [
     {

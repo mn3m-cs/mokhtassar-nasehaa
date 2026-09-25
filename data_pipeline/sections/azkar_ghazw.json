@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار الغزو والجهاد",
-    "freq": "d"
+    "freq": "d",
+    "order": 20,
+    "nodeType": "content"
   },
   "items": [
     {

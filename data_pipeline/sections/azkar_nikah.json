@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "أذكار النكاح",
-    "freq": "d"
+    "freq": "d",
+    "order": 23,
+    "nodeType": "content"
   },
   "items": [
     {

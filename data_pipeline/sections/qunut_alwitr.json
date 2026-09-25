@@ -3,7 +3,8 @@
     "name": "قنوت الوتر في رمضان وغيره",
     "freq": "d",
     "parentId": 97,
-    "order": 5
+    "order": 5,
+    "nodeType": "content"
   },
   "items": [
     {

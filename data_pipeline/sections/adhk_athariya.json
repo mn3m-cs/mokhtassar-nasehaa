@@ -1,7 +1,9 @@
 {
   "title": {
     "name": "ما يقول لطلب الذرية الصالحة",
-    "freq": "d"
+    "freq": "d",
+    "order": 24,
+    "nodeType": "content"
   },
   "items": [
     {

@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "ما يقول إذا خاف قومًا أو سلطانًا أو لاقى عدوًا",
-    "freq": "d"
+    "freq": "d",
+    "order": 3,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {

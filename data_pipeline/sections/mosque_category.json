@@ -1,8 +1,8 @@
 {
   "title": {
     "id": 108,
-    "order": 10,
-    "name": "المسجد — تصنيف تنظيمي",
+    "order": 9,
+    "name": "المسجد",
     "freq": "d",
     "nodeType": "category"
   },

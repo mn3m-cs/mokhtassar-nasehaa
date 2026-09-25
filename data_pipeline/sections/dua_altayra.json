@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "ما يقول إذا تطيَّر بشيء",
-    "freq": "d"
+    "freq": "d",
+    "order": 7,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {

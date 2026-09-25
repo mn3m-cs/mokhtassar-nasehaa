@@ -1,7 +1,10 @@
 {
   "title": {
     "name": "ما يقول إذا عرض له شيطان أو خافه",
-    "freq": "d"
+    "freq": "d",
+    "order": 4,
+    "nodeType": "content",
+    "parentId": 162
   },
   "items": [
     {

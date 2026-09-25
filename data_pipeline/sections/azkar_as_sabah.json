@@ -3,7 +3,8 @@
     "name": "أذكار الصباح",
     "freq": "d",
     "parentId": 100,
-    "order": 1
+    "order": 1,
+    "nodeType": "content"
   },
   "items": [
     {
