@@ -24,7 +24,16 @@ class _HomePageScreenState extends State<HomePageScreen> {
           return const Loading();
         }
         return state.isSearching
-            ? const SearchScreen()
+            ? PopScope(
+                canPop: false,
+                onPopInvokedWithResult: (didPop, _) {
+                  if (didPop) return;
+                  context
+                      .read<HomeBloc>()
+                      .add(const HomeToggleSearchEvent(false));
+                },
+                child: const SearchScreen(),
+              )
             : DefaultTabController(
                 length: 2,
                 child: Scaffold(
