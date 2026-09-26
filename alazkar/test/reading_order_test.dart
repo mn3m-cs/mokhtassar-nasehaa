@@ -11,7 +11,6 @@ void main() {
   HomeLoadedState stateOf(List<ZikrTitle> titles, {List<ZikrTitle>? shown}) =>
       HomeLoadedState(
         titles: titles,
-        freqFilters: const [],
         titlesToShow: shown ?? titles,
         isSearching: false,
         favouriteTitlesIds: const [],
@@ -32,6 +31,33 @@ void main() {
     expect(
       ids.length,
       titles.where((t) => t.nodeType == ZikrTitleNodeType.content).length,
+    );
+  });
+
+  test('favourites are listed in book order, not in the order added', () async {
+    final db = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(db.close);
+    final titles = (await db.query('titles')).map(ZikrTitle.fromMap).toList();
+    final state = HomeLoadedState(
+      titles: titles,
+      titlesToShow: titles,
+      isSearching: false,
+      favouriteTitlesIds: const [49, 18, 1, 16, 2, 4],
+    );
+
+    expect(
+      state.favouriteTitles().map((t) => t.name),
+      [
+        'أذكار الصباح',
+        'أذكار المساء',
+        'أذكار الاستيقاظ',
+        'ما يقول بعد الصلاة',
+        'أذكار النوم',
+        'أذكار المسافر',
+      ],
     );
   });
 

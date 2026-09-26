@@ -38,15 +38,6 @@ class HomeUnBookmarkTitleEvent extends HomeEvent {
   List<Object> get props => [zikrTitleId];
 }
 
-class HomeToggleFilterEvent extends HomeEvent {
-  final TitlesFreqEnum filter;
-
-  const HomeToggleFilterEvent(this.filter);
-
-  @override
-  List<Object> get props => [filter];
-}
-
 class HomeFiltersChange extends HomeEvent {
   final List<Filter> filters;
 

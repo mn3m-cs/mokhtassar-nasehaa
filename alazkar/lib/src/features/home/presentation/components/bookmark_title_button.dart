@@ -22,6 +22,7 @@ class BookmarkTitleButton extends StatelessWidget {
 
         if (isBookmarked) {
           return IconButton(
+            tooltip: "إزالة من المفضلة",
             onPressed: () {
               context.read<HomeBloc>().add(HomeUnBookmarkTitleEvent(titleId));
             },
@@ -32,6 +33,7 @@ class BookmarkTitleButton extends StatelessWidget {
           );
         } else {
           return IconButton(
+            tooltip: "إضافة إلى المفضلة",
             onPressed: () {
               context.read<HomeBloc>().add(HomeBookmarkTitleEvent(titleId));
             },
