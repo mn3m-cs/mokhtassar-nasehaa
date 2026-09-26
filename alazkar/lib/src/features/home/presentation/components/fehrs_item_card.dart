@@ -33,52 +33,57 @@ class FehrsItemCard extends StatelessWidget {
       padding: EdgeInsetsDirectional.only(
         start: (depth ?? 0) * _indentPerLevel,
       ),
-      child: ListTile(
-        leading: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (inTree)
-              SizedBox(
-                width: _expanderWidth,
-                child: _isCategory
-                    ? Icon(
-                        isExpanded ? Icons.expand_more : Icons.chevron_right,
-                      )
-                    : null,
-              ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minWidth: 25),
-                  child: Text((displayOrder ?? zikrTitle.order).toString()),
+      child: Semantics(
+        expanded: inTree && _isCategory ? isExpanded : null,
+        child: ListTile(
+          leading: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (inTree)
+                SizedBox(
+                  width: _expanderWidth,
+                  child: _isCategory
+                      ? Icon(
+                          isExpanded ? Icons.expand_more : Icons.chevron_right,
+                        )
+                      : null,
+                ),
+              ExcludeSemantics(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 25),
+                      child: Text((displayOrder ?? zikrTitle.order).toString()),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            if (_isCategory)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Icon(
-                  isExpanded
-                      ? Icons.folder_open_outlined
-                      : Icons.folder_outlined,
-                ),
-              )
-            else
-              BookmarkTitleButton(titleId: zikrTitle.id),
-          ],
+              if (_isCategory)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Icon(
+                    isExpanded
+                        ? Icons.folder_open_outlined
+                        : Icons.folder_outlined,
+                  ),
+                )
+              else
+                BookmarkTitleButton(titleId: zikrTitle.id),
+            ],
+          ),
+          title: Text(zikrTitle.name),
+          onTap: () {
+            if (_isCategory) {
+              onCategoryTap?.call();
+              return;
+            }
+            Navigator.push(
+              context,
+              ZikrContentViewerScreen.route(zikrTitleId: zikrTitle.id),
+            );
+          },
         ),
-        title: Text(zikrTitle.name),
-        onTap: () {
-          if (_isCategory) {
-            onCategoryTap?.call();
-            return;
-          }
-          Navigator.push(
-            context,
-            ZikrContentViewerScreen.route(zikrTitleId: zikrTitle.id),
-          );
-        },
       ),
     );
   }

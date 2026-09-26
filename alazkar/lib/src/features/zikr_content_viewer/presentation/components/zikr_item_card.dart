@@ -72,6 +72,9 @@ class _ZikrItemCardState extends State<ZikrItemCard> {
             Center(
               child: Text(
                 zikr.count == 0 ? "تم" : zikr.count.toString(),
+                semanticsLabel: zikr.count == 0
+                    ? "تم العدّ"
+                    : "العدد المتبقي ${zikr.count}",
                 style: TextStyle(
                   fontSize: 200,
                   fontWeight: FontWeight.bold,
@@ -117,9 +120,12 @@ class _ZikrItemCardState extends State<ZikrItemCard> {
                 child: Center(
                   child: Text(
                     _seenPercent == null ? "" : "$_seenPercent%",
+                    semanticsLabel: _seenPercent == null
+                        ? ""
+                        : "قرأت $_seenPercent٪ من النص",
                     style: TextStyle(
                       fontSize: 13,
-                      color: colorScheme.onSurface.withValues(alpha: .45),
+                      color: colorScheme.onSurface.withValues(alpha: .65),
                     ),
                   ),
                 ),
