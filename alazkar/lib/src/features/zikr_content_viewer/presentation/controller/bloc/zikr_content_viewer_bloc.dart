@@ -9,6 +9,7 @@ import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/core/utils/app_print.dart';
 import 'package:alazkar/src/core/utils/show_toast.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
+import 'package:alazkar/src/features/search/data/models/title_paths.dart';
 import 'package:alazkar/src/features/settings/data/repository/settings_storage.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_share_dialog.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/models/zikr_filter.dart';
@@ -86,6 +87,8 @@ class ZikrContentViewerBloc
             )
             .toList();
     final zikrTitle = await azkarDBHelper.getTitlesById(event.zikrTitleId);
+    final sectionPath =
+        buildParentPath(zikrTitle, await azkarDBHelper.getAllTitles());
 
     /// filter out zikr
     final List<Filter> filters = zikrFilterStorage.getAllFilters();
@@ -97,6 +100,7 @@ class ZikrContentViewerBloc
         azkar: azkarToSet,
         activeZikrIndex: 0,
         initialCounts: {for (final zikr in azkarToSet) zikr.id: zikr.count},
+        sectionPath: sectionPath,
       ),
     );
 

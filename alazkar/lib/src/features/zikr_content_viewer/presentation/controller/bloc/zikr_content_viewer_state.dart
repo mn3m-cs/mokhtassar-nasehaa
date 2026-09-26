@@ -14,6 +14,9 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   final int activeZikrIndex;
   final ZikrTitle zikrTitle;
 
+  /// Categories above [zikrTitle], empty for a top-level section.
+  final String sectionPath;
+
   /// Repetitions each zikr starts with, by id; 0 marks a passage to read,
   /// not a zikr to count.
   final Map<int, int> initialCounts;
@@ -23,6 +26,7 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
     required this.azkar,
     required this.activeZikrIndex,
     required this.initialCounts,
+    this.sectionPath = '',
   });
 
   ZikrContentViewerLoadedState copyWith({
@@ -34,6 +38,7 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
       azkar: azkar ?? this.azkar,
       activeZikrIndex: activeZikrIndex ?? this.activeZikrIndex,
       initialCounts: initialCounts,
+      sectionPath: sectionPath,
     );
   }
 
@@ -55,5 +60,6 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   }
 
   @override
-  List<Object> get props => [azkar, zikrTitle, activeZikrIndex, initialCounts];
+  List<Object> get props =>
+      [azkar, zikrTitle, activeZikrIndex, initialCounts, sectionPath];
 }
