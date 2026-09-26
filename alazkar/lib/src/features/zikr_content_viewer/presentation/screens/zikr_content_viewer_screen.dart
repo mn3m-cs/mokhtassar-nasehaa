@@ -189,7 +189,10 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
               itemCount: state.azkar.length,
               itemBuilder: (context, index) {
                 final zikr = state.azkar[index];
-                return ZikrItemCard(zikr: zikr);
+                return ZikrItemCard(
+                  zikr: zikr,
+                  isCounted: state.isCounted(zikr),
+                );
               },
             ),
             bottomNavigationBar: ZikrContentViewerBottomAppBar(
