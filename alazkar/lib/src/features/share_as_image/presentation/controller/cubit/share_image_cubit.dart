@@ -235,8 +235,16 @@ class ShareImageCubit extends Cubit<ShareImageState> {
     }
   }
 
+  /// The receiving app may still be reading the images when the share sheet
+  /// returns, so each share clears the previous share's files instead.
   Future _savePhone(BuildContext context, List<ByteData> filesData) async {
     final tempDir = await getTemporaryDirectory();
+    await for (final entity in tempDir.list()) {
+      if (entity is File &&
+          path.basename(entity.path).startsWith('SharedImage')) {
+        await entity.delete();
+      }
+    }
 
     final List<XFile> xFiles = [];
     for (int i = 0; i < filesData.length; i++) {
@@ -254,10 +262,6 @@ class ShareImageCubit extends Cubit<ShareImageState> {
       files: xFiles,
       sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
     ));
-
-    for (final file in xFiles) {
-      await File(file.path).delete();
-    }
   }
 
   /// **************************

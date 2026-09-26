@@ -39,18 +39,27 @@ class _ZikrShareDialogState extends State<ZikrShareDialog> {
   }
 
   Future _load() async {
-    zikr = await sl<AzkarDBHelper>().getContentById(widget.zikrId);
+    try {
+      zikr = await sl<AzkarDBHelper>().getContentById(widget.zikrId);
+    } catch (error) {
+      appPrint(error);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      showToast("تعذر تجهيز الذكر للمشاركة");
+      return;
+    }
 
     shareFadl = sl<ZikrViewerRepo>().shareFadl;
     shareSource = sl<ZikrViewerRepo>().shareSource;
 
     isLoading = false;
-    _buildSharedText();
+    await _buildSharedText();
   }
 
   Future _buildSharedText() async {
-    shareText = await sharedText();
-    setState(() {});
+    final text = await sharedText();
+    if (!mounted) return;
+    setState(() => shareText = text);
   }
 
   Future<String> sharedText() async {

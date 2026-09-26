@@ -119,12 +119,17 @@ class BookmarksDBHelper {
     Database db,
     int oldVersion,
     int newVersion,
-  ) async {
-    if (oldVersion < 2) {
-      await addDefaultTitles(db);
-    }
+  ) =>
+      upgrade(db, oldVersion);
+
+  /// Legacy defaults are judged on the stored rows before anything is added,
+  /// so adding the new defaults first cannot hide them.
+  static Future<void> upgrade(Database db, int oldVersion) async {
     if (oldVersion < 3) {
       await replaceLegacyDefaults(db);
+    }
+    if (oldVersion < 2) {
+      await addDefaultTitles(db);
     }
   }
 

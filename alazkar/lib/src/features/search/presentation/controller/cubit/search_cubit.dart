@@ -38,13 +38,6 @@ class SearchCubit extends Cubit<SearchState> {
     this.bookmarksDBHelper,
     this.searchRepo,
   ) : super(const SearchLoadingState()) {
-    homeBloc.stream.listen((event) {
-      final homeBlocState = homeBloc.state;
-      if (homeBlocState is! HomeLoadedState) return;
-      final state = this.state;
-      if (state is! SearchLoadedState) return;
-    });
-
     titlePagingController = PagingController(firstPageKey: 0)
       ..addPageRequestListener(fetchPage);
 

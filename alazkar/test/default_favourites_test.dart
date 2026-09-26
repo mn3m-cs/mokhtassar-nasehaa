@@ -53,6 +53,18 @@ void main() {
     ]);
   });
 
+  for (final oldVersion in [1, 2]) {
+    test('upgrading from version $oldVersion ends with the correct defaults',
+        () async {
+      final db =
+          await favouritesDatabase(BookmarksDBHelper.legacyDefaultTitleIds);
+
+      await BookmarksDBHelper.upgrade(db, oldVersion);
+
+      expect(await storedIds(db), [1, 2, 4, 16, 18, 49]);
+    });
+  }
+
   test('untouched legacy defaults are replaced by the correct ones', () async {
     final db =
         await favouritesDatabase(BookmarksDBHelper.legacyDefaultTitleIds);
