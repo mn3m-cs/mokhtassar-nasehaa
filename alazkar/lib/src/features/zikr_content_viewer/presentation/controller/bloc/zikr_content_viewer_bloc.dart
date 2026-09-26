@@ -133,6 +133,11 @@ class ZikrContentViewerBloc
     }
 
     final countToSet = event.zikr.count - 1;
+    if (countToSet == 0) {
+      HapticFeedback.mediumImpact();
+    } else {
+      HapticFeedback.lightImpact();
+    }
 
     final azkarToSet = state.azkar.map((e) {
       if (e.id != event.zikr.id) return e;

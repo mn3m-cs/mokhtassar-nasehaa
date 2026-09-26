@@ -70,15 +70,12 @@ class _ZikrItemCardState extends State<ZikrItemCard> {
         children: [
           if (widget.isCounted)
             Center(
-              child: Opacity(
-                opacity: .5,
-                child: Text(
-                  zikr.count == 0 ? "تم" : zikr.count.toString(),
-                  style: TextStyle(
-                    fontSize: 200,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary.withValues(alpha: .1),
-                  ),
+              child: Text(
+                zikr.count == 0 ? "تم" : zikr.count.toString(),
+                style: TextStyle(
+                  fontSize: 200,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary.withValues(alpha: .14),
                 ),
               ),
             ),
