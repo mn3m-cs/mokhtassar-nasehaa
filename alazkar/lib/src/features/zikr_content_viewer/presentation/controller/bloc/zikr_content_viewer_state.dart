@@ -14,10 +14,15 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   final int activeZikrIndex;
   final ZikrTitle zikrTitle;
 
+  /// Repetitions each zikr starts with, by id; 0 marks a passage to read,
+  /// not a zikr to count.
+  final Map<int, int> initialCounts;
+
   const ZikrContentViewerLoadedState({
     required this.zikrTitle,
     required this.azkar,
     required this.activeZikrIndex,
+    required this.initialCounts,
   });
 
   ZikrContentViewerLoadedState copyWith({
@@ -28,19 +33,20 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
       zikrTitle: zikrTitle,
       azkar: azkar ?? this.azkar,
       activeZikrIndex: activeZikrIndex ?? this.activeZikrIndex,
+      initialCounts: initialCounts,
     );
   }
 
-  double progress() {
-    if (azkar.isEmpty) return 100;
-    final length = azkar.length;
-    final done = azkar.fold(
-      0,
-      (previousValue, element) =>
-          element.count == 0 ? previousValue + 1 : previousValue,
-    );
+  bool isCounted(Zikr zikr) => (initialCounts[zikr.id] ?? 0) > 0;
 
-    return done / length;
+  /// Share of counted azkar finished; a section with nothing to count
+  /// reports how far the reader has paged instead.
+  double progress() {
+    if (azkar.isEmpty) return 1;
+    final counted = azkar.where(isCounted).toList();
+    if (counted.isEmpty) return (activeZikrIndex + 1) / azkar.length;
+    final done = counted.where((zikr) => zikr.count == 0).length;
+    return done / counted.length;
   }
 
   Zikr? get activeZikr {
@@ -49,5 +55,5 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   }
 
   @override
-  List<Object> get props => [azkar, zikrTitle, activeZikrIndex];
+  List<Object> get props => [azkar, zikrTitle, activeZikrIndex, initialCounts];
 }

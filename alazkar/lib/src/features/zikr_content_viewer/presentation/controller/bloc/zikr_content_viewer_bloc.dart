@@ -96,6 +96,7 @@ class ZikrContentViewerBloc
         zikrTitle: zikrTitle,
         azkar: azkarToSet,
         activeZikrIndex: 0,
+        initialCounts: {for (final zikr in azkarToSet) zikr.id: zikr.count},
       ),
     );
 
