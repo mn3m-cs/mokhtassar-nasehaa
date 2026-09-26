@@ -239,7 +239,7 @@ class ZikrContentViewerBloc
     if (homeState is! HomeLoadedState) return;
 
     try {
-      final titles = homeState.titlesToShow;
+      final titles = homeState.readingOrder();
       final int currentTitleIndex =
           titles.indexWhere((e) => e.id == state.zikrTitle.id);
       appPrint(currentTitleIndex);
@@ -263,7 +263,7 @@ class ZikrContentViewerBloc
     if (homeState is! HomeLoadedState) return;
 
     try {
-      final titles = homeState.titlesToShow;
+      final titles = homeState.readingOrder();
       final int currentTitleIndex =
           titles.indexWhere((e) => e.id == state.zikrTitle.id);
       if (currentTitleIndex == -1 || currentTitleIndex == 0) return;
