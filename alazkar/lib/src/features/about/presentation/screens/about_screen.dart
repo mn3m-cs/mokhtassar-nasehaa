@@ -34,8 +34,10 @@ class AboutScreen extends StatelessWidget {
         children: [
           const SizedBox(height: 15),
           ListTile(
-            leading: Image.asset(
-              "assets/icons/app.png",
+            leading: ClipOval(
+              child: Image.asset(
+                "assets/icons/logo-round.png",
+              ),
             ),
             title: Text(
                 "تطبيق زاد الذاكر الإصدار ${kAppVersion.split(" ").first}"),

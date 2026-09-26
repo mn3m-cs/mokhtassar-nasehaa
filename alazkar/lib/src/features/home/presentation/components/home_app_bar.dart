@@ -23,8 +23,10 @@ class _HomeAppBarState extends State<HomeAppBar> {
       snap: true,
       leading: Padding(
         padding: const EdgeInsets.all(5.0),
-        child: Image.asset(
-          "assets/icons/app.png",
+        child: ClipOval(
+          child: Image.asset(
+            "assets/icons/logo-round.png",
+          ),
         ),
       ),
       actions: [
