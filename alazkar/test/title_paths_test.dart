@@ -75,7 +75,7 @@ void main() {
     const topLevel = ZikrTitle(id: 4, order: 2, name: 'الوضوء', freq: 'd');
     const titles = [category, subcategory, nested, topLevel];
 
-    expect(buildParentPath(nested, titles), 'العبادات ← الصلاة');
+    expect(buildParentPath(nested, titles), 'العبادات › الصلاة');
     expect(buildParentPath(topLevel, titles), '');
   });
 }

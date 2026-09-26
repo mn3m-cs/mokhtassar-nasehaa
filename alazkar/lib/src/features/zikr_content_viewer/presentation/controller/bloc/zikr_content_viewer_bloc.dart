@@ -105,7 +105,9 @@ class ZikrContentViewerBloc
     );
 
     await Future.delayed(const Duration(milliseconds: 250));
-    if (pageController.hasClients && event.zikrOrder != null) {
+    if (pageController.hasClients && event.fromEnd && azkarToSet.isNotEmpty) {
+      pageController.jumpToPage(azkarToSet.length - 1);
+    } else if (pageController.hasClients && event.zikrOrder != null) {
       final index = azkarToSet.indexWhere((e) => e.order == event.zikrOrder);
       if (index > 0) {
         pageController.animateToPage(
@@ -247,7 +249,9 @@ class ZikrContentViewerBloc
       final int currentTitleIndex =
           titles.indexWhere((e) => e.id == state.zikrTitle.id);
       appPrint(currentTitleIndex);
-      if (currentTitleIndex == -1 || currentTitleIndex == titles.length - 1) {
+      if (currentTitleIndex == -1) return;
+      if (currentTitleIndex == titles.length - 1) {
+        showToast("هذا آخر الكتاب");
         return;
       }
       add(ZikrContentViewerStartEvent(titles[currentTitleIndex + 1].id));
@@ -271,7 +275,12 @@ class ZikrContentViewerBloc
       final int currentTitleIndex =
           titles.indexWhere((e) => e.id == state.zikrTitle.id);
       if (currentTitleIndex == -1 || currentTitleIndex == 0) return;
-      add(ZikrContentViewerStartEvent(titles[currentTitleIndex - 1].id));
+      add(
+        ZikrContentViewerStartEvent(
+          titles[currentTitleIndex - 1].id,
+          fromEnd: event.fromEnd,
+        ),
+      );
     } catch (e) {
       appPrint(e);
     }

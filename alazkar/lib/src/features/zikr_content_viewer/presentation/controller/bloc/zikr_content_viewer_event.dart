@@ -10,10 +10,17 @@ sealed class ZikrContentViewerEvent extends Equatable {
 class ZikrContentViewerStartEvent extends ZikrContentViewerEvent {
   final int zikrTitleId;
   final int? zikrOrder;
-  const ZikrContentViewerStartEvent(this.zikrTitleId, {this.zikrOrder});
+
+  /// Opens the section on its last zikr, for reading backwards.
+  final bool fromEnd;
+  const ZikrContentViewerStartEvent(
+    this.zikrTitleId, {
+    this.zikrOrder,
+    this.fromEnd = false,
+  });
 
   @override
-  List<Object?> get props => [zikrTitleId, zikrOrder];
+  List<Object?> get props => [zikrTitleId, zikrOrder, fromEnd];
 }
 
 class ZikrContentViewerDecreaseEvent extends ZikrContentViewerEvent {
@@ -40,4 +47,11 @@ class ZikrContentViewerShareEvent extends ZikrContentViewerEvent {}
 
 class ZikrContentViewerNextTitleEvent extends ZikrContentViewerEvent {}
 
-class ZikrContentViewerPerviousTitleEvent extends ZikrContentViewerEvent {}
+class ZikrContentViewerPerviousTitleEvent extends ZikrContentViewerEvent {
+  final bool fromEnd;
+
+  const ZikrContentViewerPerviousTitleEvent({this.fromEnd = false});
+
+  @override
+  List<Object> get props => [fromEnd];
+}
