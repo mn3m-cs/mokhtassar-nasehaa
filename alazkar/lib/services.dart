@@ -9,7 +9,9 @@ import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/core/storage/storage_migration_service.dart';
 import 'package:alazkar/src/core/utils/app_bloc_observer.dart';
 import 'package:alazkar/src/features/quran/data/repository/uthmani_repository.dart';
+import 'package:alazkar/src/features/settings/data/repository/settings_storage.dart';
 import 'package:alazkar/src/features/ui/data/repository/ui_repo.dart';
+import 'package:alazkar/src/features/zikr_source_filter/data/repository/zikr_filter_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,6 +35,7 @@ Future<void> initServices() async {
 
   // Run migration from GetStorage to Hive
   await StorageMigrationService(sl<KVStorage>()).migrate();
+  await resetHiddenReadingFilters();
 
   phoneDeviceBars();
   final packageInfo = await PackageInfo.fromPlatform();
@@ -90,4 +93,20 @@ Future<void> initDBs() async {
     sl<UthmaniRepository>().init(),
     sl<BookmarksDBHelper>().init(),
   ]);
+}
+
+/// The book-hiding filters and the brackets switch are no longer in the
+/// settings screen, so a value a reader set earlier could keep book text
+/// hidden with no way back. They return to their defaults once.
+Future<void> resetHiddenReadingFilters() async {
+  final storage = sl<KVStorage>();
+  const doneKey = 'hidden_reading_filters_reset';
+  if (storage.read<bool>(doneKey) ?? false) return;
+
+  final filters = sl<ZikrFilterStorage>();
+  await filters.setEnableFiltersStatus(false);
+  await filters.setEnableHokmFiltersStatus(false);
+  await filters.setShowOnlyWithFadlStatus(false);
+  await sl<SettingsStorage>().setShowTextInBrackets(true);
+  await storage.write(doneKey, true);
 }
