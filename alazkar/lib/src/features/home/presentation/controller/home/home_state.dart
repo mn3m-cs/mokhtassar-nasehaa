@@ -38,6 +38,33 @@ final class HomeLoadedState extends HomeState {
     );
   }
 
+  /// Shown sections in the order the book reads them: depth-first through
+  /// the index, siblings by their local order, categories skipped.
+  List<ZikrTitle> readingOrder() {
+    final shownIds = titlesToShow.map((title) => title.id).toSet();
+    final children = <int?, List<ZikrTitle>>{};
+    for (final title in titles) {
+      children.putIfAbsent(title.parentId, () => []).add(title);
+    }
+    for (final siblings in children.values) {
+      siblings.sort((a, b) => a.order.compareTo(b.order));
+    }
+
+    final ordered = <ZikrTitle>[];
+    void visit(int? parentId) {
+      for (final title in children[parentId] ?? const <ZikrTitle>[]) {
+        if (title.nodeType == ZikrTitleNodeType.content &&
+            shownIds.contains(title.id)) {
+          ordered.add(title);
+        }
+        visit(title.id);
+      }
+    }
+
+    visit(null);
+    return ordered;
+  }
+
   @override
   List<Object> get props => [
         titles,
