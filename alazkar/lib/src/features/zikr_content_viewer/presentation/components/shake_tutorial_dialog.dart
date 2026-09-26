@@ -26,7 +26,7 @@ class ShakeTutorialDialog extends StatelessWidget {
             const AnimatedShakeIllustration(),
             const SizedBox(height: 20),
             Text(
-              "ميزة جديدة: هز الهاتف للإبلاغ",
+              "وجدت خطأ؟ هز الهاتف للإبلاغ",
               style: TextStyle(
                 fontFamily: "Cairo",
                 fontSize: 18,

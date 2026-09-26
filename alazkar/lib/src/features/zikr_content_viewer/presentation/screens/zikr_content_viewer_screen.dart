@@ -75,8 +75,14 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
   Future<void> _showShakeTutorialIfNeeded() async {
     final storage = sl<KVStorage>();
     const String key = 'has_shown_shake_tutorial';
+    const String opensKey = 'viewer_open_count';
     final bool hasShown = storage.read<bool>(key) ?? false;
-    if (!hasShown) {
+    if (hasShown) return;
+    final int opens = (storage.read<int>(opensKey) ?? 0) + 1;
+    await storage.write(opensKey, opens);
+
+    /// A first-time reader came to read; the tip waits for the third visit.
+    if (opens >= 3) {
       if (!mounted) return;
       await showDialog(
         context: context,
