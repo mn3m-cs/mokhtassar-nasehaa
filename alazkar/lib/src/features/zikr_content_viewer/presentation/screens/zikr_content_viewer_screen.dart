@@ -151,9 +151,25 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                   (screenSize.width * .5);
           return Scaffold(
             appBar: AppBar(
-              title: isSliding
-                  ? SizedBox(
-                      height: 60,
+              title: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (state.sectionPath.isNotEmpty)
+                    Text(
+                      state.sectionPath,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: .55),
+                      ),
+                    ),
+                  if (isSliding)
+                    SizedBox(
+                      height: state.sectionPath.isEmpty ? 60 : 32,
                       child: Marquee(
                         text: state.zikrTitle.name,
                         blankSpace: screenSize.width,
@@ -166,10 +182,13 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                         style: headerStyle,
                       ),
                     )
-                  : Text(
+                  else
+                    Text(
                       state.zikrTitle.name,
                       style: headerStyle,
                     ),
+                ],
+              ),
               centerTitle: true,
               actions: [BookmarkTitleButton(titleId: state.zikrTitle.id)],
               bottom: PreferredSize(
