@@ -24,10 +24,27 @@ class ZikrItemCard extends StatefulWidget {
 class _ZikrItemCardState extends State<ZikrItemCard> {
   final ScrollController _scrollController = ScrollController();
 
+  /// Share of the text already on screen, or null when it all fits.
+  int? _seenPercent;
+
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  bool _updateSeenPercent(ScrollMetrics metrics) {
+    final int? seenPercent = metrics.maxScrollExtent <= 0
+        ? null
+        : ((metrics.pixels + metrics.viewportDimension) /
+                (metrics.maxScrollExtent + metrics.viewportDimension) *
+                100)
+            .round()
+            .clamp(0, 100);
+    if (seenPercent != _seenPercent) {
+      setState(() => _seenPercent = seenPercent);
+    }
+    return false;
   }
 
   @override
@@ -65,24 +82,50 @@ class _ZikrItemCardState extends State<ZikrItemCard> {
                 ),
               ),
             ),
-          Scrollbar(
-            controller: _scrollController,
-            thumbVisibility: true,
-            child: ListView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(20),
-              children: [
-                ZikrContentBuilder(
-                  zikr: zikr,
-                  enableDiacritics: true,
-                  fontSize: context.read<ThemeCubit>().state.fontSize,
+          Column(
+            children: [
+              Expanded(
+                child: NotificationListener<ScrollMetricsNotification>(
+                  onNotification: (notification) =>
+                      _updateSeenPercent(notification.metrics),
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) =>
+                        _updateSeenPercent(notification.metrics),
+                    child: Scrollbar(
+                      controller: _scrollController,
+                      thumbVisibility: true,
+                      child: ListView(
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.all(20),
+                        children: [
+                          ZikrContentBuilder(
+                            zikr: zikr,
+                            enableDiacritics: true,
+                            fontSize: context.read<ThemeCubit>().state.fontSize,
+                          ),
+                          if (zikr.fadl.isNotEmpty) ...[
+                            const SizedBox(height: 50),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                if (zikr.fadl.isNotEmpty) ...[
-                  const SizedBox(height: 50),
-                ],
-              ],
-            ),
+              ),
+              SizedBox(
+                height: 28,
+                child: Center(
+                  child: Text(
+                    _seenPercent == null ? "" : "$_seenPercent%",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurface.withValues(alpha: .45),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
