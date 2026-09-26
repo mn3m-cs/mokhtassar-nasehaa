@@ -97,7 +97,6 @@ void main() {
     const section = ZikrTitle(id: 1, order: 1, name: 'أذكار الصباح', freq: 'd');
     const state = HomeLoadedState(
       titles: [category, section],
-      freqFilters: [],
       titlesToShow: [category, section],
       isSearching: false,
       favouriteTitlesIds: [1, 99],

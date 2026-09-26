@@ -31,6 +31,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
         IconButton(
           splashRadius: 20,
           padding: EdgeInsets.zero,
+          tooltip: "البحث",
           icon: const Icon(Icons.search),
           onPressed: () {
             context.read<HomeBloc>().add(const HomeToggleSearchEvent(true));
@@ -39,6 +40,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
         IconButton(
           splashRadius: 20,
           padding: EdgeInsets.zero,
+          tooltip: "الإعدادات",
           icon: const Icon(Icons.settings),
           onPressed: () {
             Navigator.of(context).push(

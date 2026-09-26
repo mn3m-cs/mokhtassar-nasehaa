@@ -15,7 +15,9 @@ class NoItemsFoundIndicatorBuilder extends StatelessWidget {
         const Icon(Icons.search),
         const SizedBox(height: 10),
         Text(
-          'لا توجد نتائج\n"$searchText"',
+          searchText.trim().isEmpty
+              ? 'اكتب كلمة للبحث في الفهرس أو في نصوص الأذكار'
+              : 'لا توجد نتائج\n"$searchText"',
           textAlign: TextAlign.center,
         ),
       ],

@@ -4,7 +4,6 @@ import 'package:alazkar/src/core/helpers/azkar_helper.dart';
 import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/core/utils/app_print.dart';
-import 'package:alazkar/src/features/home/data/models/titles_freq_enum.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/models/zikr_filter.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/models/zikr_filter_list_extension.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/repository/zikr_filter_storage.dart';
@@ -37,7 +36,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeBookmarkTitleEvent>(_bookmarkTitle);
     on<HomeUnBookmarkTitleEvent>(_unBookmarkTitle);
     on<HomeBookmarksChangedEvent>(_bookmarksChanged);
-    on<HomeToggleFilterEvent>(_toggleFreqFilter);
     on<HomeFiltersChange>(_handleSettingsFiltersChanges);
   }
 
@@ -59,37 +57,28 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final List<int> favouriteTitlesIds =
         await bookmarksDBHelper.getAllFavoriteTitles();
 
-    ///
-    final freq = zikrFilterStorage.getTitlesFreqFilterStatus();
-
     /// Filters
-    titlesToSet = await applyFiltersOnTitles(dbTitles, freq);
+    titlesToSet = await applyFiltersOnTitles(dbTitles);
 
     emit(
       HomeLoadedState(
         titles: dbTitles,
         titlesToShow: titlesToSet,
         isSearching: false,
-        freqFilters: freq,
         favouriteTitlesIds: favouriteTitlesIds,
       ),
     );
   }
 
   Future<List<ZikrTitle>> applyFiltersOnTitles(
-    List<ZikrTitle> titles,
-    List<TitlesFreqEnum> titleFreqList, {
+    List<ZikrTitle> titles, {
     List<Filter>? zikrFilters,
   }) async {
-    final frequencyFilteredTitles = titles
-        .where(
-          (title) =>
-              title.nodeType == ZikrTitleNodeType.content &&
-              titleFreqList.validate(title.freq),
-        )
+    final contentTitles = titles
+        .where((title) => title.nodeType == ZikrTitleNodeType.content)
         .toList();
     final matchingContentTitles = await _contentTitlesMatchingFilters(
-      frequencyFilteredTitles,
+      contentTitles,
       zikrFilters ?? zikrFilterStorage.getAllFilters(),
     );
     return _titlesWithAncestors(titles, matchingContentTitles);
@@ -178,37 +167,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     );
   }
 
-  Future<void> _toggleFreqFilter(
-    HomeToggleFilterEvent event,
-    Emitter<HomeState> emit,
-  ) async {
-    final state = this.state;
-    if (state is! HomeLoadedState) return;
-
-    /// Handle freq change
-    final List<TitlesFreqEnum> newFreq = List.of(state.freqFilters);
-    if (newFreq.contains(event.filter)) {
-      newFreq.remove(event.filter);
-    } else {
-      newFreq.add(event.filter);
-    }
-
-    /// Handle titles change
-    final List<ZikrTitle> titleToView = await applyFiltersOnTitles(
-      List.of(state.titles),
-      newFreq,
-    );
-
-    await zikrFilterStorage.setTitlesFreqFilterStatus(newFreq);
-
-    emit(
-      state.copyWith(
-        freqFilters: newFreq,
-        titlesToShow: titleToView,
-      ),
-    );
-  }
-
   @override
   Future<void> close() {
     zikrSourceFilterCubitStram.cancel();
@@ -234,7 +192,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
     final List<ZikrTitle> titleToView = await applyFiltersOnTitles(
       List.of(state.titles),
-      state.freqFilters,
       zikrFilters: event.filters,
     );
 
