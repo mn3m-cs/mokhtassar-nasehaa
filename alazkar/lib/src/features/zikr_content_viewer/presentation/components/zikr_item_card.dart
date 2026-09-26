@@ -68,20 +68,6 @@ class _ZikrItemCardState extends State<ZikrItemCard> {
       },
       child: Stack(
         children: [
-          if (widget.isCounted)
-            Center(
-              child: Text(
-                zikr.count == 0 ? "تم" : zikr.count.toString(),
-                semanticsLabel: zikr.count == 0
-                    ? "تم العدّ"
-                    : "العدد المتبقي ${zikr.count}",
-                style: TextStyle(
-                  fontSize: 200,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary.withValues(alpha: .14),
-                ),
-              ),
-            ),
           Column(
             children: [
               Expanded(
@@ -116,23 +102,69 @@ class _ZikrItemCardState extends State<ZikrItemCard> {
                 ),
               ),
               SizedBox(
-                height: 28,
-                child: Center(
-                  child: Text(
-                    _seenPercent == null ? "" : "$_seenPercent%",
-                    semanticsLabel: _seenPercent == null
-                        ? ""
-                        : "قرأت $_seenPercent٪ من النص",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurface.withValues(alpha: .65),
+                height: widget.isCounted ? 72 : 28,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (widget.isCounted) _RemainingCount(count: zikr.count),
+                    PositionedDirectional(
+                      end: 20,
+                      child: Text(
+                        _seenPercent == null ? "" : "$_seenPercent%",
+                        semanticsLabel: _seenPercent == null
+                            ? ""
+                            : "قرأت $_seenPercent٪ من النص",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colorScheme.onSurface.withValues(alpha: .65),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Repetitions left for a counted zikr, kept below the text so it never
+/// sits behind the words; a check mark once it is done.
+class _RemainingCount extends StatelessWidget {
+  final int count;
+
+  const _RemainingCount({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final done = count == 0;
+    return Semantics(
+      label: done ? "تم العدّ" : "العدد المتبقي $count",
+      excludeSemantics: true,
+      child: Container(
+        width: 52,
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: done
+              ? colorScheme.primary
+              : colorScheme.primary.withValues(alpha: .12),
+        ),
+        child: done
+            ? Icon(Icons.check, color: colorScheme.onPrimary)
+            : Text(
+                "$count",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
+                ),
+              ),
       ),
     );
   }
