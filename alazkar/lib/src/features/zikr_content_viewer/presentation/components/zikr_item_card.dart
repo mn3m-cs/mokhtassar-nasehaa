@@ -96,7 +96,9 @@ class _ZikrItemCardState extends State<ZikrItemCard> {
                       thumbVisibility: true,
                       child: ListView(
                         controller: _scrollController,
-                        physics: const BouncingScrollPhysics(),
+                        physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics(),
+                        ),
                         padding: const EdgeInsets.all(20),
                         children: [
                           ZikrContentBuilder(

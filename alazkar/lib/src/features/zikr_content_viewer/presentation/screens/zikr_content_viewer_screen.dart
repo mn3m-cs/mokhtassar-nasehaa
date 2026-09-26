@@ -118,41 +118,51 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
 
   /// How far past the first or last zikr a drag must go to change section.
   static const double _crossSectionThreshold = 72;
-  double _edgeDrag = 0;
-  bool _crossedSection = false;
+  final Map<int, double> _edgeDrag = {};
+  final Set<int> _crossedSection = {};
 
-  /// With continuous reading on, dragging past the last zikr opens the next
-  /// section and dragging before the first opens the previous one at its end.
+  /// With continuous reading on, dragging sideways past the last zikr, or up
+  /// past the end of its text, opens the next section; dragging sideways
+  /// before the first zikr opens the previous one at its end.
   bool _crossSectionEdge(ScrollNotification notification) {
-    if (notification.depth != 0) return false;
+    final depth = notification.depth;
+    if (depth > 1) return false;
     if (notification is ScrollStartNotification ||
         notification is ScrollEndNotification) {
-      _edgeDrag = 0;
-      _crossedSection = false;
+      _edgeDrag.remove(depth);
+      _crossedSection.remove(depth);
       return false;
     }
-    if (_crossedSection || !_bloc.settingsStorage.continuousReading) {
+    if (_crossedSection.contains(depth) ||
+        !_bloc.settingsStorage.continuousReading) {
       return false;
     }
 
     final metrics = notification.metrics;
+    var drag = _edgeDrag[depth] ?? 0;
     if (notification is OverscrollNotification &&
         notification.dragDetails != null) {
-      _edgeDrag += notification.overscroll;
+      drag += notification.overscroll;
     } else if (notification is ScrollUpdateNotification &&
         notification.dragDetails != null) {
       if (metrics.pixels > metrics.maxScrollExtent) {
-        _edgeDrag = metrics.pixels - metrics.maxScrollExtent;
+        drag = metrics.pixels - metrics.maxScrollExtent;
       } else if (metrics.pixels < metrics.minScrollExtent) {
-        _edgeDrag = metrics.pixels - metrics.minScrollExtent;
+        drag = metrics.pixels - metrics.minScrollExtent;
       }
     }
+    _edgeDrag[depth] = drag;
 
-    if (_edgeDrag > _crossSectionThreshold) {
-      _crossedSection = true;
+    final state = _bloc.state;
+    final onLastZikr = state is ZikrContentViewerLoadedState &&
+        state.activeZikrIndex == state.azkar.length - 1;
+    if (depth == 1 && !onLastZikr) return false;
+
+    if (drag > _crossSectionThreshold) {
+      _crossedSection.add(depth);
       _bloc.add(ZikrContentViewerNextTitleEvent());
-    } else if (_edgeDrag < -_crossSectionThreshold) {
-      _crossedSection = true;
+    } else if (depth == 0 && drag < -_crossSectionThreshold) {
+      _crossedSection.add(depth);
       _bloc.add(const ZikrContentViewerPerviousTitleEvent(fromEnd: true));
     }
     return false;
