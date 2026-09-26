@@ -239,7 +239,6 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                             TextSpan(
                               text: category,
                               style: TextStyle(
-                                fontSize: 14,
                                 fontWeight: FontWeight.normal,
                                 color: mutedColor,
                               ),
@@ -250,7 +249,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                                 textDirection: TextDirection.ltr,
                                 child: Icon(
                                   Icons.chevron_left,
-                                  size: 18,
+                                  size: 22,
                                   color: mutedColor,
                                 ),
                               ),
