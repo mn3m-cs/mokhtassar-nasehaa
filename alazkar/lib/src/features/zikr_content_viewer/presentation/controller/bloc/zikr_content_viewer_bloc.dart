@@ -126,16 +126,13 @@ class ZikrContentViewerBloc
     final state = this.state;
     if (state is! ZikrContentViewerLoadedState) return;
 
-    if (event.zikr.count == 0) return;
+    final index = state.azkar.indexWhere((e) => e.id == event.zikr.id);
+    if (event.zikr.count == 0) {
+      _advanceFrom(index, state.azkar.length);
+      return;
+    }
 
     final countToSet = event.zikr.count - 1;
-
-    if (countToSet == 0) {
-      pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
 
     final azkarToSet = state.azkar.map((e) {
       if (e.id != event.zikr.id) return e;
@@ -147,6 +144,26 @@ class ZikrContentViewerBloc
         azkar: azkarToSet,
       ),
     );
+
+    if (countToSet == 0) {
+      if (index == state.azkar.length - 1) {
+        await Future.delayed(const Duration(milliseconds: 400));
+      }
+      _advanceFrom(index, state.azkar.length);
+    }
+  }
+
+  /// Moves on from the zikr at [index]: to the next zikr, or past the last
+  /// one to the next section when continuous reading is on.
+  void _advanceFrom(int index, int length) {
+    if (index < length - 1) {
+      pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else if (settingsStorage.continuousReading) {
+      add(ZikrContentViewerNextTitleEvent());
+    }
   }
 
   Future<void> _pageChanged(
