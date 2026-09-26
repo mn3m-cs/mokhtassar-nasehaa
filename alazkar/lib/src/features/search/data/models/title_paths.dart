@@ -11,18 +11,21 @@ Map<int, String> buildTitlePaths(List<ZikrTitle> titles) {
 String buildParentPath(ZikrTitle title, List<ZikrTitle> titles) {
   final titlesById = {for (final title in titles) title.id: title};
   final parent = title.parentId == null ? null : titlesById[title.parentId];
-  return parent == null ? '' : _buildTitlePath(parent, titlesById);
+  return parent == null
+      ? ''
+      : _buildTitlePath(parent, titlesById, separator: ' › ');
 }
 
 String _buildTitlePath(
   ZikrTitle title,
-  Map<int, ZikrTitle> titlesById,
-) {
+  Map<int, ZikrTitle> titlesById, {
+  String separator = ' ← ',
+}) {
   final names = <String>[];
   ZikrTitle? current = title;
   while (current != null) {
     names.add(current.name);
     current = current.parentId == null ? null : titlesById[current.parentId]!;
   }
-  return names.reversed.join(' ← ');
+  return names.reversed.join(separator);
 }

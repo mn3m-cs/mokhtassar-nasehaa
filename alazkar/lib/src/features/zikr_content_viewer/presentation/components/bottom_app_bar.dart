@@ -22,7 +22,7 @@ class ZikrContentViewerBottomAppBar extends StatelessWidget {
             onPressed: () {
               context
                   .read<ZikrContentViewerBloc>()
-                  .add(ZikrContentViewerPerviousTitleEvent());
+                  .add(const ZikrContentViewerPerviousTitleEvent());
             },
             icon: const Icon(Icons.keyboard_double_arrow_right_sharp),
           ),

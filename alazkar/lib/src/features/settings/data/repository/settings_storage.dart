@@ -25,4 +25,10 @@ class SettingsStorage {
   bool get praiseWithVolumeKeys => _box.read(praiseWithVolumeKeysKey) ?? true;
   Future<void> changePraiseWithVolumeKeysStatus({required bool value}) =>
       _box.write(praiseWithVolumeKeysKey, value);
+
+  ///MARK: continuousReading
+  static const continuousReadingKey = 'continuousReading';
+  bool get continuousReading => _box.read(continuousReadingKey) ?? false;
+  Future<void> changeContinuousReadingStatus({required bool value}) =>
+      _box.write(continuousReadingKey, value);
 }

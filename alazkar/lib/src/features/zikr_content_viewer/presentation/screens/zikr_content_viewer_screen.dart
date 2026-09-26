@@ -116,6 +116,48 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     });
   }
 
+  /// How far past the first or last zikr a drag must go to change section.
+  static const double _crossSectionThreshold = 72;
+  double _edgeDrag = 0;
+  bool _crossedSection = false;
+
+  /// With continuous reading on, dragging past the last zikr opens the next
+  /// section and dragging before the first opens the previous one at its end.
+  bool _crossSectionEdge(ScrollNotification notification) {
+    if (notification.depth != 0) return false;
+    if (notification is ScrollStartNotification ||
+        notification is ScrollEndNotification) {
+      _edgeDrag = 0;
+      _crossedSection = false;
+      return false;
+    }
+    if (_crossedSection || !_bloc.settingsStorage.continuousReading) {
+      return false;
+    }
+
+    final metrics = notification.metrics;
+    if (notification is OverscrollNotification &&
+        notification.dragDetails != null) {
+      _edgeDrag += notification.overscroll;
+    } else if (notification is ScrollUpdateNotification &&
+        notification.dragDetails != null) {
+      if (metrics.pixels > metrics.maxScrollExtent) {
+        _edgeDrag = metrics.pixels - metrics.maxScrollExtent;
+      } else if (metrics.pixels < metrics.minScrollExtent) {
+        _edgeDrag = metrics.pixels - metrics.minScrollExtent;
+      }
+    }
+
+    if (_edgeDrag > _crossSectionThreshold) {
+      _crossedSection = true;
+      _bloc.add(ZikrContentViewerNextTitleEvent());
+    } else if (_edgeDrag < -_crossSectionThreshold) {
+      _crossedSection = true;
+      _bloc.add(const ZikrContentViewerPerviousTitleEvent(fromEnd: true));
+    }
+    return false;
+  }
+
   double getTextWidth(String text, TextStyle style, BuildContext context) {
     final textSpan = TextSpan(text: text, style: style);
     final textPainter = TextPainter(
@@ -146,32 +188,24 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
             fontWeight: FontWeight.bold,
           );
           final Size screenSize = MediaQuery.of(context).size;
+          final String breadcrumb = state.sectionPath.isEmpty
+              ? state.zikrTitle.name
+              : "${state.sectionPath} › ${state.zikrTitle.name}";
+          final List<String> pathParts = state.sectionPath.isEmpty
+              ? const []
+              : state.sectionPath.split(' › ');
+          final Color mutedColor =
+              Theme.of(context).colorScheme.onSurface.withValues(alpha: .55);
           final bool isSliding =
-              getTextWidth(state.zikrTitle.name, headerStyle, context) >
+              getTextWidth(breadcrumb, headerStyle, context) >
                   (screenSize.width * .5);
           return Scaffold(
             appBar: AppBar(
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (state.sectionPath.isNotEmpty)
-                    Text(
-                      state.sectionPath,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: .55),
-                      ),
-                    ),
-                  if (isSliding)
-                    SizedBox(
-                      height: state.sectionPath.isEmpty ? 60 : 32,
+              title: isSliding
+                  ? SizedBox(
+                      height: 60,
                       child: Marquee(
-                        text: state.zikrTitle.name,
+                        text: breadcrumb,
                         blankSpace: screenSize.width,
                         pauseAfterRound: const Duration(seconds: 1),
                         accelerationCurve: Curves.easeInOut,
@@ -182,13 +216,35 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                         style: headerStyle,
                       ),
                     )
-                  else
-                    Text(
-                      state.zikrTitle.name,
+                  : Text.rich(
+                      TextSpan(
+                        children: [
+                          for (final category in pathParts) ...[
+                            TextSpan(
+                              text: category,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                                color: mutedColor,
+                              ),
+                            ),
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Icon(
+                                  Icons.chevron_left,
+                                  size: 18,
+                                  color: mutedColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                          TextSpan(text: state.zikrTitle.name),
+                        ],
+                      ),
                       style: headerStyle,
                     ),
-                ],
-              ),
               centerTitle: true,
               actions: [BookmarkTitleButton(titleId: state.zikrTitle.id)],
               bottom: PreferredSize(
@@ -203,16 +259,19 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                 ),
               ),
             ),
-            body: PageView.builder(
-              controller: _bloc.pageController,
-              itemCount: state.azkar.length,
-              itemBuilder: (context, index) {
-                final zikr = state.azkar[index];
-                return ZikrItemCard(
-                  zikr: zikr,
-                  isCounted: state.isCounted(zikr),
-                );
-              },
+            body: NotificationListener<ScrollNotification>(
+              onNotification: _crossSectionEdge,
+              child: PageView.builder(
+                controller: _bloc.pageController,
+                itemCount: state.azkar.length,
+                itemBuilder: (context, index) {
+                  final zikr = state.azkar[index];
+                  return ZikrItemCard(
+                    zikr: zikr,
+                    isCounted: state.isCounted(zikr),
+                  );
+                },
+              ),
             ),
             bottomNavigationBar: ZikrContentViewerBottomAppBar(
               state: state,

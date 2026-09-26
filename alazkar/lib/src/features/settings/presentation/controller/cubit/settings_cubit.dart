@@ -11,6 +11,7 @@ class SettingsCubit extends Cubit<SettingsState> {
           SettingsState(
             showTextInBrackets: settingsStorage.showTextInBrackets(),
             praiseWithVolumeKeys: settingsStorage.praiseWithVolumeKeys,
+            continuousReading: settingsStorage.continuousReading,
           ),
         );
 
@@ -24,5 +25,11 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future togglePraiseWithVolumeKeys({required bool use}) async {
     await settingsStorage.changePraiseWithVolumeKeysStatus(value: use);
     emit(state.copyWith(praiseWithVolumeKeys: use));
+  }
+
+  ///MARK: continuousReading
+  Future toggleContinuousReading({required bool use}) async {
+    await settingsStorage.changeContinuousReadingStatus(value: use);
+    emit(state.copyWith(continuousReading: use));
   }
 }
