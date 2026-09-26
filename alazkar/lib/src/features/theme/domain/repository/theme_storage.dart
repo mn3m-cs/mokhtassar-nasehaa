@@ -7,8 +7,13 @@ class ThemeStorage {
 
   /// *****************************
   static const String _brightnessKey = "ThemeBrightness";
+
+  /// The reader's own choice, or the phone's setting until they make one.
   Brightness get getBrightness {
     final String? brightness = box.read(_brightnessKey);
+    if (brightness == null) {
+      return WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    }
     return brightness == Brightness.dark.toString()
         ? Brightness.dark
         : Brightness.light;

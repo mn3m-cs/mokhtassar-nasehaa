@@ -211,7 +211,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
               ? const []
               : state.sectionPath.split(' › ');
           final Color mutedColor =
-              Theme.of(context).colorScheme.onSurface.withValues(alpha: .55);
+              Theme.of(context).colorScheme.onSurface.withValues(alpha: .65);
           final bool isSliding =
               getTextWidth(breadcrumb, headerStyle, context) >
                   (screenSize.width * .5);
@@ -269,6 +269,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                   children: [
                     ZikrContentViewerAppBarBottom(state: state),
                     LinearProgressIndicator(
+                      semanticsLabel: "التقدم في الباب",
                       value: state.progress(),
                     ),
                   ],
