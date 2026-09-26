@@ -102,6 +102,7 @@ class _ZikrItemCardState extends State<ZikrItemCard> {
                 ),
               ),
               SizedBox(
+                width: double.infinity,
                 height: widget.isCounted ? 72 : 28,
                 child: Stack(
                   alignment: Alignment.center,
