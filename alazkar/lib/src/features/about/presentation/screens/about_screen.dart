@@ -37,8 +37,9 @@ class AboutScreen extends StatelessWidget {
             leading: Image.asset(
               "assets/icons/app.png",
             ),
-            title: Text("تطبيق زاد الذاكر الإصدار $kAppVersion"),
-            subtitle: const Text("تطبيق مجاني خالي من الإعلانات ومفتوح المصدر"),
+            title: Text(
+                "تطبيق زاد الذاكر الإصدار ${kAppVersion.split(" ").first}"),
+            subtitle: const Text("تطبيق مجاني خالٍ من الإعلانات ومفتوح المصدر"),
           ),
           const Divider(),
           const ListTile(
@@ -50,13 +51,11 @@ class AboutScreen extends StatelessWidget {
             leading: Icon(Icons.source_outlined),
             title: Text("المصدر"),
             isThreeLine: true,
-            subtitle: Text("""
-الكتاب: مختصر النصيحة في الأذكار والأدعية الصحيحة
-المؤلف: د. محمد إسماعيل المقدم (محمد أحمد إسماعيل المقدم)
-الطبعة: العاشرة
-
-جُمّع المحتوى من أدعية القرآن الكريم وما صحّ من سنة النبي ﷺ في الأدعية والأذكار.
-"""),
+            subtitle: Text(
+              "الكتاب: مختصر النصيحة في الأذكار والأدعية الصحيحة\n"
+              "إعداد: محمد أحمد إسماعيل المقدم\n"
+              "النشر: دار الأمل ودار التميز، 1443هـ - 2022م",
+            ),
           ),
           const Divider(),
           ListTile(
