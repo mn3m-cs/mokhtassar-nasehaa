@@ -213,7 +213,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
           final Color mutedColor =
               Theme.of(context).colorScheme.onSurface.withValues(alpha: .65);
           final bool isSliding =
-              getTextWidth(breadcrumb, headerStyle, context) >
+              getTextWidth(state.zikrTitle.name, headerStyle, context) >
                   (screenSize.width * .5);
           return Scaffold(
             appBar: AppBar(
@@ -221,7 +221,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                   ? SizedBox(
                       height: 60,
                       child: Marquee(
-                        text: breadcrumb,
+                        text: state.zikrTitle.name,
                         blankSpace: screenSize.width,
                         pauseAfterRound: const Duration(seconds: 1),
                         accelerationCurve: Curves.easeInOut,
@@ -232,33 +232,38 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                         style: headerStyle,
                       ),
                     )
-                  : Text.rich(
-                      TextSpan(
+                  : Semantics(
+                      label: breadcrumb,
+                      excludeSemantics: true,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          for (final category in pathParts) ...[
-                            TextSpan(
-                              text: category,
-                              style: TextStyle(
-                                fontWeight: FontWeight.normal,
-                                color: mutedColor,
-                              ),
-                            ),
-                            WidgetSpan(
-                              alignment: PlaceholderAlignment.middle,
-                              child: Directionality(
-                                textDirection: TextDirection.ltr,
-                                child: Icon(
-                                  Icons.chevron_left,
-                                  size: 22,
+                          if (state.sectionPath.isNotEmpty) ...[
+                            // The path gives way first, so the section's
+                            // own name is never cut short.
+                            Flexible(
+                              child: Text(
+                                pathParts.last,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: headerStyle.copyWith(
+                                  fontWeight: FontWeight.normal,
                                   color: mutedColor,
                                 ),
                               ),
                             ),
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Icon(
+                                Icons.chevron_left,
+                                size: 22,
+                                color: mutedColor,
+                              ),
+                            ),
                           ],
-                          TextSpan(text: state.zikrTitle.name),
+                          Text(state.zikrTitle.name, style: headerStyle),
                         ],
                       ),
-                      style: headerStyle,
                     ),
               centerTitle: true,
               actions: [BookmarkTitleButton(titleId: state.zikrTitle.id)],
