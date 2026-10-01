@@ -32,18 +32,23 @@ class ZikrContentViewerDecreaseEvent extends ZikrContentViewerEvent {
   List<Object> get props => [zikr];
 }
 
-class ZikrContentViewerPageChangeEvent extends ZikrContentViewerEvent {
-  final int index;
+class ZikrContentViewerCopyEvent extends ZikrContentViewerEvent {
+  final Zikr zikr;
 
-  const ZikrContentViewerPageChangeEvent(this.index);
+  const ZikrContentViewerCopyEvent(this.zikr);
 
   @override
-  List<Object> get props => [index];
+  List<Object> get props => [zikr];
 }
 
-class ZikrContentViewerCopyEvent extends ZikrContentViewerEvent {}
+class ZikrContentViewerShareEvent extends ZikrContentViewerEvent {
+  final Zikr zikr;
 
-class ZikrContentViewerShareEvent extends ZikrContentViewerEvent {}
+  const ZikrContentViewerShareEvent(this.zikr);
+
+  @override
+  List<Object> get props => [zikr];
+}
 
 class ZikrContentViewerNextTitleEvent extends ZikrContentViewerEvent {}
 

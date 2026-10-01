@@ -21,12 +21,16 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   /// not a zikr to count.
   final Map<int, int> initialCounts;
 
+  /// Order of the zikr to bring into view on opening, from a search result.
+  final int? focusOrder;
+
   const ZikrContentViewerLoadedState({
     required this.zikrTitle,
     required this.azkar,
     required this.activeZikrIndex,
     required this.initialCounts,
     this.sectionPath = '',
+    this.focusOrder,
   });
 
   ZikrContentViewerLoadedState copyWith({
@@ -39,6 +43,7 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
       activeZikrIndex: activeZikrIndex ?? this.activeZikrIndex,
       initialCounts: initialCounts,
       sectionPath: sectionPath,
+      focusOrder: focusOrder,
     );
   }
 
@@ -54,9 +59,24 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
     return done / counted.length;
   }
 
+  /// The first counted zikr not yet finished, or -1 when none is left; the
+  /// volume keys count it and the page brings it into view.
+  int get currentIndex =>
+      azkar.indexWhere((zikr) => isCounted(zikr) && zikr.count > 0);
+
+  Zikr? get currentZikr {
+    final index = currentIndex;
+    return index == -1 ? null : azkar[index];
+  }
+
+  int get finishedCount =>
+      azkar.where((zikr) => isCounted(zikr) && zikr.count == 0).length;
+
+  int get countedTotal => azkar.where(isCounted).length;
+
   Zikr? get activeZikr {
     if (azkar.isEmpty) return null;
-    return azkar[activeZikrIndex];
+    return azkar[activeZikrIndex.clamp(0, azkar.length - 1)];
   }
 
   @override

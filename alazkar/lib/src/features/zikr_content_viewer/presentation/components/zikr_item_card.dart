@@ -1,11 +1,16 @@
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/features/theme/presentation/controller/cubit/theme_cubit.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_content_builder.dart';
+import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_source_dialog.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/controller/bloc/zikr_content_viewer_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class ZikrItemCard extends StatefulWidget {
+enum _ZikrAction { source, share, copy }
+
+/// One zikr as a card in the section's page: the text, its virtue below it,
+/// and for a counted zikr a counter button; the rest sits behind a menu.
+class ZikrItemCard extends StatelessWidget {
   final Zikr zikr;
 
   /// False for a passage that is read, not counted; it gets no counter.
@@ -18,152 +23,167 @@ class ZikrItemCard extends StatefulWidget {
   });
 
   @override
-  State<ZikrItemCard> createState() => _ZikrItemCardState();
-}
-
-class _ZikrItemCardState extends State<ZikrItemCard> {
-  final ScrollController _scrollController = ScrollController();
-
-  /// Share of the text already on screen, or null when it all fits.
-  int? _seenPercent;
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  bool _updateSeenPercent(ScrollMetrics metrics) {
-    final int? seenPercent = metrics.maxScrollExtent <= 0
-        ? null
-        : ((metrics.pixels + metrics.viewportDimension) /
-                (metrics.maxScrollExtent + metrics.viewportDimension) *
-                100)
-            .round()
-            .clamp(0, 100);
-    if (seenPercent != _seenPercent) {
-      setState(() => _seenPercent = seenPercent);
-    }
-    return false;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final zikr = widget.zikr;
-    final colorScheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: () {
-        context
-            .read<ZikrContentViewerBloc>()
-            .add(ZikrContentViewerDecreaseEvent(zikr));
-      },
-      onLongPress: () {
-        final SnackBar snackBar = SnackBar(
-          content: Text(
-              "الحكم: ${zikr.hokm}\n\nالمصدر:\n${zikr.source}\n\nرقم الذكر في المصدر:\n${zikr.sourceIndex}"),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          snackBar,
-        );
-      },
-      child: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: NotificationListener<ScrollMetricsNotification>(
-                  onNotification: (notification) =>
-                      _updateSeenPercent(notification.metrics),
-                  child: NotificationListener<ScrollNotification>(
-                    onNotification: (notification) =>
-                        _updateSeenPercent(notification.metrics),
-                    child: Scrollbar(
-                      controller: _scrollController,
-                      thumbVisibility: true,
-                      child: ListView(
-                        controller: _scrollController,
-                        physics: const AlwaysScrollableScrollPhysics(
-                          parent: BouncingScrollPhysics(),
-                        ),
-                        padding: const EdgeInsets.all(20),
-                        children: [
-                          ZikrContentBuilder(
-                            zikr: zikr,
-                            enableDiacritics: true,
-                            fontSize: context.read<ThemeCubit>().state.fontSize,
-                          ),
-                          if (zikr.fadl.isNotEmpty) ...[
-                            const SizedBox(height: 50),
-                          ],
-                        ],
-                      ),
-                    ),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final done = isCounted && zikr.count == 0;
+    final mutedColor = colorScheme.onSurface.withValues(alpha: .65);
+    return AnimatedOpacity(
+      opacity: done ? .5 : 1,
+      duration: const Duration(milliseconds: 250),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsetsDirectional.fromSTEB(18, 4, 8, 14),
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            colorScheme.surface.withValues(alpha: .7),
+            colorScheme.surfaceContainerHighest,
+          ),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: _ActionsMenu(zikr: zikr, color: mutedColor),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 10),
+              child: ZikrContentBuilder(
+                zikr: zikr,
+                enableDiacritics: true,
+                fontSize: context.watch<ThemeCubit>().state.fontSize,
+              ),
+            ),
+            if (zikr.fadl.isNotEmpty)
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 10, 0),
+                child: Text(
+                  zikr.fadl,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    height: 1.7,
+                    color: colorScheme.primary,
                   ),
                 ),
               ),
-              SizedBox(
-                width: double.infinity,
-                height: widget.isCounted ? 72 : 28,
-                child: Stack(
-                  alignment: Alignment.center,
+            if (isCounted || zikr.hokm.isNotEmpty)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(top: 10, end: 2),
+                child: Row(
                   children: [
-                    if (widget.isCounted) _RemainingCount(count: zikr.count),
-                    PositionedDirectional(
-                      end: 20,
+                    Expanded(
                       child: Text(
-                        _seenPercent == null ? "" : "$_seenPercent%",
-                        semanticsLabel: _seenPercent == null
-                            ? ""
-                            : "قرأت $_seenPercent٪ من النص",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colorScheme.onSurface.withValues(alpha: .65),
-                        ),
+                        zikr.hokm,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: mutedColor),
                       ),
                     ),
+                    if (isCounted) _CounterButton(zikr: zikr),
                   ],
                 ),
               ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Repetitions left for a counted zikr, kept below the text so it never
-/// sits behind the words; a check mark once it is done.
-class _RemainingCount extends StatelessWidget {
-  final int count;
+class _ActionsMenu extends StatelessWidget {
+  final Zikr zikr;
+  final Color color;
 
-  const _RemainingCount({required this.count});
+  const _ActionsMenu({required this.zikr, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = context.read<ZikrContentViewerBloc>();
+    return PopupMenuButton<_ZikrAction>(
+      tooltip: "خيارات الذكر",
+      icon: Icon(Icons.more_horiz, color: color),
+      onSelected: (action) {
+        switch (action) {
+          case _ZikrAction.source:
+            showZikrSourceDialog(context, zikr);
+          case _ZikrAction.share:
+            bloc.add(ZikrContentViewerShareEvent(zikr));
+          case _ZikrAction.copy:
+            bloc.add(ZikrContentViewerCopyEvent(zikr));
+        }
+      },
+      itemBuilder: (context) => [
+        if (zikr.source.isNotEmpty || zikr.hokm.isNotEmpty)
+          const PopupMenuItem(
+            value: _ZikrAction.source,
+            child: ListTile(
+              leading: Icon(Icons.menu_book_rounded),
+              title: Text("المصدر والحكم"),
+            ),
+          ),
+        const PopupMenuItem(
+          value: _ZikrAction.share,
+          child: ListTile(
+            leading: Icon(Icons.share),
+            title: Text("مشاركة"),
+          ),
+        ),
+        const PopupMenuItem(
+          value: _ZikrAction.copy,
+          child: ListTile(
+            leading: Icon(Icons.copy),
+            title: Text("نسخ"),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Repetitions left; each press counts one, and it turns into a check mark
+/// once the zikr is done.
+class _CounterButton extends StatelessWidget {
+  final Zikr zikr;
+
+  const _CounterButton({required this.zikr});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final done = count == 0;
+    final done = zikr.count == 0;
     return Semantics(
-      label: done ? "تم العدّ" : "العدد المتبقي $count",
+      button: !done,
+      label: done ? "تم العدّ" : "العدد المتبقي ${zikr.count}، اضغط للعدّ",
       excludeSemantics: true,
-      child: Container(
+      child: SizedBox(
         width: 52,
         height: 52,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: done
-              ? colorScheme.primary
-              : colorScheme.primary.withValues(alpha: .12),
-        ),
         child: done
-            ? Icon(Icons.check, color: colorScheme.onPrimary)
-            : Text(
-                "$count",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+            ? DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                   color: colorScheme.primary,
+                ),
+                child: Icon(Icons.check, color: colorScheme.onPrimary),
+              )
+            : OutlinedButton(
+                onPressed: () => context
+                    .read<ZikrContentViewerBloc>()
+                    .add(ZikrContentViewerDecreaseEvent(zikr)),
+                style: OutlinedButton.styleFrom(
+                  shape: const CircleBorder(),
+                  padding: EdgeInsets.zero,
+                  side: BorderSide(color: colorScheme.primary, width: 1.5),
+                  backgroundColor: colorScheme.primary.withValues(alpha: .1),
+                ),
+                child: Text(
+                  "${zikr.count}",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
                 ),
               ),
       ),
