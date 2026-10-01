@@ -46,6 +46,10 @@ class ThemeStorage {
     await box.write(_colorKey, color.toARGB32());
   }
 
+  Future resetColor() async {
+    await box.remove(_colorKey);
+  }
+
   /// *****************************
   static const String _zikrFontKey = "ZikrFont";
   ZikrFont get getZikrFont {

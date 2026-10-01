@@ -10,6 +10,7 @@ import 'package:alazkar/src/core/storage/storage_migration_service.dart';
 import 'package:alazkar/src/core/utils/app_bloc_observer.dart';
 import 'package:alazkar/src/features/quran/data/repository/uthmani_repository.dart';
 import 'package:alazkar/src/features/settings/data/repository/settings_storage.dart';
+import 'package:alazkar/src/features/theme/domain/repository/theme_storage.dart';
 import 'package:alazkar/src/features/ui/data/repository/ui_repo.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/repository/zikr_filter_storage.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,7 @@ Future<void> initServices() async {
   // Run migration from GetStorage to Hive
   await StorageMigrationService(sl<KVStorage>()).migrate();
   await resetHiddenReadingFilters();
+  await resetHiddenThemeColor();
 
   phoneDeviceBars();
   final packageInfo = await PackageInfo.fromPlatform();
@@ -108,5 +110,17 @@ Future<void> resetHiddenReadingFilters() async {
   await filters.setEnableHokmFiltersStatus(false);
   await filters.setShowOnlyWithFadlStatus(false);
   await sl<SettingsStorage>().setShowTextInBrackets(true);
+  await storage.write(doneKey, true);
+}
+
+/// The colour picker is no longer in the theme screen, so a colour a reader
+/// chose earlier could not be changed back. It returns to the paper colour
+/// once.
+Future<void> resetHiddenThemeColor() async {
+  final storage = sl<KVStorage>();
+  const doneKey = 'hidden_theme_color_reset';
+  if (storage.read<bool>(doneKey) ?? false) return;
+
+  await sl<ThemeStorage>().resetColor();
   await storage.write(doneKey, true);
 }

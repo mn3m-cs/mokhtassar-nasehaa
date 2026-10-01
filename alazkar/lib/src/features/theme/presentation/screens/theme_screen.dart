@@ -1,7 +1,7 @@
 import 'package:alazkar/src/features/theme/presentation/controller/cubit/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+// import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class ThemeScreen extends StatelessWidget {
   const ThemeScreen({super.key});
@@ -17,44 +17,45 @@ class ThemeScreen extends StatelessWidget {
           ),
           body: ListView(
             children: [
-              ListTile(
-                title: const Text("اللون الأساسي للتطبيق"),
-                trailing: CircleAvatar(
-                  backgroundColor: state.color,
-                ),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      Color selectedColor = state.color;
-                      return AlertDialog(
-                        title: const Text('اختر لونا'),
-                        content: SingleChildScrollView(
-                          child: ColorPicker(
-                            hexInputBar: true,
-                            enableAlpha: false,
-                            pickerColor: state.color,
-                            onColorChanged: (value) {
-                              selectedColor = value;
-                            },
-                          ),
-                        ),
-                        actions: <Widget>[
-                          ElevatedButton(
-                            child: const Text('تعيين'),
-                            onPressed: () {
-                              context
-                                  .read<ThemeCubit>()
-                                  .changeColor(selectedColor);
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
+              // Hidden: one paper colour suits the book; any colour could spoil it.
+              // ListTile(
+              //   title: const Text("اللون الأساسي للتطبيق"),
+              //   trailing: CircleAvatar(
+              //     backgroundColor: state.color,
+              //   ),
+              //   onTap: () {
+              //     showDialog(
+              //       context: context,
+              //       builder: (context) {
+              //         Color selectedColor = state.color;
+              //         return AlertDialog(
+              //           title: const Text('اختر لونا'),
+              //           content: SingleChildScrollView(
+              //             child: ColorPicker(
+              //               hexInputBar: true,
+              //               enableAlpha: false,
+              //               pickerColor: state.color,
+              //               onColorChanged: (value) {
+              //                 selectedColor = value;
+              //               },
+              //             ),
+              //           ),
+              //           actions: <Widget>[
+              //             ElevatedButton(
+              //               child: const Text('تعيين'),
+              //               onPressed: () {
+              //                 context
+              //                     .read<ThemeCubit>()
+              //                     .changeColor(selectedColor);
+              //                 Navigator.of(context).pop();
+              //               },
+              //             ),
+              //           ],
+              //         );
+              //       },
+              //     );
+              //   },
+              // ),
               SwitchListTile(
                 value: state.brightness == Brightness.dark,
                 title: const Text("المظهر الليلي"),
