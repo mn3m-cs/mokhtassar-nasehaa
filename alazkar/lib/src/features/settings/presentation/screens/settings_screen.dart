@@ -1,12 +1,13 @@
 import 'package:alazkar/src/features/about/presentation/screens/about_screen.dart';
 // import 'package:alazkar/src/features/settings/presentation/components/continuous_reading_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/font_size_tile.dart';
+import 'package:alazkar/src/features/settings/presentation/components/night_mode_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/praise_with_volume_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/settings_group_title.dart';
 import 'package:alazkar/src/features/settings/presentation/components/zikr_font_tile.dart';
 // import 'package:alazkar/src/features/settings/presentation/components/show_only_with_fadl_switch.dart';
 // import 'package:alazkar/src/features/settings/presentation/components/show_text_in_bracket_switch.dart';
-import 'package:alazkar/src/features/theme/presentation/screens/theme_screen.dart';
+// import 'package:alazkar/src/features/theme/presentation/screens/theme_screen.dart';
 // import 'package:alazkar/src/features/zikr_source_filter/presentation/screens/select_zikr_hokm_screen.dart';
 // import 'package:alazkar/src/features/zikr_source_filter/presentation/screens/select_zikr_source_screen.dart';
 import 'package:flutter/material.dart';
@@ -25,19 +26,21 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(15),
         children: [
           const SettingsGroupTitle(title: "عام"),
-          ListTile(
-            leading: const Icon(Icons.palette),
-            title: const Text("مظهر التطبيق"),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) {
-                    return const ThemeScreen();
-                  },
-                ),
-              );
-            },
-          ),
+          // Hidden: night mode was all the theme screen had left.
+          // ListTile(
+          //   leading: const Icon(Icons.palette),
+          //   title: const Text("مظهر التطبيق"),
+          //   onTap: () {
+          //     Navigator.of(context).push(
+          //       MaterialPageRoute(
+          //         builder: (context) {
+          //           return const ThemeScreen();
+          //         },
+          //       ),
+          //     );
+          //   },
+          // ),
+          const NightModeSwitch(),
           // Hidden: removing bracketed text alters the book's wording.
           // const ShowTextInBracketsSwitch(),
           const PraiseWithVolumeSwitch(),
