@@ -1,4 +1,5 @@
 import 'package:alazkar/src/features/settings/data/repository/zikr_text_repo.dart';
+import 'package:alazkar/src/features/theme/domain/models/zikr_font.dart';
 import 'package:alazkar/src/features/theme/domain/repository/theme_storage.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -16,6 +17,7 @@ class ThemeCubit extends Cubit<ThemeState> {
             color: themeStorage.getColor,
             useMaterial3: themeStorage.getUseMaterial3,
             fontSize: zikrTextRepo.fontSize,
+            zikrFont: themeStorage.getZikrFont,
           ),
         );
 
@@ -32,6 +34,11 @@ class ThemeCubit extends Cubit<ThemeState> {
   Future<void> changeColor(Color color) async {
     await themeStorage.setColor(color);
     emit(state.copyWith(color: color));
+  }
+
+  Future<void> changeZikrFont(ZikrFont font) async {
+    await themeStorage.setZikrFont(font);
+    emit(state.copyWith(zikrFont: font));
   }
 
   Future<void> increaseFontSize() async {

@@ -8,12 +8,16 @@ class ZikrContentBuilder extends StatelessWidget {
   final double fontSize;
   final bool enableDiacritics;
   final Color? color;
+
+  /// The reader's chosen typeface for the azkar text.
+  final String fontFamily;
   const ZikrContentBuilder({
     super.key,
     required this.zikr,
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
+    this.fontFamily = "NotoNaskhArabic",
   });
 
   @override
@@ -25,12 +29,14 @@ class ZikrContentBuilder extends StatelessWidget {
             enableDiacritics: enableDiacritics,
             fontSize: fontSize,
             color: color,
+            fontFamily: fontFamily,
           )
         : ZikrContentPlainText(
             zikr: zikr,
             enableDiacritics: enableDiacritics,
             fontSize: fontSize,
             color: color,
+            fontFamily: fontFamily,
           );
   }
 }
@@ -40,12 +46,14 @@ class ZikrContentPlainText extends StatelessWidget {
   final double fontSize;
   final bool enableDiacritics;
   final Color? color;
+  final String fontFamily;
   const ZikrContentPlainText({
     super.key,
     required this.zikr,
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
+    this.fontFamily = "NotoNaskhArabic",
   });
 
   @override
@@ -56,6 +64,7 @@ class ZikrContentPlainText extends StatelessWidget {
       fontSize: fontSize,
       color: color,
       enableDiacritics: enableDiacritics,
+      fontFamily: fontFamily,
     );
   }
 }
@@ -65,12 +74,14 @@ class ZikrContentTextWithQuran extends StatelessWidget {
   final double fontSize;
   final bool enableDiacritics;
   final Color? color;
+  final String fontFamily;
   const ZikrContentTextWithQuran({
     super.key,
     required this.zikr,
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
+    this.fontFamily = "NotoNaskhArabic",
   });
 
   @override
@@ -87,7 +98,7 @@ class ZikrContentTextWithQuran extends StatelessWidget {
             style: TextStyle(
               fontSize: fontSize,
               height: 2,
-              fontFamily: "Kitab",
+              fontFamily: fontFamily,
               color: color ?? Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),

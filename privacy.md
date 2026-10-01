@@ -1,6 +1,6 @@
 # سياسة الخصوصية — تطبيق «زاد الذاكر»
 
-آخر تحديث: 25 سبتمبر 2026
+آخر تحديث: 1 أكتوبر 2026
 
 تطبيق «زاد الذاكر» تطبيق مجاني بلا إعلانات، يعمل كاملًا دون اتصال بالإنترنت.
 
@@ -13,8 +13,7 @@
 تُحفظ في ذاكرة الجهاز، ولا تغادره:
 
 - الأقسام التي تضيفها إلى المفضلة.
-- إعداداتك، مثل حجم الخط والتشكيل والألوان وإعدادات صورة المشاركة.
-- موضع قراءتك في كل قسم، لتعود إليه.
+- إعداداتك، مثل حجم الخط ونوعه والوضع الليلي وإعدادات صورة المشاركة.
 
 وتُحذف هذه البيانات بحذف التطبيق أو مسح بياناته من إعدادات الجهاز.
 
@@ -38,13 +37,13 @@
 
 # Privacy Policy — Zad Al-Dhakir
 
-Last updated: 25 September 2026
+Last updated: 1 October 2026
 
 Zad Al-Dhakir is a free, ad-free app that works entirely offline.
 
 **Data we collect:** none. The app collects no personal data, sends nothing to any server, uses no analytics, tracking or advertising, and does not request internet access.
 
-**Stored on your device only:** your favourites, your settings (font size, diacritics, colours, share-image options) and your reading position in each section. Uninstalling the app or clearing its data removes them.
+**Stored on your device only:** your favourites and your settings (text size and typeface, dark mode, share-image options). Uninstalling the app or clearing its data removes them.
 
 **Contact:** if you choose to send feedback or report an error from within the app, your own email app opens with a prepared message; nothing is sent unless you send it. We use what we receive only to reply and to fix the problem.
 
