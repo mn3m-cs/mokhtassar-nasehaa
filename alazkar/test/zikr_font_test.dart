@@ -28,8 +28,8 @@ class _MemoryStorage implements KVStorage {
 }
 
 void main() {
-  test('the azkar text starts in Kitab', () {
-    expect(ThemeStorage(_MemoryStorage()).getZikrFont, ZikrFont.kitab);
+  test('the azkar text starts in Noto Naskh', () {
+    expect(ThemeStorage(_MemoryStorage()).getZikrFont, ZikrFont.notoNaskh);
   });
 
   test('a chosen font is remembered', () async {
@@ -40,11 +40,11 @@ void main() {
     expect(storage.getZikrFont, ZikrFont.amiri);
   });
 
-  test('an unknown stored font falls back to Kitab', () async {
+  test('an unknown stored font falls back to Noto Naskh', () async {
     final box = _MemoryStorage();
     await box.write("ZikrFont", "removedFont");
 
-    expect(ThemeStorage(box).getZikrFont, ZikrFont.kitab);
+    expect(ThemeStorage(box).getZikrFont, ZikrFont.notoNaskh);
   });
 
   test('every choosable font is bundled with the app', () {

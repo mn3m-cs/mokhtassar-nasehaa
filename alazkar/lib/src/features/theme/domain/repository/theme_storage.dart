@@ -52,7 +52,7 @@ class ThemeStorage {
     final String? name = box.read(_zikrFontKey);
     return ZikrFont.values.firstWhere(
       (font) => font.name == name,
-      orElse: () => ZikrFont.kitab,
+      orElse: () => ZikrFont.notoNaskh,
     );
   }
 

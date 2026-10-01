@@ -17,7 +17,7 @@ class ZikrContentBuilder extends StatelessWidget {
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
-    this.fontFamily = "Kitab",
+    this.fontFamily = "NotoNaskhArabic",
   });
 
   @override
@@ -53,7 +53,7 @@ class ZikrContentPlainText extends StatelessWidget {
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
-    this.fontFamily = "Kitab",
+    this.fontFamily = "NotoNaskhArabic",
   });
 
   @override
@@ -81,7 +81,7 @@ class ZikrContentTextWithQuran extends StatelessWidget {
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
-    this.fontFamily = "Kitab",
+    this.fontFamily = "NotoNaskhArabic",
   });
 
   @override

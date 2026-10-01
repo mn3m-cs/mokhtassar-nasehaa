@@ -14,7 +14,7 @@ class StringFormatter extends StatelessWidget {
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
-    this.fontFamily = 'Kitab',
+    this.fontFamily = 'NotoNaskhArabic',
   });
 
   @override
