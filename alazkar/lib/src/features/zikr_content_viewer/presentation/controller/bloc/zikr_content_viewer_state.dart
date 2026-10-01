@@ -12,7 +12,8 @@ final class ZikrContentViewerLoadingState extends ZikrContentViewerState {}
 final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   final List<Zikr> azkar;
 
-  /// The zikr in view, kept up to date by the page as the reader scrolls.
+  /// The zikr the reader is on: the one last counted, or after a scroll the
+  /// first one whose middle is on the page.
   final int activeZikrIndex;
   final ZikrTitle zikrTitle;
 

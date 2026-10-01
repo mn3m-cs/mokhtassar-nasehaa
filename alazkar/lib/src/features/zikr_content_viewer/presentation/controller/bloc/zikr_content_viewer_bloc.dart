@@ -114,7 +114,14 @@ class ZikrContentViewerBloc
       return e.copyWith(count: countToSet);
     }).toList();
 
-    emit(state.copyWith(azkar: azkarToSet));
+    // The zikr just counted becomes the one the keys continue.
+    emit(
+      state.copyWith(
+        azkar: azkarToSet,
+        activeZikrIndex:
+            state.azkar.indexWhere((zikr) => zikr.id == event.zikr.id),
+      ),
+    );
   }
 
   void _focus(

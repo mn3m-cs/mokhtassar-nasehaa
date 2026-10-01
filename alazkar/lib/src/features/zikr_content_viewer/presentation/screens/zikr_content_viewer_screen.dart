@@ -5,6 +5,7 @@ import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/core/widgets/loading.dart';
 import 'package:alazkar/src/features/home/presentation/components/bookmark_title_button.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
+import 'package:alazkar/src/features/settings/presentation/controller/cubit/settings_cubit.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/shake_tutorial_dialog.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_item_card.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_report_dialog.dart';
@@ -138,23 +139,22 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     );
   }
 
-  /// Tells the bloc which zikr is in view: the card under a line a quarter
-  /// of the way down the page, or the first card below that line.
+  /// Tells the bloc which zikr is in view: the first card whose middle is on
+  /// the page.
   void _reportFocus() {
     final state = _bloc.state;
     if (state is! ZikrContentViewerLoadedState || state.azkar.isEmpty) return;
     final viewport =
         _viewportKey.currentContext?.findRenderObject() as RenderBox?;
     if (viewport == null || !viewport.attached) return;
-    final line =
-        viewport.localToGlobal(Offset.zero).dy + viewport.size.height / 4;
+    final pageTop = viewport.localToGlobal(Offset.zero).dy;
     var focus = state.azkar.length - 1;
     for (var i = 0; i < state.azkar.length; i++) {
       final card = _cardKeys[state.azkar[i].id]
           ?.currentContext
           ?.findRenderObject() as RenderBox?;
       if (card == null || !card.attached) continue;
-      if (card.localToGlobal(Offset(0, card.size.height)).dy > line) {
+      if (card.localToGlobal(Offset(0, card.size.height / 2)).dy >= pageTop) {
         focus = i;
         break;
       }
@@ -231,6 +231,9 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
           }
           final theme = Theme.of(context);
           final mutedColor = theme.colorScheme.onSurface.withValues(alpha: .65);
+          final keysCount =
+              context.watch<SettingsCubit>().state.praiseWithVolumeKeys;
+          final keyTarget = state.keyTarget;
           final pathParts = state.sectionPath.isEmpty
               ? const <String>[]
               : state.sectionPath.split(' › ');
@@ -281,6 +284,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                         key: _keyFor(zikr.id),
                         zikr: zikr,
                         isCounted: state.isCounted(zikr),
+                        isKeyTarget: keysCount && keyTarget?.id == zikr.id,
                       ),
                     _SectionEnd(
                       previous: _titleAt(state.zikrTitle, -1),

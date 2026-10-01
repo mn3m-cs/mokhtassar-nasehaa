@@ -16,10 +16,14 @@ class ZikrItemCard extends StatelessWidget {
   /// False for a passage that is read, not counted; it gets no counter.
   final bool isCounted;
 
+  /// True for the zikr the volume keys will count next; it gets a frame.
+  final bool isKeyTarget;
+
   const ZikrItemCard({
     super.key,
     required this.zikr,
     this.isCounted = true,
+    this.isKeyTarget = false,
   });
 
   @override
@@ -39,7 +43,15 @@ class ZikrItemCard extends StatelessWidget {
             colorScheme.surface.withValues(alpha: .7),
             colorScheme.surfaceContainerHighest,
           ),
-          borderRadius: BorderRadius.circular(18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: isKeyTarget
+                ? BorderSide(
+                    color: colorScheme.primary.withValues(alpha: .6),
+                    width: 1.5,
+                  )
+                : BorderSide.none,
+          ),
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
             // A tap anywhere on a counted zikr counts it, like its button.
