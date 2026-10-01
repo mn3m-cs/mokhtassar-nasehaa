@@ -86,6 +86,20 @@ void main() {
     await dismissTip(tester);
     expect(find.text('أتممت 0 من 26'), findsOneWidget, reason: 'next section');
     expect(find.text('أذكار المساء'), findsWidgets);
+
+    // ...and leads back to the previous one.
+    await tester.scrollUntilVisible(
+      find.text('الباب السابق'),
+      600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('الباب السابق'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('أتممت 0 من 28'),
+      findsOneWidget,
+      reason: 'previous section',
+    );
     await backHome(tester);
 
     // Searching the index finds a section.
@@ -103,6 +117,24 @@ void main() {
       findsWidgets,
       reason: 'search result',
     );
+
+    // A section opened from search returns to the index, search closed.
+    await tester.tap(find.text('أذكار النوم').first);
+    await tester.pumpAndSettle();
+    await dismissTip(tester);
+    await tester.scrollUntilVisible(
+      find.text('العودة إلى الفهرس'),
+      600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('العودة إلى الفهرس'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextFormField), findsNothing, reason: 'search closed');
+    expect(find.byTooltip('البحث'), findsOneWidget, reason: 'on the index');
+
+    // The back key closes search instead of leaving the app.
+    await tester.tap(find.byTooltip('البحث'));
+    await tester.pumpAndSettle();
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(

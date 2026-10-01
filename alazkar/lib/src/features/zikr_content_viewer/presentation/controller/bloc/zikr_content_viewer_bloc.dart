@@ -48,7 +48,8 @@ class ZikrContentViewerBloc
     on<ZikrContentViewerCopyEvent>(_copy);
     on<ZikrContentViewerShareEvent>(_share);
     on<ZikrContentViewerNextTitleEvent>(_nextTitle);
-    on<ZikrContentViewerPerviousTitleEvent>(_perviousTitle);
+    on<ZikrContentViewerPreviousTitleEvent>(_previousTitle);
+    on<ZikrContentViewerFocusEvent>(_focus);
   }
 
   Future<void> _start(
@@ -78,15 +79,18 @@ class ZikrContentViewerBloc
     final List<Filter> filters = zikrFilterStorage.getAllFilters();
     azkarToSet = filters.getFilteredZikr(azkarFromDB);
 
-    final loaded = ZikrContentViewerLoadedState(
-      zikrTitle: zikrTitle,
-      azkar: azkarToSet,
-      activeZikrIndex: 0,
-      initialCounts: {for (final zikr in azkarToSet) zikr.id: zikr.count},
-      sectionPath: sectionPath,
-      focusOrder: event.zikrOrder,
+    final focusIndex =
+        azkarToSet.indexWhere((zikr) => zikr.order == event.zikrOrder);
+    emit(
+      ZikrContentViewerLoadedState(
+        zikrTitle: zikrTitle,
+        azkar: azkarToSet,
+        activeZikrIndex: focusIndex == -1 ? 0 : focusIndex,
+        initialCounts: {for (final zikr in azkarToSet) zikr.id: zikr.count},
+        sectionPath: sectionPath,
+        focusOrder: event.zikrOrder,
+      ),
     );
-    emit(loaded.copyWith(activeZikrIndex: loaded.currentIndex));
   }
 
   Future<void> _decrease(
@@ -110,8 +114,17 @@ class ZikrContentViewerBloc
       return e.copyWith(count: countToSet);
     }).toList();
 
-    final counted = state.copyWith(azkar: azkarToSet);
-    emit(counted.copyWith(activeZikrIndex: counted.currentIndex));
+    emit(state.copyWith(azkar: azkarToSet));
+  }
+
+  void _focus(
+    ZikrContentViewerFocusEvent event,
+    Emitter<ZikrContentViewerState> emit,
+  ) {
+    final state = this.state;
+    if (state is! ZikrContentViewerLoadedState) return;
+    if (state.activeZikrIndex == event.index) return;
+    emit(state.copyWith(activeZikrIndex: event.index));
   }
 
   Future<String> sharedZikrText(Zikr zikr) async {
@@ -159,11 +172,11 @@ class ZikrContentViewerBloc
     await VolumeButtonManager.handler(
       call: call,
       onVolumeUpPressed: () {
-        final zikr = state.currentZikr;
+        final zikr = state.keyTarget;
         if (zikr != null) add(ZikrContentViewerDecreaseEvent(zikr));
       },
       onVolumeDownPressed: () {
-        final zikr = state.currentZikr;
+        final zikr = state.keyTarget;
         if (zikr != null) add(ZikrContentViewerDecreaseEvent(zikr));
       },
     );
@@ -203,8 +216,8 @@ class ZikrContentViewerBloc
     }
   }
 
-  Future<void> _perviousTitle(
-    ZikrContentViewerPerviousTitleEvent event,
+  Future<void> _previousTitle(
+    ZikrContentViewerPreviousTitleEvent event,
     Emitter<ZikrContentViewerState> emit,
   ) async {
     final state = this.state;
@@ -218,12 +231,7 @@ class ZikrContentViewerBloc
       final int currentTitleIndex =
           titles.indexWhere((e) => e.id == state.zikrTitle.id);
       if (currentTitleIndex == -1 || currentTitleIndex == 0) return;
-      add(
-        ZikrContentViewerStartEvent(
-          titles[currentTitleIndex - 1].id,
-          fromEnd: event.fromEnd,
-        ),
-      );
+      add(ZikrContentViewerStartEvent(titles[currentTitleIndex - 1].id));
     } catch (e) {
       appPrint(e);
     }

@@ -45,6 +45,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
   late final ZikrContentViewerBloc _bloc;
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _cardKeys = {};
+  final GlobalKey _viewportKey = GlobalKey();
 
   @override
   void initState() {
@@ -137,8 +138,44 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     );
   }
 
-  /// A new section starts at its top, or at the zikr a search result named;
-  /// finishing a zikr brings the next unfinished one after it into view.
+  /// Tells the bloc which zikr is in view: the card under a line a quarter
+  /// of the way down the page, or the first card below that line.
+  void _reportFocus() {
+    final state = _bloc.state;
+    if (state is! ZikrContentViewerLoadedState || state.azkar.isEmpty) return;
+    final viewport =
+        _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewport == null || !viewport.attached) return;
+    final line =
+        viewport.localToGlobal(Offset.zero).dy + viewport.size.height / 4;
+    var focus = state.azkar.length - 1;
+    for (var i = 0; i < state.azkar.length; i++) {
+      final card = _cardKeys[state.azkar[i].id]
+          ?.currentContext
+          ?.findRenderObject() as RenderBox?;
+      if (card == null || !card.attached) continue;
+      if (card.localToGlobal(Offset(0, card.size.height)).dy > line) {
+        focus = i;
+        break;
+      }
+    }
+    _bloc.add(ZikrContentViewerFocusEvent(focus));
+  }
+
+  bool _isBelowPage(int zikrId) {
+    final viewport =
+        _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+    final card =
+        _cardKeys[zikrId]?.currentContext?.findRenderObject() as RenderBox?;
+    if (viewport == null || card == null) return false;
+    final pageBottom =
+        viewport.localToGlobal(Offset(0, viewport.size.height)).dy;
+    return card.localToGlobal(Offset.zero).dy >= pageBottom;
+  }
+
+  /// A new section starts at its top, or at the zikr a search result named.
+  /// Finishing a zikr brings the next unfinished one after it into view; a
+  /// count below the page, from the volume keys, scrolls down to show it.
   void _onStateChange(
     ZikrContentViewerState previous,
     ZikrContentViewerState current,
@@ -156,17 +193,24 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
         if (focus != null) _bringIntoView(focus.id);
         return;
       }
-      if (current.finishedCount <= previous.finishedCount) return;
-      final finished = current.azkar.indexWhere(
+      final counted = current.azkar.indexWhere(
         (zikr) =>
-            zikr.count == 0 &&
-            previous.azkar.any((p) => p.id == zikr.id && p.count > 0),
+            previous.azkar.any((p) => p.id == zikr.id && p.count > zikr.count),
       );
+      if (counted == -1) return;
+      if (current.azkar[counted].count > 0) {
+        // Only a zikr wholly below the page moves it; a tap on the card in
+        // view never shifts the text being read.
+        if (_isBelowPage(current.azkar[counted].id)) {
+          _bringIntoView(current.azkar[counted].id);
+        }
+        return;
+      }
       // Move on past the zikr just finished, never back to one skipped.
-      final next = current.azkar.skip(finished + 1).where(
+      final next = current.azkar.skip(counted + 1).where(
             (zikr) => current.isCounted(zikr) && zikr.count > 0,
           );
-      if (finished != -1 && next.isNotEmpty) _bringIntoView(next.first.id);
+      if (next.isNotEmpty) _bringIntoView(next.first.id);
     });
   }
 
@@ -220,23 +264,31 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
               ),
               actions: [BookmarkTitleButton(titleId: state.zikrTitle.id)],
             ),
-            body: SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.only(top: 6, bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final zikr in state.azkar)
-                    ZikrItemCard(
-                      key: _keyFor(zikr.id),
-                      zikr: zikr,
-                      isCounted: state.isCounted(zikr),
+            body: NotificationListener<ScrollEndNotification>(
+              onNotification: (_) {
+                _reportFocus();
+                return false;
+              },
+              child: SingleChildScrollView(
+                key: _viewportKey,
+                controller: _scrollController,
+                padding: const EdgeInsets.only(top: 6, bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final zikr in state.azkar)
+                      ZikrItemCard(
+                        key: _keyFor(zikr.id),
+                        zikr: zikr,
+                        isCounted: state.isCounted(zikr),
+                      ),
+                    _SectionEnd(
+                      previous: _titleAt(state.zikrTitle, -1),
+                      next: _titleAt(state.zikrTitle, 1),
+                      mutedColor: mutedColor,
                     ),
-                  _SectionEnd(
-                    next: _nextTitle(state.zikrTitle),
-                    mutedColor: mutedColor,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
@@ -245,23 +297,31 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     );
   }
 
-  ZikrTitle? _nextTitle(ZikrTitle current) {
+  /// The section [step] places from [current] in book order, if any.
+  ZikrTitle? _titleAt(ZikrTitle current, int step) {
     final homeState = _bloc.homeBloc.state;
     if (homeState is! HomeLoadedState) return null;
     final titles = homeState.readingOrder();
     final index = titles.indexWhere((title) => title.id == current.id);
-    if (index == -1 || index == titles.length - 1) return null;
-    return titles[index + 1];
+    if (index == -1) return null;
+    final target = index + step;
+    if (target < 0 || target >= titles.length) return null;
+    return titles[target];
   }
 }
 
 /// The close of a section: a plain marker, then a clear way on to the next
-/// section in book order, or back to the index.
+/// section in book order, back to the previous one, or to the index.
 class _SectionEnd extends StatelessWidget {
+  final ZikrTitle? previous;
   final ZikrTitle? next;
   final Color mutedColor;
 
-  const _SectionEnd({required this.next, required this.mutedColor});
+  const _SectionEnd({
+    required this.previous,
+    required this.next,
+    required this.mutedColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -327,9 +387,29 @@ class _SectionEnd extends StatelessWidget {
                 ),
               ),
             ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("العودة إلى الفهرس"),
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: [
+              if (previous != null)
+                TextButton(
+                  onPressed: () => context
+                      .read<ZikrContentViewerBloc>()
+                      .add(ZikrContentViewerPreviousTitleEvent()),
+                  child: const Text("الباب السابق"),
+                ),
+              TextButton(
+                // A section opened from search sits above the results; the
+                // index is under them, with search closed.
+                onPressed: () {
+                  context
+                      .read<ZikrContentViewerBloc>()
+                      .homeBloc
+                      .add(const HomeToggleSearchEvent(false));
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                child: const Text("العودة إلى الفهرس"),
+              ),
+            ],
           ),
         ],
       ),

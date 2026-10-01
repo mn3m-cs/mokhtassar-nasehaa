@@ -11,6 +11,8 @@ final class ZikrContentViewerLoadingState extends ZikrContentViewerState {}
 
 final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   final List<Zikr> azkar;
+
+  /// The zikr in view, kept up to date by the page as the reader scrolls.
   final int activeZikrIndex;
   final ZikrTitle zikrTitle;
 
@@ -49,24 +51,13 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
 
   bool isCounted(Zikr zikr) => (initialCounts[zikr.id] ?? 0) > 0;
 
-  /// Share of counted azkar finished; a section with nothing to count
-  /// reports how far the reader has paged instead.
-  double progress() {
-    if (azkar.isEmpty) return 1;
-    final counted = azkar.where(isCounted).toList();
-    if (counted.isEmpty) return (activeZikrIndex + 1) / azkar.length;
-    final done = counted.where((zikr) => zikr.count == 0).length;
-    return done / counted.length;
-  }
-
-  /// The first counted zikr not yet finished, or -1 when none is left; the
-  /// volume keys count it and the page brings it into view.
-  int get currentIndex =>
-      azkar.indexWhere((zikr) => isCounted(zikr) && zikr.count > 0);
-
-  Zikr? get currentZikr {
-    final index = currentIndex;
-    return index == -1 ? null : azkar[index];
+  /// The zikr the volume keys count: the one in view while it has
+  /// repetitions left, else the next such zikr below it, never one above.
+  Zikr? get keyTarget {
+    for (final zikr in azkar.skip(activeZikrIndex.clamp(0, azkar.length))) {
+      if (isCounted(zikr) && zikr.count > 0) return zikr;
+    }
+    return null;
   }
 
   int get finishedCount =>
