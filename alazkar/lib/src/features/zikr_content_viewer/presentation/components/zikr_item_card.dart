@@ -28,6 +28,7 @@ class ZikrItemCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final done = isCounted && zikr.count == 0;
     final mutedColor = colorScheme.onSurface.withValues(alpha: .65);
+    final themeState = context.watch<ThemeCubit>().state;
     return AnimatedOpacity(
       opacity: done ? .5 : 1,
       duration: const Duration(milliseconds: 250),
@@ -61,7 +62,8 @@ class ZikrItemCard extends StatelessWidget {
                     child: ZikrContentBuilder(
                       zikr: zikr,
                       enableDiacritics: true,
-                      fontSize: context.watch<ThemeCubit>().state.fontSize,
+                      fontSize: themeState.fontSize,
+                      fontFamily: themeState.zikrFont.family,
                     ),
                   ),
                   if (zikr.fadl.isNotEmpty)
