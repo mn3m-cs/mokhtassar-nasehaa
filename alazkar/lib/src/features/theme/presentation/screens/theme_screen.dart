@@ -71,13 +71,14 @@ class ThemeScreen extends StatelessWidget {
                   }
                 },
               ),
-              SwitchListTile(
-                value: state.useMaterial3,
-                title: const Text("التصميم الحديث"),
-                onChanged: (value) {
-                  context.read<ThemeCubit>().changeUseMaterial3(value);
-                },
-              ),
+              // Hidden: the cards and buttons are drawn for the modern design.
+              // SwitchListTile(
+              //   value: state.useMaterial3,
+              //   title: const Text("التصميم الحديث"),
+              //   onChanged: (value) {
+              //     context.read<ThemeCubit>().changeUseMaterial3(value);
+              //   },
+              // ),
             ],
           ),
         );

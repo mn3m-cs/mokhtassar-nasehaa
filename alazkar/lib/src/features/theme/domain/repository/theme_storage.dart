@@ -35,6 +35,10 @@ class ThemeStorage {
     await box.write(_useMaterial3Key, useMaterial3);
   }
 
+  Future resetUseMaterial3() async {
+    await box.remove(_useMaterial3Key);
+  }
+
   /// *****************************
   static const String _colorKey = "ThemeColor";
   Color get getColor {

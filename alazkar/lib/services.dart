@@ -37,7 +37,7 @@ Future<void> initServices() async {
   // Run migration from GetStorage to Hive
   await StorageMigrationService(sl<KVStorage>()).migrate();
   await resetHiddenReadingFilters();
-  await resetHiddenThemeColor();
+  await resetHiddenThemeChoices();
 
   phoneDeviceBars();
   final packageInfo = await PackageInfo.fromPlatform();
@@ -113,14 +113,16 @@ Future<void> resetHiddenReadingFilters() async {
   await storage.write(doneKey, true);
 }
 
-/// The colour picker is no longer in the theme screen, so a colour a reader
-/// chose earlier could not be changed back. It returns to the paper colour
-/// once.
-Future<void> resetHiddenThemeColor() async {
+/// The colour picker and the modern design switch are no longer in the theme
+/// screen, so a choice a reader made earlier could not be changed back. Both
+/// return to their defaults once.
+Future<void> resetHiddenThemeChoices() async {
   final storage = sl<KVStorage>();
-  const doneKey = 'hidden_theme_color_reset';
+  const doneKey = 'hidden_theme_choices_reset';
   if (storage.read<bool>(doneKey) ?? false) return;
 
-  await sl<ThemeStorage>().resetColor();
+  final theme = sl<ThemeStorage>();
+  await theme.resetColor();
+  await theme.resetUseMaterial3();
   await storage.write(doneKey, true);
 }
