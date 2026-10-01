@@ -32,8 +32,11 @@ void main() {
 
   Future<void> openSection(WidgetTester tester, String name) async {
     await tester.tap(find.text(name).first);
-    await tester.pumpAndSettle();
+    // The shake tip, shown on the third section opened, loops its
+    // animation and never settles, so wait a fixed time before closing it.
+    await tester.pump(const Duration(seconds: 2));
     await dismissTip(tester);
+    await tester.pumpAndSettle();
   }
 
   testWidgets('core reading journeys', (tester) async {
@@ -119,9 +122,7 @@ void main() {
     );
 
     // A section opened from search returns to the index, search closed.
-    await tester.tap(find.text('أذكار النوم').first);
-    await tester.pumpAndSettle();
-    await dismissTip(tester);
+    await openSection(tester, 'أذكار النوم');
     await tester.scrollUntilVisible(
       find.text('العودة إلى الفهرس'),
       600,
