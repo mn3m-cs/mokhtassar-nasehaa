@@ -62,14 +62,18 @@ void main() {
       });
     expect(readingOrder, expected, reason: 'favourite tiles in book order');
 
-    // Counting a zikr with its button marks it done in the header.
+    // Tapping a zikr's text counts it and marks it done in the header.
     await openSection(tester, 'أذكار الصباح');
     expect(find.text('أتممت 0 من 28'), findsOneWidget);
     await tester
-        .tap(find.bySemanticsLabel('العدد المتبقي 1، اضغط للعدّ').first);
+        .tap(find.textContaining('أصبحنا على', findRichText: true).first);
     await tester.pumpAndSettle();
     expect(find.text('أتممت 1 من 28'), findsOneWidget, reason: 'counted');
-    expect(find.bySemanticsLabel('تم العدّ'), findsOneWidget, reason: 'done');
+    expect(
+      find.bySemanticsLabel(RegExp('تم العدّ')),
+      findsOneWidget,
+      reason: 'done',
+    );
 
     // The section ends with the next section in book order.
     await tester.scrollUntilVisible(
