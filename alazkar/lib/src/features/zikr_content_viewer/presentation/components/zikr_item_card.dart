@@ -82,7 +82,8 @@ class ZikrItemCard extends StatelessWidget {
                   if (isCounted || zikr.hokm.isNotEmpty)
                     Padding(
                       padding:
-                          const EdgeInsetsDirectional.only(top: 10, end: 2),
+                          const EdgeInsetsDirectional.only(top: 10, end: 10),
+                      // The counter sits under the centre of the text.
                       child: Row(
                         children: [
                           Expanded(
@@ -93,6 +94,7 @@ class ZikrItemCard extends StatelessWidget {
                             ),
                           ),
                           if (isCounted) _CounterButton(zikr: zikr),
+                          const Spacer(),
                         ],
                       ),
                     ),
