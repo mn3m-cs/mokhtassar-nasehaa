@@ -138,7 +138,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
   }
 
   /// A new section starts at its top, or at the zikr a search result named;
-  /// finishing a zikr brings the next unfinished one into view.
+  /// finishing a zikr brings the next unfinished one after it into view.
   void _onStateChange(
     ZikrContentViewerState previous,
     ZikrContentViewerState current,
@@ -156,9 +156,17 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
         if (focus != null) _bringIntoView(focus.id);
         return;
       }
-      final finishedOne = current.finishedCount > previous.finishedCount;
-      final next = current.currentZikr;
-      if (finishedOne && next != null) _bringIntoView(next.id);
+      if (current.finishedCount <= previous.finishedCount) return;
+      final finished = current.azkar.indexWhere(
+        (zikr) =>
+            zikr.count == 0 &&
+            previous.azkar.any((p) => p.id == zikr.id && p.count > 0),
+      );
+      // Move on past the zikr just finished, never back to one skipped.
+      final next = current.azkar.skip(finished + 1).where(
+            (zikr) => current.isCounted(zikr) && zikr.count > 0,
+          );
+      if (finished != -1 && next.isNotEmpty) _bringIntoView(next.first.id);
     });
   }
 

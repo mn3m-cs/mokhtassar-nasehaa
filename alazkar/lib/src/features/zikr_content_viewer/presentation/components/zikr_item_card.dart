@@ -31,60 +31,73 @@ class ZikrItemCard extends StatelessWidget {
     return AnimatedOpacity(
       opacity: done ? .5 : 1,
       duration: const Duration(milliseconds: 250),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        padding: const EdgeInsetsDirectional.fromSTEB(18, 4, 8, 14),
-        decoration: BoxDecoration(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        child: Material(
           color: Color.alphaBlend(
             colorScheme.surface.withValues(alpha: .7),
             colorScheme.surfaceContainerHighest,
           ),
           borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: _ActionsMenu(zikr: zikr, color: mutedColor),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 10),
-              child: ZikrContentBuilder(
-                zikr: zikr,
-                enableDiacritics: true,
-                fontSize: context.watch<ThemeCubit>().state.fontSize,
-              ),
-            ),
-            if (zikr.fadl.isNotEmpty)
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 10, 0),
-                child: Text(
-                  zikr.fadl,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.7,
-                    color: colorScheme.primary,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            // A tap anywhere on a counted zikr counts it, like its button.
+            onTap: isCounted && zikr.count > 0
+                ? () => context
+                    .read<ZikrContentViewerBloc>()
+                    .add(ZikrContentViewerDecreaseEvent(zikr))
+                : null,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(18, 4, 8, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: _ActionsMenu(zikr: zikr, color: mutedColor),
                   ),
-                ),
-              ),
-            if (isCounted || zikr.hokm.isNotEmpty)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(top: 10, end: 2),
-                child: Row(
-                  children: [
-                    Expanded(
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 10),
+                    child: ZikrContentBuilder(
+                      zikr: zikr,
+                      enableDiacritics: true,
+                      fontSize: context.watch<ThemeCubit>().state.fontSize,
+                    ),
+                  ),
+                  if (zikr.fadl.isNotEmpty)
+                    Padding(
+                      padding:
+                          const EdgeInsetsDirectional.fromSTEB(0, 8, 10, 0),
                       child: Text(
-                        zikr.hokm,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: mutedColor),
+                        zikr.fadl,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.7,
+                          color: colorScheme.primary,
+                        ),
                       ),
                     ),
-                    if (isCounted) _CounterButton(zikr: zikr),
-                  ],
-                ),
+                  if (isCounted || zikr.hokm.isNotEmpty)
+                    Padding(
+                      padding:
+                          const EdgeInsetsDirectional.only(top: 10, end: 2),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              zikr.hokm,
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(color: mutedColor),
+                            ),
+                          ),
+                          if (isCounted) _CounterButton(zikr: zikr),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-          ],
+            ),
+          ),
         ),
       ),
     );
