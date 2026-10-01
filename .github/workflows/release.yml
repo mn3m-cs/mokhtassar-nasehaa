@@ -7,7 +7,8 @@ on:
 
 jobs:
   release:
-    uses: muslimpack/.github/.github/workflows/flutter_release.yaml@main
+    # Pinned: this workflow receives the signing key and the Play account.
+    uses: muslimpack/.github/.github/workflows/flutter_release.yaml@3a1f26ae8bb1155e61ce6297e43b80bccea264d3
     with:
       app_directory: alazkar
       package_name: com.menemlabs.zaadalthakir
