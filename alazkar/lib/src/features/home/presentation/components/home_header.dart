@@ -5,8 +5,9 @@ import 'package:alazkar/src/features/zikr_content_viewer/presentation/screens/zi
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Top of the home page: the app's name with search and settings, the
-/// reader's favourite sections as tiles, and the heading of the index.
+/// Top of the home page: the app's name and its source book, with search and
+/// settings; the reader's favourite sections as tiles; and the heading of the
+/// index.
 class HomeHeader extends StatelessWidget {
   final List<ZikrTitle> favourites;
 
@@ -31,14 +32,27 @@ class HomeHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text(
-                  "زاد الذاكر",
-                  style: TextStyle(
-                    fontFamily: "Kitab",
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "زاد الذاكر",
+                      style: TextStyle(
+                        fontFamily: "Kitab",
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    // Names the source, for a reader who came for the book.
+                    Text(
+                      "من كتاب «مختصر النصيحة في الأذكار والأدعية الصحيحة»",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: .65),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               IconButton(
