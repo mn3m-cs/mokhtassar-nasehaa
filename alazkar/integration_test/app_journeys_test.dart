@@ -22,11 +22,6 @@ void main() {
     }
   }
 
-  Future<void> openFavourites(WidgetTester tester) async {
-    await tester.tap(find.text('المفضلة'));
-    await tester.pumpAndSettle();
-  }
-
   Future<void> dismissTip(WidgetTester tester) async {
     final gotIt = find.text('فهمت');
     if (gotIt.evaluate().isNotEmpty) {
@@ -41,14 +36,12 @@ void main() {
     await dismissTip(tester);
   }
 
-  Finder header(String text) => find.textContaining(text, findRichText: true);
-
   testWidgets('core reading journeys', (tester) async {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
 
-    // Default favourites are listed in book order.
-    await openFavourites(tester);
+    // Default favourites are the home tiles, in book order (right to left,
+    // then down).
     const expected = [
       'أذكار الصباح',
       'أذكار المساء',
@@ -57,25 +50,38 @@ void main() {
       'أذكار النوم',
       'أذكار المسافر',
     ];
-    final tops = [
-      for (final name in expected) tester.getTopLeft(find.text(name)).dy,
-    ];
-    expect(tops, [...tops]..sort(), reason: 'favourites in book order');
+    final positions = {
+      for (final name in expected)
+        name: tester.getCenter(find.text(name).first),
+    };
+    final readingOrder = [...expected]..sort((a, b) {
+        final pa = positions[a]!;
+        final pb = positions[b]!;
+        if ((pa.dy - pb.dy).abs() > 20) return pa.dy.compareTo(pb.dy);
+        return pb.dx.compareTo(pa.dx);
+      });
+    expect(readingOrder, expected, reason: 'favourite tiles in book order');
 
-    // Finishing a zikr counts it down and moves to the next.
+    // Counting a zikr with its button marks it done in the header.
     await openSection(tester, 'أذكار الصباح');
-    expect(find.text('1 من 28'), findsOneWidget);
-    await tester.tap(find.byType(PageView));
+    expect(find.text('أتممت 0 من 28'), findsOneWidget);
+    await tester
+        .tap(find.bySemanticsLabel('العدد المتبقي 1، اضغط للعدّ').first);
     await tester.pumpAndSettle();
-    expect(find.text('2 من 28'), findsOneWidget, reason: 'moved on');
-    expect(find.text('3'), findsOneWidget, reason: 'next zikr counter');
+    expect(find.text('أتممت 1 من 28'), findsOneWidget, reason: 'counted');
+    expect(find.bySemanticsLabel('تم العدّ'), findsOneWidget, reason: 'done');
 
-    // Next section follows the book.
-    await tester.tap(find.byTooltip('الباب التالي'));
+    // The section ends with the next section in book order.
+    await tester.scrollUntilVisible(
+      find.text('الباب التالي'),
+      600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('الباب التالي'));
     await tester.pumpAndSettle();
     await dismissTip(tester);
-    expect(header('أذكار المساء'), findsOneWidget, reason: 'next section');
-    expect(header('أذكار الصباح والمساء'), findsOneWidget, reason: 'path');
+    expect(find.text('أتممت 0 من 26'), findsOneWidget, reason: 'next section');
+    expect(find.text('أذكار المساء'), findsWidgets);
     await backHome(tester);
 
     // Searching the index finds a section.
@@ -101,21 +107,23 @@ void main() {
       reason: 'back from search returns to the index, not out of the app',
     );
 
-    // Continuous reading drags from one section into the next.
-    await tester.tap(find.byTooltip('الإعدادات'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('القراءة المتصلة'));
-    await tester.pumpAndSettle();
-    await backHome(tester);
-    await tester.tap(find.text('فهرس'));
-    await tester.pumpAndSettle();
+    // A reading-only section names its part of the book and leads on.
+    await tester.scrollUntilVisible(
+      find.text('حول الكتاب'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('حول الكتاب'));
     await tester.pumpAndSettle();
     await openSection(tester, 'تمهيد الكتاب');
-    expect(header('تمهيد الكتاب'), findsOneWidget);
-    await tester.drag(find.byType(PageView), const Offset(600, 0));
+    expect(find.text('حول الكتاب'), findsOneWidget, reason: 'parent shown');
+    await tester.scrollUntilVisible(
+      find.text('الباب التالي'),
+      600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('الباب التالي'));
     await tester.pumpAndSettle();
-    await dismissTip(tester);
-    expect(header('المقدمة'), findsOneWidget, reason: 'continuous reading');
+    expect(find.text('المقدمة'), findsWidgets, reason: 'next in book order');
   });
 }
