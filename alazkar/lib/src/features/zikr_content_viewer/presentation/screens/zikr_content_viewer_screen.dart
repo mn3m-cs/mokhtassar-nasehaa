@@ -276,22 +276,26 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                 key: _viewportKey,
                 controller: _scrollController,
                 padding: const EdgeInsets.only(top: 6, bottom: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final zikr in state.azkar)
-                      ZikrItemCard(
-                        key: _keyFor(zikr.id),
-                        zikr: zikr,
-                        isCounted: state.isCounted(zikr),
-                        isKeyTarget: keysCount && keyTarget?.id == zikr.id,
+                // The section is painted once and moved as the reader
+                // scrolls, instead of being repainted on every frame.
+                child: RepaintBoundary(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final zikr in state.azkar)
+                        ZikrItemCard(
+                          key: _keyFor(zikr.id),
+                          zikr: zikr,
+                          isCounted: state.isCounted(zikr),
+                          isKeyTarget: keysCount && keyTarget?.id == zikr.id,
+                        ),
+                      _SectionEnd(
+                        previous: _titleAt(state.zikrTitle, -1),
+                        next: _titleAt(state.zikrTitle, 1),
+                        mutedColor: mutedColor,
                       ),
-                    _SectionEnd(
-                      previous: _titleAt(state.zikrTitle, -1),
-                      next: _titleAt(state.zikrTitle, 1),
-                      mutedColor: mutedColor,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
