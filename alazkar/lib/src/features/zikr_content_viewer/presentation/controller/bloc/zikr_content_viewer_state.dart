@@ -11,6 +11,9 @@ final class ZikrContentViewerLoadingState extends ZikrContentViewerState {}
 
 final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   final List<Zikr> azkar;
+
+  /// The zikr the reader is on: the one last counted, or after a scroll the
+  /// first one whose middle is on the page.
   final int activeZikrIndex;
   final ZikrTitle zikrTitle;
 
@@ -21,12 +24,16 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   /// not a zikr to count.
   final Map<int, int> initialCounts;
 
+  /// Order of the zikr to bring into view on opening, from a search result.
+  final int? focusOrder;
+
   const ZikrContentViewerLoadedState({
     required this.zikrTitle,
     required this.azkar,
     required this.activeZikrIndex,
     required this.initialCounts,
     this.sectionPath = '',
+    this.focusOrder,
   });
 
   ZikrContentViewerLoadedState copyWith({
@@ -39,24 +46,29 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
       activeZikrIndex: activeZikrIndex ?? this.activeZikrIndex,
       initialCounts: initialCounts,
       sectionPath: sectionPath,
+      focusOrder: focusOrder,
     );
   }
 
   bool isCounted(Zikr zikr) => (initialCounts[zikr.id] ?? 0) > 0;
 
-  /// Share of counted azkar finished; a section with nothing to count
-  /// reports how far the reader has paged instead.
-  double progress() {
-    if (azkar.isEmpty) return 1;
-    final counted = azkar.where(isCounted).toList();
-    if (counted.isEmpty) return (activeZikrIndex + 1) / azkar.length;
-    final done = counted.where((zikr) => zikr.count == 0).length;
-    return done / counted.length;
+  /// The zikr the volume keys count: the one in view while it has
+  /// repetitions left, else the next such zikr below it, never one above.
+  Zikr? get keyTarget {
+    for (final zikr in azkar.skip(activeZikrIndex.clamp(0, azkar.length))) {
+      if (isCounted(zikr) && zikr.count > 0) return zikr;
+    }
+    return null;
   }
+
+  int get finishedCount =>
+      azkar.where((zikr) => isCounted(zikr) && zikr.count == 0).length;
+
+  int get countedTotal => azkar.where(isCounted).length;
 
   Zikr? get activeZikr {
     if (azkar.isEmpty) return null;
-    return azkar[activeZikrIndex];
+    return azkar[activeZikrIndex.clamp(0, azkar.length - 1)];
   }
 
   @override

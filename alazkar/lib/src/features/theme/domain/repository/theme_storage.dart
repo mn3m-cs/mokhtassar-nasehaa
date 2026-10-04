@@ -1,4 +1,5 @@
 import 'package:alazkar/src/core/storage/kv_storage.dart';
+import 'package:alazkar/src/features/theme/domain/models/zikr_font.dart';
 import 'package:flutter/material.dart';
 
 class ThemeStorage {
@@ -34,6 +35,10 @@ class ThemeStorage {
     await box.write(_useMaterial3Key, useMaterial3);
   }
 
+  Future resetUseMaterial3() async {
+    await box.remove(_useMaterial3Key);
+  }
+
   /// *****************************
   static const String _colorKey = "ThemeColor";
   Color get getColor {
@@ -43,5 +48,23 @@ class ThemeStorage {
 
   Future setColor(Color color) async {
     await box.write(_colorKey, color.toARGB32());
+  }
+
+  Future resetColor() async {
+    await box.remove(_colorKey);
+  }
+
+  /// *****************************
+  static const String _zikrFontKey = "ZikrFont";
+  ZikrFont get getZikrFont {
+    final String? name = box.read(_zikrFontKey);
+    return ZikrFont.values.firstWhere(
+      (font) => font.name == name,
+      orElse: () => ZikrFont.notoNaskh,
+    );
+  }
+
+  Future setZikrFont(ZikrFont font) async {
+    await box.write(_zikrFontKey, font.name);
   }
 }

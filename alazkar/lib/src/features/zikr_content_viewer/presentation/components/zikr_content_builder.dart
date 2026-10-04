@@ -8,12 +8,16 @@ class ZikrContentBuilder extends StatelessWidget {
   final double fontSize;
   final bool enableDiacritics;
   final Color? color;
+
+  /// The reader's chosen typeface for the azkar text.
+  final String fontFamily;
   const ZikrContentBuilder({
     super.key,
     required this.zikr,
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
+    this.fontFamily = "NotoNaskhArabic",
   });
 
   @override
@@ -25,12 +29,14 @@ class ZikrContentBuilder extends StatelessWidget {
             enableDiacritics: enableDiacritics,
             fontSize: fontSize,
             color: color,
+            fontFamily: fontFamily,
           )
         : ZikrContentPlainText(
             zikr: zikr,
             enableDiacritics: enableDiacritics,
             fontSize: fontSize,
             color: color,
+            fontFamily: fontFamily,
           );
   }
 }
@@ -40,12 +46,14 @@ class ZikrContentPlainText extends StatelessWidget {
   final double fontSize;
   final bool enableDiacritics;
   final Color? color;
+  final String fontFamily;
   const ZikrContentPlainText({
     super.key,
     required this.zikr,
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
+    this.fontFamily = "NotoNaskhArabic",
   });
 
   @override
@@ -56,27 +64,59 @@ class ZikrContentPlainText extends StatelessWidget {
       fontSize: fontSize,
       color: color,
       enableDiacritics: enableDiacritics,
+      fontFamily: fontFamily,
     );
   }
 }
 
-class ZikrContentTextWithQuran extends StatelessWidget {
+/// Text with Quranic verses, whose spans are loaded asynchronously. They are
+/// loaded once per zikr and kept, so a rebuild of the page never swaps the
+/// verses for a loading bar and reflows everything around them.
+class ZikrContentTextWithQuran extends StatefulWidget {
   final Zikr zikr;
   final double fontSize;
   final bool enableDiacritics;
   final Color? color;
+  final String fontFamily;
   const ZikrContentTextWithQuran({
     super.key,
     required this.zikr,
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
+    this.fontFamily = "NotoNaskhArabic",
   });
+
+  @override
+  State<ZikrContentTextWithQuran> createState() =>
+      _ZikrContentTextWithQuranState();
+}
+
+class _ZikrContentTextWithQuranState extends State<ZikrContentTextWithQuran> {
+  late Future<List<InlineSpan>> _spans;
+
+  @override
+  void initState() {
+    super.initState();
+    _spans = _load();
+  }
+
+  @override
+  void didUpdateWidget(ZikrContentTextWithQuran oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.zikr.body != widget.zikr.body ||
+        oldWidget.enableDiacritics != widget.enableDiacritics) {
+      _spans = _load();
+    }
+  }
+
+  Future<List<InlineSpan>> _load() =>
+      widget.zikr.getTextSpan(enableDiacritics: widget.enableDiacritics);
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: zikr.getTextSpan(enableDiacritics: enableDiacritics),
+      future: _spans,
       builder: (context, snap) {
         if (!snap.hasData) return const LinearProgressIndicator();
 
@@ -85,10 +125,11 @@ class ZikrContentTextWithQuran extends StatelessWidget {
           text: TextSpan(
             children: snap.data ?? [],
             style: TextStyle(
-              fontSize: fontSize,
+              fontSize: widget.fontSize,
               height: 2,
-              fontFamily: "Kitab",
-              color: color ?? Theme.of(context).textTheme.bodyMedium?.color,
+              fontFamily: widget.fontFamily,
+              color:
+                  widget.color ?? Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         );

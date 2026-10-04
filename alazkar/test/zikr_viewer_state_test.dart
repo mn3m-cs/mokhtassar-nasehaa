@@ -31,29 +31,46 @@ void main() {
         initialCounts: {for (final z in initial) z.id: z.count},
       );
 
-  test('a passage with no count is not treated as a finished zikr', () {
+  test('a passage with no count is not treated as a zikr to count', () {
     final s = state(initial: [zikr(1, 0), zikr(2, 3)]);
 
     expect(s.isCounted(s.azkar[0]), isFalse);
     expect(s.isCounted(s.azkar[1]), isTrue);
-    expect(s.progress(), 0);
   });
 
-  test('progress counts only the azkar that were counted down', () {
-    final initial = [zikr(1, 0), zikr(2, 3), zikr(3, 1)];
+  test('the volume keys count the zikr in view', () {
+    final initial = [zikr(1, 3), zikr(2, 3), zikr(3, 3)];
+
+    expect(state(initial: initial, activeZikrIndex: 1).keyTarget?.id, 2);
+  });
+
+  test('the volume keys never count an unfinished zikr above the one in view',
+      () {
+    final initial = [zikr(1, 3), zikr(2, 3), zikr(3, 3)];
+
+    expect(state(initial: initial, activeZikrIndex: 2).keyTarget?.id, 3);
+  });
+
+  test('past a finished zikr or a passage, the keys count the next one below',
+      () {
+    final initial = [zikr(1, 3), zikr(2, 1), zikr(3, 0), zikr(4, 2)];
     final s = state(
       initial: initial,
-      current: [zikr(1, 0), zikr(2, 3), zikr(3, 0)],
+      current: [zikr(1, 3), zikr(2, 0), zikr(3, 0), zikr(4, 2)],
+      activeZikrIndex: 1,
     );
 
-    expect(s.isCounted(s.azkar[2]), isTrue);
-    expect(s.progress(), 0.5);
+    expect(s.keyTarget?.id, 4);
   });
 
-  test('a reading-only section reports how far the reader has paged', () {
-    final initial = [zikr(1, 0), zikr(2, 0), zikr(3, 0), zikr(4, 0)];
+  test('with nothing left to count below, the keys count nothing', () {
+    final initial = [zikr(1, 3), zikr(2, 1)];
+    final s = state(
+      initial: initial,
+      current: [zikr(1, 3), zikr(2, 0)],
+      activeZikrIndex: 1,
+    );
 
-    expect(state(initial: initial).progress(), 0.25);
-    expect(state(initial: initial, activeZikrIndex: 3).progress(), 1);
+    expect(s.keyTarget, isNull);
   });
 }

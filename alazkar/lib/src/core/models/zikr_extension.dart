@@ -94,11 +94,7 @@ extension ZikrExt on Zikr {
 
       final List<String> verse = [];
 
-      // add Basmallah
-      final notHaveBasmallah =
-          currentVerse.key.startSura == 1 && currentVerse.key.startAyah == 1;
-
-      if (i == 0 && !notHaveBasmallah) verse.add(kArBasmallah);
+      if (currentVerse.key.opensWithBasmala) verse.add("$kArBasmallah\n");
 
       // add Brackets
       verse.add(" ﴿ ${currentVerse.value.trim()} ﴾");

@@ -11,16 +11,10 @@ class ZikrContentViewerStartEvent extends ZikrContentViewerEvent {
   final int zikrTitleId;
   final int? zikrOrder;
 
-  /// Opens the section on its last zikr, for reading backwards.
-  final bool fromEnd;
-  const ZikrContentViewerStartEvent(
-    this.zikrTitleId, {
-    this.zikrOrder,
-    this.fromEnd = false,
-  });
+  const ZikrContentViewerStartEvent(this.zikrTitleId, {this.zikrOrder});
 
   @override
-  List<Object?> get props => [zikrTitleId, zikrOrder, fromEnd];
+  List<Object?> get props => [zikrTitleId, zikrOrder];
 }
 
 class ZikrContentViewerDecreaseEvent extends ZikrContentViewerEvent {
@@ -32,26 +26,34 @@ class ZikrContentViewerDecreaseEvent extends ZikrContentViewerEvent {
   List<Object> get props => [zikr];
 }
 
-class ZikrContentViewerPageChangeEvent extends ZikrContentViewerEvent {
-  final int index;
+class ZikrContentViewerCopyEvent extends ZikrContentViewerEvent {
+  final Zikr zikr;
 
-  const ZikrContentViewerPageChangeEvent(this.index);
+  const ZikrContentViewerCopyEvent(this.zikr);
 
   @override
-  List<Object> get props => [index];
+  List<Object> get props => [zikr];
 }
 
-class ZikrContentViewerCopyEvent extends ZikrContentViewerEvent {}
+class ZikrContentViewerShareEvent extends ZikrContentViewerEvent {
+  final Zikr zikr;
 
-class ZikrContentViewerShareEvent extends ZikrContentViewerEvent {}
+  const ZikrContentViewerShareEvent(this.zikr);
+
+  @override
+  List<Object> get props => [zikr];
+}
 
 class ZikrContentViewerNextTitleEvent extends ZikrContentViewerEvent {}
 
-class ZikrContentViewerPerviousTitleEvent extends ZikrContentViewerEvent {
-  final bool fromEnd;
+class ZikrContentViewerPreviousTitleEvent extends ZikrContentViewerEvent {}
 
-  const ZikrContentViewerPerviousTitleEvent({this.fromEnd = false});
+/// The reader scrolled; [index] is the zikr now in view.
+class ZikrContentViewerFocusEvent extends ZikrContentViewerEvent {
+  final int index;
+
+  const ZikrContentViewerFocusEvent(this.index);
 
   @override
-  List<Object> get props => [fromEnd];
+  List<Object> get props => [index];
 }

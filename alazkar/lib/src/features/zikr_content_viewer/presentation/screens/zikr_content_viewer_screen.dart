@@ -1,17 +1,17 @@
 import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/core/extension/extension_platform.dart';
+import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/core/widgets/loading.dart';
 import 'package:alazkar/src/features/home/presentation/components/bookmark_title_button.dart';
-import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/app_bar_bottom.dart';
-import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/bottom_app_bar.dart';
+import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
+import 'package:alazkar/src/features/settings/presentation/controller/cubit/settings_cubit.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/shake_tutorial_dialog.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_item_card.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_report_dialog.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/controller/bloc/zikr_content_viewer_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:marquee/marquee.dart';
 import 'package:shake/shake.dart';
 
 class ZikrContentViewerScreen extends StatefulWidget {
@@ -44,6 +44,9 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
   ShakeDetector? _shakeDetector;
   bool _dialogOpen = false;
   late final ZikrContentViewerBloc _bloc;
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _cardKeys = {};
+  final GlobalKey _viewportKey = GlobalKey();
 
   @override
   void initState() {
@@ -68,6 +71,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
   @override
   void dispose() {
     _shakeDetector?.stopListening();
+    _scrollController.dispose();
     _bloc.close();
     super.dispose();
   }
@@ -122,183 +126,300 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     });
   }
 
-  /// How far past the first or last zikr a drag must go to change section.
-  static const double _crossSectionThreshold = 72;
-  final Map<int, double> _edgeDrag = {};
-  final Set<int> _crossedSection = {};
+  GlobalKey _keyFor(int zikrId) => _cardKeys.putIfAbsent(zikrId, GlobalKey.new);
 
-  /// With continuous reading on, dragging sideways past the last zikr, or up
-  /// past the end of its text, opens the next section; dragging sideways
-  /// before the first zikr opens the previous one at its end.
-  bool _crossSectionEdge(ScrollNotification notification) {
-    final depth = notification.depth;
-    if (depth > 1) return false;
-    if (notification is ScrollStartNotification ||
-        notification is ScrollEndNotification) {
-      _edgeDrag.remove(depth);
-      _crossedSection.remove(depth);
-      return false;
-    }
-    if (_crossedSection.contains(depth) ||
-        !_bloc.settingsStorage.continuousReading) {
-      return false;
-    }
-
-    final metrics = notification.metrics;
-    var drag = _edgeDrag[depth] ?? 0;
-    if (notification is OverscrollNotification &&
-        notification.dragDetails != null) {
-      drag += notification.overscroll;
-    } else if (notification is ScrollUpdateNotification &&
-        notification.dragDetails != null) {
-      if (metrics.pixels > metrics.maxScrollExtent) {
-        drag = metrics.pixels - metrics.maxScrollExtent;
-      } else if (metrics.pixels < metrics.minScrollExtent) {
-        drag = metrics.pixels - metrics.minScrollExtent;
-      }
-    }
-    _edgeDrag[depth] = drag;
-
-    final state = _bloc.state;
-    final onLastZikr = state is ZikrContentViewerLoadedState &&
-        state.activeZikrIndex == state.azkar.length - 1;
-    if (depth == 1 && !onLastZikr) return false;
-
-    if (drag > _crossSectionThreshold) {
-      _crossedSection.add(depth);
-      _bloc.add(ZikrContentViewerNextTitleEvent());
-    } else if (depth == 0 && drag < -_crossSectionThreshold) {
-      _crossedSection.add(depth);
-      _bloc.add(const ZikrContentViewerPerviousTitleEvent(fromEnd: true));
-    }
-    return false;
+  void _bringIntoView(int zikrId) {
+    final cardContext = _cardKeys[zikrId]?.currentContext;
+    if (cardContext == null) return;
+    Scrollable.ensureVisible(
+      cardContext,
+      alignment: .05,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeInOut,
+    );
   }
 
-  double getTextWidth(String text, TextStyle style, BuildContext context) {
-    final textSpan = TextSpan(text: text, style: style);
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-      maxLines: 1, // Set to 1 for single line text
-    );
-    textPainter.layout(
-      maxWidth: MediaQuery.of(context)
-          .size
-          .width, // You can adjust this width as needed
-    );
-    return textPainter.width;
+  /// Tells the bloc which zikr is in view: the first card whose middle is on
+  /// the page.
+  void _reportFocus() {
+    final state = _bloc.state;
+    if (state is! ZikrContentViewerLoadedState || state.azkar.isEmpty) return;
+    final viewport =
+        _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewport == null || !viewport.attached) return;
+    final pageTop = viewport.localToGlobal(Offset.zero).dy;
+    var focus = state.azkar.length - 1;
+    for (var i = 0; i < state.azkar.length; i++) {
+      final card = _cardKeys[state.azkar[i].id]
+          ?.currentContext
+          ?.findRenderObject() as RenderBox?;
+      if (card == null || !card.attached) continue;
+      if (card.localToGlobal(Offset(0, card.size.height / 2)).dy >= pageTop) {
+        focus = i;
+        break;
+      }
+    }
+    _bloc.add(ZikrContentViewerFocusEvent(focus));
+  }
+
+  bool _isBelowPage(int zikrId) {
+    final viewport =
+        _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+    final card =
+        _cardKeys[zikrId]?.currentContext?.findRenderObject() as RenderBox?;
+    if (viewport == null || card == null) return false;
+    final pageBottom =
+        viewport.localToGlobal(Offset(0, viewport.size.height)).dy;
+    return card.localToGlobal(Offset.zero).dy >= pageBottom;
+  }
+
+  /// A new section starts at its top, or at the zikr a search result named.
+  /// Finishing a zikr brings the next unfinished one after it into view; a
+  /// count below the page, from the volume keys, scrolls down to show it.
+  void _onStateChange(
+    ZikrContentViewerState previous,
+    ZikrContentViewerState current,
+  ) {
+    if (current is! ZikrContentViewerLoadedState) return;
+    final sameSection = previous is ZikrContentViewerLoadedState &&
+        previous.zikrTitle.id == current.zikrTitle.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!sameSection) {
+        if (_scrollController.hasClients) _scrollController.jumpTo(0);
+        final focus = current.azkar
+            .where((zikr) => zikr.order == current.focusOrder)
+            .firstOrNull;
+        if (focus != null) _bringIntoView(focus.id);
+        return;
+      }
+      final counted = current.azkar.indexWhere(
+        (zikr) =>
+            previous.azkar.any((p) => p.id == zikr.id && p.count > zikr.count),
+      );
+      if (counted == -1) return;
+      if (current.azkar[counted].count > 0) {
+        // Only a zikr wholly below the page moves it; a tap on the card in
+        // view never shifts the text being read.
+        if (_isBelowPage(current.azkar[counted].id)) {
+          _bringIntoView(current.azkar[counted].id);
+        }
+        return;
+      }
+      // Move on past the zikr just finished, never back to one skipped.
+      final next = current.azkar.skip(counted + 1).where(
+            (zikr) => current.isCounted(zikr) && zikr.count > 0,
+          );
+      if (next.isNotEmpty) _bringIntoView(next.first.id);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _bloc,
-      child: BlocBuilder<ZikrContentViewerBloc, ZikrContentViewerState>(
+      child: BlocConsumer<ZikrContentViewerBloc, ZikrContentViewerState>(
         bloc: _bloc,
+        listener: (_, __) {},
+        listenWhen: (previous, current) {
+          _onStateChange(previous, current);
+          return false;
+        },
         builder: (context, state) {
           if (state is! ZikrContentViewerLoadedState) {
             return const Loading();
           }
-          const headerStyle = TextStyle(
-            fontFamily: "Kitab",
-            fontWeight: FontWeight.bold,
-          );
-          final Size screenSize = MediaQuery.of(context).size;
-          final String breadcrumb = state.sectionPath.isEmpty
-              ? state.zikrTitle.name
-              : "${state.sectionPath} › ${state.zikrTitle.name}";
-          final List<String> pathParts = state.sectionPath.isEmpty
-              ? const []
+          final theme = Theme.of(context);
+          final mutedColor = theme.colorScheme.onSurface.withValues(alpha: .65);
+          final keysCount =
+              context.watch<SettingsCubit>().state.praiseWithVolumeKeys;
+          final keyTarget = state.keyTarget;
+          final pathParts = state.sectionPath.isEmpty
+              ? const <String>[]
               : state.sectionPath.split(' › ');
-          final Color mutedColor =
-              Theme.of(context).colorScheme.onSurface.withValues(alpha: .65);
-          final bool isSliding =
-              getTextWidth(state.zikrTitle.name, headerStyle, context) >
-                  (screenSize.width * .5);
+          final subtitle = state.countedTotal > 0
+              ? "أتممت ${state.finishedCount} من ${state.countedTotal}"
+              : pathParts.isEmpty
+                  ? ""
+                  : pathParts.last;
           return Scaffold(
             appBar: AppBar(
-              title: isSliding
-                  ? SizedBox(
-                      height: 60,
-                      child: Marquee(
-                        text: state.zikrTitle.name,
-                        blankSpace: screenSize.width,
-                        pauseAfterRound: const Duration(seconds: 1),
-                        accelerationCurve: Curves.easeInOut,
-                        decelerationCurve: Curves.easeOut,
-                        fadingEdgeEndFraction: 1,
-                        fadingEdgeStartFraction: .5,
-                        showFadingOnlyWhenScrolling: false,
-                        style: headerStyle,
-                      ),
-                    )
-                  : Semantics(
-                      label: breadcrumb,
-                      excludeSemantics: true,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (state.sectionPath.isNotEmpty) ...[
-                            // The path gives way first, so the section's
-                            // own name is never cut short.
-                            Flexible(
-                              child: Text(
-                                pathParts.last,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: headerStyle.copyWith(
-                                  fontWeight: FontWeight.normal,
-                                  color: mutedColor,
-                                ),
-                              ),
-                            ),
-                            Directionality(
-                              textDirection: TextDirection.ltr,
-                              child: Icon(
-                                Icons.chevron_left,
-                                size: 22,
-                                color: mutedColor,
-                              ),
-                            ),
-                          ],
-                          Text(state.zikrTitle.name, style: headerStyle),
-                        ],
-                      ),
-                    ),
               centerTitle: true,
-              actions: [BookmarkTitleButton(titleId: state.zikrTitle.id)],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(50),
-                child: Column(
-                  children: [
-                    ZikrContentViewerAppBarBottom(state: state),
-                    LinearProgressIndicator(
-                      semanticsLabel: "التقدم في الباب",
-                      value: state.progress(),
+              title: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    state.zikrTitle.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: "Kitab",
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
+                  ),
+                  if (subtitle.isNotEmpty)
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: mutedColor),
+                    ),
+                ],
+              ),
+              actions: [BookmarkTitleButton(titleId: state.zikrTitle.id)],
+            ),
+            body: NotificationListener<ScrollEndNotification>(
+              onNotification: (_) {
+                _reportFocus();
+                return false;
+              },
+              child: SingleChildScrollView(
+                key: _viewportKey,
+                controller: _scrollController,
+                padding: const EdgeInsets.only(top: 6, bottom: 24),
+                // The section is painted once and moved as the reader
+                // scrolls, instead of being repainted on every frame.
+                child: RepaintBoundary(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final zikr in state.azkar)
+                        ZikrItemCard(
+                          key: _keyFor(zikr.id),
+                          zikr: zikr,
+                          isCounted: state.isCounted(zikr),
+                          isKeyTarget: keysCount && keyTarget?.id == zikr.id,
+                        ),
+                      _SectionEnd(
+                        previous: _titleAt(state.zikrTitle, -1),
+                        next: _titleAt(state.zikrTitle, 1),
+                        mutedColor: mutedColor,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-            body: NotificationListener<ScrollNotification>(
-              onNotification: _crossSectionEdge,
-              child: PageView.builder(
-                controller: _bloc.pageController,
-                itemCount: state.azkar.length,
-                itemBuilder: (context, index) {
-                  final zikr = state.azkar[index];
-                  return ZikrItemCard(
-                    zikr: zikr,
-                    isCounted: state.isCounted(zikr),
-                  );
-                },
-              ),
-            ),
-            bottomNavigationBar: ZikrContentViewerBottomAppBar(
-              state: state,
-            ),
           );
         },
+      ),
+    );
+  }
+
+  /// The section [step] places from [current] in book order, if any.
+  ZikrTitle? _titleAt(ZikrTitle current, int step) {
+    final homeState = _bloc.homeBloc.state;
+    if (homeState is! HomeLoadedState) return null;
+    final titles = homeState.readingOrder();
+    final index = titles.indexWhere((title) => title.id == current.id);
+    if (index == -1) return null;
+    final target = index + step;
+    if (target < 0 || target >= titles.length) return null;
+    return titles[target];
+  }
+}
+
+/// The close of a section: a plain marker, then a clear way on to the next
+/// section in book order, back to the previous one, or to the index.
+class _SectionEnd extends StatelessWidget {
+  final ZikrTitle? previous;
+  final ZikrTitle? next;
+  final Color mutedColor;
+
+  const _SectionEnd({
+    required this.previous,
+    required this.next,
+    required this.mutedColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+      child: Column(
+        children: [
+          Text(
+            next == null ? "تمّ الكتاب بحمد الله" : "تمّ الباب",
+            style: TextStyle(color: mutedColor),
+          ),
+          const SizedBox(height: 12),
+          if (next != null)
+            Material(
+              color: colorScheme.primary,
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () => context
+                    .read<ZikrContentViewerBloc>()
+                    .add(ZikrContentViewerNextTitleEvent()),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "الباب التالي",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: colorScheme.onPrimary
+                                    .withValues(alpha: .85),
+                              ),
+                            ),
+                            Text(
+                              next!.name,
+                              style: TextStyle(
+                                fontFamily: "Kitab",
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Icon(
+                          Icons.chevron_left,
+                          color: colorScheme.onPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: [
+              if (previous != null)
+                TextButton(
+                  onPressed: () => context
+                      .read<ZikrContentViewerBloc>()
+                      .add(ZikrContentViewerPreviousTitleEvent()),
+                  child: const Text("الباب السابق"),
+                ),
+              TextButton(
+                // A section opened from search sits above the results; the
+                // index is under them, with search closed.
+                onPressed: () {
+                  context
+                      .read<ZikrContentViewerBloc>()
+                      .homeBloc
+                      .add(const HomeToggleSearchEvent(false));
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                child: const Text("العودة إلى الفهرس"),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

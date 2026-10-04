@@ -8,12 +8,19 @@ class SectionRow {
   final bool isExpanded;
   final VoidCallback toggle;
 
+  /// Where the row sits among the visible rows, so a list can draw them as
+  /// one rounded group.
+  final bool isFirst;
+  final bool isLast;
+
   const SectionRow({
     required this.title,
     required this.localOrder,
     required this.depth,
     required this.isExpanded,
     required this.toggle,
+    this.isFirst = false,
+    this.isLast = false,
   });
 }
 
@@ -26,10 +33,14 @@ class SectionBrowser extends StatefulWidget {
   final List<ZikrTitle> titles;
   final SectionItemBuilder itemBuilder;
 
+  /// Scrolls with the rows, above them.
+  final Widget? header;
+
   const SectionBrowser({
     super.key,
     required this.titles,
     required this.itemBuilder,
+    this.header,
   });
 
   @override
@@ -89,7 +100,18 @@ class _SectionBrowserState extends State<SectionBrowser> {
     }
 
     visit(null, 0);
-    return rows;
+    return [
+      for (var index = 0; index < rows.length; index++)
+        SectionRow(
+          title: rows[index].title,
+          localOrder: rows[index].localOrder,
+          depth: rows[index].depth,
+          isExpanded: rows[index].isExpanded,
+          toggle: rows[index].toggle,
+          isFirst: index == 0,
+          isLast: index == rows.length - 1,
+        ),
+    ];
   }
 
   @override
@@ -98,12 +120,17 @@ class _SectionBrowserState extends State<SectionBrowser> {
     if (rows.isEmpty) {
       return const Center(child: Text('لا توجد أقسام أو أذكار هنا'));
     }
+    final header = widget.header;
+    final offset = header == null ? 0 : 1;
     return ListView.builder(
       key: const PageStorageKey<String>('section-tree'),
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
-      itemCount: rows.length,
-      itemBuilder: (context, index) => widget.itemBuilder(context, rows[index]),
+      padding: const EdgeInsets.only(bottom: 24),
+      itemCount: rows.length + offset,
+      itemBuilder: (context, index) => header != null && index == 0
+          ? header
+          : widget.itemBuilder(context, rows[index - offset]),
     );
   }
 }

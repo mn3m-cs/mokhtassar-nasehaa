@@ -7,12 +7,14 @@ class StringFormatter extends StatelessWidget {
   final double fontSize;
   final bool enableDiacritics;
   final Color? color;
+  final String fontFamily;
   const StringFormatter({
     super.key,
     required this.text,
     required this.fontSize,
     required this.enableDiacritics,
     this.color,
+    this.fontFamily = 'NotoNaskhArabic',
   });
 
   @override
@@ -27,7 +29,7 @@ class StringFormatter extends StatelessWidget {
       textDirection: TextDirection.rtl,
       text: customTextSpan(
         text: enableDiacritics ? text : text.removeDiacritics,
-        defaultStyle: defaultStyle.copyWith(fontFamily: 'Kitab'),
+        defaultStyle: defaultStyle.copyWith(fontFamily: fontFamily),
         highlightStyle: defaultStyle.copyWith(fontFamily: 'Uthmanic2'),
       ),
     );
