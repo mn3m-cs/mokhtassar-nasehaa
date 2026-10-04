@@ -24,6 +24,12 @@ class VerseRange extends Equatable {
     return startAyah == endingAyah && startSura == endingSura;
   }
 
+  /// A passage from the start of a surah is headed by the basmala, as the
+  /// book prints it; one from the middle of a surah is not. Al-Fatiha's
+  /// basmala is its first verse, already in the text, and At-Tawbah has none.
+  bool get opensWithBasmala =>
+      startAyah == 1 && startSura != 1 && startSura != 9;
+
   @override
   List<Object> get props => [startSura, startAyah, endingSura, endingAyah];
 }

@@ -69,7 +69,10 @@ class ZikrContentPlainText extends StatelessWidget {
   }
 }
 
-class ZikrContentTextWithQuran extends StatelessWidget {
+/// Text with Quranic verses, whose spans are loaded asynchronously. They are
+/// loaded once per zikr and kept, so a rebuild of the page never swaps the
+/// verses for a loading bar and reflows everything around them.
+class ZikrContentTextWithQuran extends StatefulWidget {
   final Zikr zikr;
   final double fontSize;
   final bool enableDiacritics;
@@ -85,9 +88,35 @@ class ZikrContentTextWithQuran extends StatelessWidget {
   });
 
   @override
+  State<ZikrContentTextWithQuran> createState() =>
+      _ZikrContentTextWithQuranState();
+}
+
+class _ZikrContentTextWithQuranState extends State<ZikrContentTextWithQuran> {
+  late Future<List<InlineSpan>> _spans;
+
+  @override
+  void initState() {
+    super.initState();
+    _spans = _load();
+  }
+
+  @override
+  void didUpdateWidget(ZikrContentTextWithQuran oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.zikr.body != widget.zikr.body ||
+        oldWidget.enableDiacritics != widget.enableDiacritics) {
+      _spans = _load();
+    }
+  }
+
+  Future<List<InlineSpan>> _load() =>
+      widget.zikr.getTextSpan(enableDiacritics: widget.enableDiacritics);
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: zikr.getTextSpan(enableDiacritics: enableDiacritics),
+      future: _spans,
       builder: (context, snap) {
         if (!snap.hasData) return const LinearProgressIndicator();
 
@@ -96,10 +125,11 @@ class ZikrContentTextWithQuran extends StatelessWidget {
           text: TextSpan(
             children: snap.data ?? [],
             style: TextStyle(
-              fontSize: fontSize,
+              fontSize: widget.fontSize,
               height: 2,
-              fontFamily: fontFamily,
-              color: color ?? Theme.of(context).textTheme.bodyMedium?.color,
+              fontFamily: widget.fontFamily,
+              color:
+                  widget.color ?? Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         );
