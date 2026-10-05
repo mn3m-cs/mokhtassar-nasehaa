@@ -67,11 +67,11 @@ void main() {
 
     // Tapping a zikr's text counts it and marks it done in the header.
     await openSection(tester, 'أذكار الصباح');
-    expect(find.text('أتممت 0 من 28'), findsOneWidget);
+    expect(find.text('أتممت 0 من 27'), findsOneWidget);
     await tester
         .tap(find.textContaining('أصبحنا على', findRichText: true).first);
     await tester.pumpAndSettle();
-    expect(find.text('أتممت 1 من 28'), findsOneWidget, reason: 'counted');
+    expect(find.text('أتممت 1 من 27'), findsOneWidget, reason: 'counted');
     expect(
       find.bySemanticsLabel(RegExp('تم العدّ')),
       findsOneWidget,
@@ -87,7 +87,7 @@ void main() {
     await tester.tap(find.text('الباب التالي'));
     await tester.pumpAndSettle();
     await dismissTip(tester);
-    expect(find.text('أتممت 0 من 26'), findsOneWidget, reason: 'next section');
+    expect(find.text('أتممت 0 من 25'), findsOneWidget, reason: 'next section');
     expect(find.text('أذكار المساء'), findsWidgets);
 
     // ...and leads back to the previous one.
@@ -99,7 +99,7 @@ void main() {
     await tester.tap(find.text('الباب السابق'));
     await tester.pumpAndSettle();
     expect(
-      find.text('أتممت 0 من 28'),
+      find.text('أتممت 0 من 27'),
       findsOneWidget,
       reason: 'previous section',
     );
