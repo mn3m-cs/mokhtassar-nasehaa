@@ -88,7 +88,8 @@ extension ZikrExt on Zikr {
     bool enableDiacritics,
   ) {
     final List<InlineSpan> spans = [];
-    if (lineIndex != 0) spans.add(const TextSpan(text: "\n\n"));
+    // A line break, not an empty line, between the text and its verses.
+    if (lineIndex != 0) spans.add(const TextSpan(text: "\n"));
     for (var i = 0; i < verses.entries.length; i++) {
       final currentVerse = verses.entries.elementAt(i);
 
@@ -111,7 +112,7 @@ extension ZikrExt on Zikr {
       );
     }
     if (lineIndex != linesLength - 1) {
-      spans.add(const TextSpan(text: "\n\n"));
+      spans.add(const TextSpan(text: "\n"));
     }
 
     return spans;

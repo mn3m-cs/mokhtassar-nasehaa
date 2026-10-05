@@ -61,13 +61,6 @@ void main() {
       GROUP BY titles.id
       ORDER BY titles."order"
     ''');
-    final unclassifiedWirds = await database.rawQuery('''
-      SELECT contents.id
-      FROM contents
-      JOIN titles ON titles.id = contents.titleId
-      WHERE titles.name LIKE 'الورد %'
-        AND TRIM(COALESCE(contents.hokm, '')) = ''
-    ''');
     final eveningSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
       FROM contents
@@ -335,7 +328,7 @@ void main() {
       SELECT id, hokm
       FROM contents
       WHERE titleId IN (61, 62, 63, 64, 65, 68)
-        AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
+        AND hokm NOT IN ('', 'صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
     ''');
     final absoluteDhikrAndWirdSections = await database.rawQuery('''
       SELECT titles.id, COUNT(contents.id) AS count,
@@ -364,7 +357,7 @@ void main() {
             (66, 67, 69, 70, 71, 72, 73, 74, 75, 76, 77, 82,
               83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
         AND contents.hokm NOT IN
-            ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
+            ('', 'صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
     ''');
     final absoluteDhikrHierarchy = await database.rawQuery('''
       WITH RECURSIVE descendants(id, depth) AS (
@@ -410,7 +403,7 @@ void main() {
       SELECT id, hokm
       FROM contents
       WHERE titleId BETWEEN 33 AND 60
-        AND hokm NOT IN ('صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر', 'قرآني')
+        AND hokm NOT IN ('', 'صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
     ''');
     final prayerPilot = await database.rawQuery('''
       SELECT
@@ -536,7 +529,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 138);
+    expect(await database.getVersion(), 139);
     expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -668,9 +661,8 @@ void main() {
       wirdCounts.map((row) => row['count']),
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
     );
-    expect(unclassifiedWirds, isEmpty);
-    expect(morningSection.single, {'count': 29, 'first': 1, 'last': 29});
-    expect(eveningSection.single, {'count': 26, 'first': 1, 'last': 26});
+    expect(morningSection.single, {'count': 28, 'first': 1, 'last': 28});
+    expect(eveningSection.single, {'count': 25, 'first': 1, 'last': 25});
     expect(nightSection.single, {
       'name': 'ما يُقرأ في الليل',
       'count': 6,
@@ -1093,17 +1085,35 @@ void main() {
     );
 
     final alternatives = await database.rawQuery('''
-      SELECT id FROM contents WHERE id IN (22, 50) AND body LIKE 'أو: %'
+      SELECT id FROM contents
+      WHERE id IN (21, 49) AND count = 100 AND body LIKE '%' || char(10) || 'أو: %'
+    ''');
+    final separateAlternatives = await database.rawQuery('''
+      SELECT id FROM contents WHERE id IN (22, 50)
+    ''');
+    final tawbah129 = await database.rawQuery('''
+      SELECT id FROM contents
+      WHERE id IN (18, 46, 414) AND body LIKE '﴿ حَسۡبِيَ%' AND body NOT LIKE '%QuranText%'
+    ''');
+    final appLabels = await database.rawQuery('''
+      SELECT COUNT(*) AS count FROM contents WHERE hokm = 'قرآني'
     ''');
     final morningClosing = await database.rawQuery('''
       SELECT id, count FROM contents
-      WHERE titleId = 1 AND "order" IN (28, 29) ORDER BY "order"
+      WHERE titleId = 1 AND "order" IN (27, 28) ORDER BY "order"
     ''');
     final morningNote = await database.rawQuery('''
       SELECT body FROM contents WHERE id = 1194
     ''');
     expect(alternatives.length, 2,
-        reason: '«أو:» marks an alternative, not a second zikr (p14, p19)');
+        reason: '«أو:» is one choice in one card, counted a hundred times '
+            '(p14, p19)');
+    expect(separateAlternatives, isEmpty);
+    expect(tawbah129.length, 3,
+        reason: 'the book quotes at-Tawbah 129 from «حسبي الله» (p13, p19, '
+            'p152), not the whole verse');
+    expect(appLabels.single, {'count': 0},
+        reason: '«قرآني» is not a grading the book gives');
     expect(
         morningClosing,
         [
