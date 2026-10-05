@@ -8,6 +8,7 @@ class StringFormatter extends StatelessWidget {
   final bool enableDiacritics;
   final Color? color;
   final String fontFamily;
+  final TextAlign textAlign;
   const StringFormatter({
     super.key,
     required this.text,
@@ -15,6 +16,7 @@ class StringFormatter extends StatelessWidget {
     required this.enableDiacritics,
     this.color,
     this.fontFamily = 'NotoNaskhArabic',
+    this.textAlign = TextAlign.center,
   });
 
   @override
@@ -25,7 +27,7 @@ class StringFormatter extends StatelessWidget {
       color: color ?? Theme.of(context).textTheme.bodyMedium?.color,
     );
     return RichText(
-      textAlign: TextAlign.center,
+      textAlign: textAlign,
       textDirection: TextDirection.rtl,
       text: customTextSpan(
         text: enableDiacritics ? text : text.removeDiacritics,
