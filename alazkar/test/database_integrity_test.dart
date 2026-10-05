@@ -536,7 +536,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 137);
+    expect(await database.getVersion(), 138);
     expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -669,7 +669,7 @@ void main() {
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
     );
     expect(unclassifiedWirds, isEmpty);
-    expect(morningSection.single, {'count': 28, 'first': 1, 'last': 28});
+    expect(morningSection.single, {'count': 29, 'first': 1, 'last': 29});
     expect(eveningSection.single, {'count': 26, 'first': 1, 'last': 26});
     expect(nightSection.single, {
       'name': 'ما يُقرأ في الليل',
@@ -1086,12 +1086,34 @@ void main() {
     ''');
     expect(
       virtueRecords.map((row) => row['id']),
-      [
-        2, 4, 6, 7, 13, 14, 17, 18, 19, 21, 22, 24, 25, 26, 27, 28, 33, 35, //
-        36, 40, 45, 46, 47, 49, 50, 52, 61, 63, 65, 70, 74, 274, 277, 334,
-        883, 884, 885, 886, 903, 905, 906,
-      ],
-      reason: 'only virtues verified in the book (#83)',
+      [274, 277, 334, 906],
+      reason: 'a virtue line shows only what the book prints in its main '
+          'text under the zikr (p104, p105, p123, p47); excerpts of the '
+          'takhrij hadiths stay whole in the source',
+    );
+
+    final alternatives = await database.rawQuery('''
+      SELECT id FROM contents WHERE id IN (22, 50) AND body LIKE 'أو: %'
+    ''');
+    final morningClosing = await database.rawQuery('''
+      SELECT id, count FROM contents
+      WHERE titleId = 1 AND "order" IN (28, 29) ORDER BY "order"
+    ''');
+    final morningNote = await database.rawQuery('''
+      SELECT body FROM contents WHERE id = 1194
+    ''');
+    expect(alternatives.length, 2,
+        reason: '«أو:» marks an alternative, not a second zikr (p14, p19)');
+    expect(
+        morningClosing,
+        [
+          {'id': 1194, 'count': 0},
+          {'id': 28, 'count': 1},
+        ],
+        reason: 'the «تنبيه» is read before the expiation of the gathering');
+    expect(
+      morningNote.single['body']! as String,
+      allOf(startsWith('تنبيه:'), endsWith('ختمه بكفارة المجلس:')),
     );
 
     final distressFootnotes = await database.rawQuery('''
@@ -1104,7 +1126,7 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 107});
+    expect(recordsWithFootnotes.single, {'count': 108});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {

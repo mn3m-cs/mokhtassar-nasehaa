@@ -11,6 +11,9 @@ class ZikrContentBuilder extends StatelessWidget {
 
   /// The reader's chosen typeface for the azkar text.
   final String fontFamily;
+
+  /// Centred for a zikr; a passage to read is set as a paragraph.
+  final TextAlign textAlign;
   const ZikrContentBuilder({
     super.key,
     required this.zikr,
@@ -18,6 +21,7 @@ class ZikrContentBuilder extends StatelessWidget {
     required this.enableDiacritics,
     this.color,
     this.fontFamily = "NotoNaskhArabic",
+    this.textAlign = TextAlign.center,
   });
 
   @override
@@ -30,6 +34,7 @@ class ZikrContentBuilder extends StatelessWidget {
             fontSize: fontSize,
             color: color,
             fontFamily: fontFamily,
+            textAlign: textAlign,
           )
         : ZikrContentPlainText(
             zikr: zikr,
@@ -37,6 +42,7 @@ class ZikrContentBuilder extends StatelessWidget {
             fontSize: fontSize,
             color: color,
             fontFamily: fontFamily,
+            textAlign: textAlign,
           );
   }
 }
@@ -47,6 +53,7 @@ class ZikrContentPlainText extends StatelessWidget {
   final bool enableDiacritics;
   final Color? color;
   final String fontFamily;
+  final TextAlign textAlign;
   const ZikrContentPlainText({
     super.key,
     required this.zikr,
@@ -54,6 +61,7 @@ class ZikrContentPlainText extends StatelessWidget {
     required this.enableDiacritics,
     this.color,
     this.fontFamily = "NotoNaskhArabic",
+    this.textAlign = TextAlign.center,
   });
 
   @override
@@ -65,6 +73,7 @@ class ZikrContentPlainText extends StatelessWidget {
       color: color,
       enableDiacritics: enableDiacritics,
       fontFamily: fontFamily,
+      textAlign: textAlign,
     );
   }
 }
@@ -78,6 +87,7 @@ class ZikrContentTextWithQuran extends StatefulWidget {
   final bool enableDiacritics;
   final Color? color;
   final String fontFamily;
+  final TextAlign textAlign;
   const ZikrContentTextWithQuran({
     super.key,
     required this.zikr,
@@ -85,6 +95,7 @@ class ZikrContentTextWithQuran extends StatefulWidget {
     required this.enableDiacritics,
     this.color,
     this.fontFamily = "NotoNaskhArabic",
+    this.textAlign = TextAlign.center,
   });
 
   @override
@@ -121,7 +132,7 @@ class _ZikrContentTextWithQuranState extends State<ZikrContentTextWithQuran> {
         if (!snap.hasData) return const LinearProgressIndicator();
 
         return RichText(
-          textAlign: TextAlign.center,
+          textAlign: widget.textAlign,
           text: TextSpan(
             children: snap.data ?? [],
             style: TextStyle(

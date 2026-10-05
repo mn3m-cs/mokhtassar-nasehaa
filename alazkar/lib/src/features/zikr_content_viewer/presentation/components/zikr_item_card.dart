@@ -33,6 +33,44 @@ class ZikrItemCard extends StatelessWidget {
     final done = isCounted && zikr.count == 0;
     final mutedColor = colorScheme.onSurface.withValues(alpha: .65);
     final themeState = context.watch<ThemeCubit>().state;
+    if (!isCounted) {
+      // A passage to read sits on the page like the book's prose, not in a
+      // card: no background, set as a paragraph.
+      return Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(24, 4, 12, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: _ActionsMenu(zikr: zikr, color: mutedColor),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 12),
+              child: ZikrContentBuilder(
+                zikr: zikr,
+                enableDiacritics: true,
+                fontSize: themeState.fontSize,
+                fontFamily: themeState.zikrFont.family,
+                textAlign: TextAlign.justify,
+              ),
+            ),
+            if (zikr.fadl.isNotEmpty)
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 12, 0),
+                child: Text(
+                  zikr.fadl,
+                  textAlign: TextAlign.justify,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    height: 1.7,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
     return AnimatedOpacity(
       opacity: done ? .5 : 1,
       duration: const Duration(milliseconds: 250),
