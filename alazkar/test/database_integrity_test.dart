@@ -241,7 +241,7 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 1 AND search = '282121') AS qasas_dua
+        SUM("order" = 1 AND search = 'رب نجني من القوم الظلمين') AS qasas_dua
       FROM contents
       WHERE titleId = 34
     ''');
@@ -529,7 +529,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 139);
+    expect(await database.getVersion(), 140);
     expect(titleCount.single, {'count': 147});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1114,6 +1114,43 @@ void main() {
             'p152), not the whole verse');
     expect(appLabels.single, {'count': 0},
         reason: '«قرآني» is not a grading the book gives');
+
+    final quotedVerses = await database.rawQuery('''
+      SELECT id FROM contents
+      WHERE id IN (227, 236, 253, 273, 304, 305, 306, 327, 328, 337, 355, 356,
+                   398, 399, 412, 413, 415, 416, 417, 419, 420, 421, 422, 423,
+                   425, 426, 427, 428, 429, 430, 431, 432, 454, 468, 607, 608,
+                   609, 610, 626, 627, 629, 630, 647, 648, 649, 686, 687, 688,
+                   689, 690, 708, 709, 710, 711, 725, 747, 748, 827, 828, 829,
+                   830, 831, 833, 846, 847, 1013, 1023)
+        AND body LIKE '%﴿ %﴾%' AND body NOT LIKE '%QuranText%'
+    ''');
+    final supplicationsInTheBooksWords = await database.rawQuery('''
+      SELECT id FROM contents
+      WHERE id IN (222, 251, 260) AND body NOT LIKE '%QuranText%'
+        AND body NOT LIKE '%﴿%'
+    ''');
+    final secondRabbana = await database.rawQuery('''
+      SELECT id FROM contents WHERE id = 609 AND search = 'ربنا أفرغ علينا صبرا وتوفنا مسلمين'
+    ''');
+    final fatihaVerses = await database.rawQuery('''
+      SELECT id FROM contents WHERE id = 1037 AND body LIKE 'QuranText[(1:2:4)]%'
+    ''');
+    final ridingVerseOnce = await database.rawQuery('''
+      SELECT id FROM contents WHERE id = 872 AND body LIKE '%QuranText%'
+    ''');
+    expect(quotedVerses.length, 67,
+        reason: 'the book quotes these verses in part; the app shows the same '
+            'words, not the whole verse (#116)');
+    expect(supplicationsInTheBooksWords.length, 3,
+        reason: 'pp89, 97, 99 write these as supplications, not as verses');
+    expect(secondRabbana.single, {'id': 609},
+        reason: 'p207 quotes al-Aʿraf 126 from the second «ربنا»');
+    expect(fatihaVerses.single, {'id': 1037},
+        reason: 'p74 «الحمد لله رب العالمين…» is al-Fatiha 2-4; 1:1 is the '
+            'basmala');
+    expect(ridingVerseOnce, isEmpty,
+        reason: 'p133: the riding verse belongs to the first supplication');
     expect(
         morningClosing,
         [
