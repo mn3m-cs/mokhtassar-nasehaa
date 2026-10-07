@@ -129,24 +129,13 @@ class ZikrItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (isCounted || zikr.hokm.isNotEmpty)
+                  // The book prints no grading under a zikr; it stays in
+                  // the source, as the book's takhrij gives it.
+                  if (isCounted)
                     Padding(
                       padding:
                           const EdgeInsetsDirectional.only(top: 10, end: 10),
-                      // The counter sits under the centre of the text.
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              zikr.hokm,
-                              style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: mutedColor),
-                            ),
-                          ),
-                          if (isCounted) _CounterButton(zikr: zikr),
-                          const Spacer(),
-                        ],
-                      ),
+                      child: Center(child: _CounterButton(zikr: zikr)),
                     ),
                 ],
               ),
@@ -181,12 +170,12 @@ class _ActionsMenu extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
-        if (zikr.source.isNotEmpty || zikr.hokm.isNotEmpty)
+        if (zikr.source.isNotEmpty)
           const PopupMenuItem(
             value: _ZikrAction.source,
             child: ListTile(
               leading: Icon(Icons.menu_book_rounded),
-              title: Text("المصدر والحكم"),
+              title: Text("المصدر"),
             ),
           ),
         const PopupMenuItem(
