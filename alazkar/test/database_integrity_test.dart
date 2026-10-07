@@ -175,12 +175,15 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 1 AND search = 'الله أكبر' AND count = 1) AS opening_takbir,
-        SUM("order" = 12 AND search = 'سبحان الله والحمد لله والله أكبر' AND count = 33) AS combined_tasbih,
-        SUM("order" = 22 AND search = 'لا إله إلا الله' AND count = 25) AS fourth_formula_tahlil,
-        SUM("order" = 31 AND count = 10 AND source LIKE '%صلاة الصبح%') AS morning_dhikr,
-        SUM("order" = 32 AND count = 10 AND source LIKE '%صلاة المغرب%') AS sunset_dhikr,
-        SUM("order" = 33 AND search = 'سبحان الملك القدوس' AND count = 3) AS witr_dhikr,
+        SUM("order" = 1 AND search = 'يكبر الله عز وجل' AND count = 1) AS opening_takbir,
+        SUM("order" = 14 AND search = 'سبحان الله والحمد لله والله أكبر' AND count = 33) AS combined_tasbih,
+        SUM("order" BETWEEN 15 AND 19 AND body LIKE 'أو: %') AS tasbih_alternatives,
+        SUM("order" = 17 AND count = 100 AND body LIKE '%(٢٥)%') AS fourth_formula,
+        SUM("order" = 20 AND count = 0) AS fingers_note,
+        SUM("order" = 23 AND count = 10 AND source LIKE '%صلاة الصبح%') AS morning_dhikr,
+        SUM("order" = 26 AND count = 10 AND source LIKE '%صلاة المغرب%') AS sunset_dhikr,
+        SUM("order" = 30 AND search LIKE 'سبحان الملك القدوس سبحان الملك القدوس سبحان الملك القدوس%') AS witr_dhikr,
+        SUM(count = 0) AS passages,
         SUM(search = 'اللهم لا تخزني يوم القيامة') AS unsupported_dua
       FROM contents
       WHERE titleId = 16
@@ -529,7 +532,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 142);
+    expect(await database.getVersion(), 143);
     expect(titleCount.single, {'count': 141});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -749,18 +752,25 @@ void main() {
       'prophetic_guidance': 1,
       'closing_dua': 1,
     });
-    expect(afterPrayerSection.single, {
-      'count': 34,
-      'first': 1,
-      'last': 34,
-      'opening_takbir': 1,
-      'combined_tasbih': 1,
-      'fourth_formula_tahlil': 1,
-      'morning_dhikr': 1,
-      'sunset_dhikr': 1,
-      'witr_dhikr': 1,
-      'unsupported_dua': 0,
-    });
+    expect(
+        afterPrayerSection.single,
+        {
+          'count': 31,
+          'first': 1,
+          'last': 31,
+          'opening_takbir': 1,
+          'combined_tasbih': 1,
+          'tasbih_alternatives': 5,
+          'fourth_formula': 1,
+          'fingers_note': 1,
+          'morning_dhikr': 1,
+          'sunset_dhikr': 1,
+          'witr_dhikr': 1,
+          'passages': 9,
+          'unsupported_dua': 0,
+        },
+        reason: "pp68-71: six tasbih forms as one choice, with the book's "
+            "instructions and sub-headings");
     expect(sleepSection.single, {
       'count': 26,
       'first': 1,
@@ -1161,7 +1171,7 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 108});
+    expect(recordsWithFootnotes.single, {'count': 110});
   });
 
   test('missing bundled database asset fails instead of continuing', () async {

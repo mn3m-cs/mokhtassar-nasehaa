@@ -52,19 +52,46 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
 
   bool isCounted(Zikr zikr) => (initialCounts[zikr.id] ?? 0) > 0;
 
-  /// The zikr the volume keys count: the one in view while it has
-  /// repetitions left, else the next such zikr below it, never one above.
+  /// A zikr the book offers in place of the one before it, printed «أو:».
+  static bool isAlternative(Zikr zikr) => zikr.body.startsWith('أو:');
+
+  /// The counted azkar grouped into choices: a zikr opens a choice, and the
+  /// «أو:» alternatives after it join that choice. A choice is done once any
+  /// one of its azkar is.
+  List<List<Zikr>> get choices {
+    final groups = <List<Zikr>>[];
+    for (final zikr in azkar.where(isCounted)) {
+      if (groups.isNotEmpty && isAlternative(zikr)) {
+        groups.last.add(zikr);
+      } else {
+        groups.add([zikr]);
+      }
+    }
+    return groups;
+  }
+
+  bool _choiceDone(List<Zikr> choice) => choice.any((zikr) => zikr.count == 0);
+
+  /// Whether [zikr] still waits to be counted: it has repetitions left and
+  /// no alternative of its choice is done.
+  bool isPending(Zikr zikr) {
+    if (!isCounted(zikr) || zikr.count == 0) return false;
+    final choice = choices.firstWhere((group) => group.contains(zikr));
+    return !_choiceDone(choice);
+  }
+
+  /// The zikr the volume keys count: the one in view while it is pending,
+  /// else the next pending zikr below it, never one above.
   Zikr? get keyTarget {
     for (final zikr in azkar.skip(activeZikrIndex.clamp(0, azkar.length))) {
-      if (isCounted(zikr) && zikr.count > 0) return zikr;
+      if (isPending(zikr)) return zikr;
     }
     return null;
   }
 
-  int get finishedCount =>
-      azkar.where((zikr) => isCounted(zikr) && zikr.count == 0).length;
+  int get finishedCount => choices.where(_choiceDone).length;
 
-  int get countedTotal => azkar.where(isCounted).length;
+  int get countedTotal => choices.length;
 
   Zikr? get activeZikr {
     if (azkar.isEmpty) return null;

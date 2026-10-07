@@ -142,7 +142,7 @@ class ZikrContentViewerBloc
         ? ""
         : "\n\n-------\nالفضل:\n${activeZikr.fadl}";
     final plainText =
-        "${await activeZikr.toPlainText()}\n\n-------\nعدد مرات الذكر:  ${activeZikr.count}$fadlTxt\n\n-------\nالحكم: ${activeZikr.hokm}\n\n==============\nالمصدر:\n${activeZikr.source}";
+        "${await activeZikr.toPlainText()}\n\n-------\nعدد مرات الذكر:  ${activeZikr.count}$fadlTxt\n\n==============\nالمصدر:\n${activeZikr.source}";
     return plainText;
   }
 
