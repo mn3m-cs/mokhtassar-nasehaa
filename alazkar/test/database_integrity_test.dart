@@ -335,7 +335,7 @@ void main() {
              MIN(contents."order") AS first, MAX(contents."order") AS last
       FROM titles
       JOIN contents ON contents.titleId = titles.id
-      WHERE titles.id IN (66, 67, 69, 70, 73, 77, 82,
+      WHERE titles.id IN (66, 67, 69, 70, 77, 82,
                            83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
       GROUP BY titles.id
       ORDER BY titles.id
@@ -347,14 +347,14 @@ void main() {
         SUM(titleId = 92 AND "order" = 1) AS first_wird_starts_at_one,
         SUM(titleId = 91 AND "order" = 15) AS eleventh_wird_ends_at_fifteen
       FROM contents
-      WHERE titleId IN (66, 67, 69, 70, 73, 77, 82,
+      WHERE titleId IN (66, 67, 69, 70, 77, 82,
                          83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
     ''');
     final absoluteDhikrAndWirdJudgments = await database.rawQuery('''
       SELECT contents.id, contents.hokm
       FROM contents
       WHERE contents.titleId IN
-            (66, 67, 69, 70, 73, 77, 82,
+            (66, 67, 69, 70, 77, 82,
               83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
         AND contents.hokm NOT IN
             ('', 'صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
@@ -529,8 +529,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 141);
-    expect(titleCount.single, {'count': 142});
+    expect(await database.getVersion(), 142);
+    expect(titleCount.single, {'count': 141});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -903,7 +903,6 @@ void main() {
         43,
         5,
         7,
-        3,
         1,
         9,
         11,
@@ -931,7 +930,7 @@ void main() {
       'eleventh_wird_ends_at_fifteen': 1,
     });
     expect(absoluteDhikrAndWirdJudgments, isEmpty);
-    expect(absoluteDhikrHierarchy.single, {'nodes': 23, 'max_depth': 2});
+    expect(absoluteDhikrHierarchy.single, {'nodes': 22, 'max_depth': 2});
     expect(
       absoluteDhikrContent,
       [
@@ -949,7 +948,6 @@ void main() {
     expect(absoluteDhikrParents, [
       {'id': 69, 'parentId': 143, 'order': 2},
       {'id': 70, 'parentId': 142, 'order': 3},
-      {'id': 73, 'parentId': 145, 'order': 2},
       {'id': 77, 'parentId': 146, 'order': 4},
     ]);
     expect(absoluteDhikrSamples.single, {
@@ -983,8 +981,8 @@ void main() {
 
     final removedSections = await database.rawQuery('''
       SELECT
-        (SELECT COUNT(*) FROM titles WHERE id IN (71, 72, 74, 75, 76, 78, 79, 80)) AS titles,
-        (SELECT COUNT(*) FROM contents WHERE titleId IN (71, 72, 74, 75, 76, 78, 79, 80))
+        (SELECT COUNT(*) FROM titles WHERE id IN (71, 72, 73, 74, 75, 76, 78, 79, 80)) AS titles,
+        (SELECT COUNT(*) FROM contents WHERE titleId IN (71, 72, 73, 74, 75, 76, 78, 79, 80))
           AS contents
     ''');
     final editorialSuffixes = await database.rawQuery('''
