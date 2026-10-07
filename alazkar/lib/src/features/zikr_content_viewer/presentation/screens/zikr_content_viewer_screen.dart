@@ -336,11 +336,6 @@ class _SectionEnd extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
       child: Column(
         children: [
-          Text(
-            next == null ? "تمّ الكتاب بحمد الله" : "تمّ الباب",
-            style: TextStyle(color: mutedColor),
-          ),
-          const SizedBox(height: 12),
           if (next != null)
             Material(
               color: colorScheme.primary,

@@ -44,9 +44,9 @@ class HomeHeader extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    // Names the source, for a reader who came for the book.
+                    // The book's title as its cover prints it.
                     Text(
-                      "من كتاب «مختصر النصيحة في الأذكار والأدعية الصحيحة»",
+                      "مختصر النصيحة في الأذكار والأدعية الصحيحة",
                       style: theme.textTheme.bodySmall?.copyWith(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: .65),
