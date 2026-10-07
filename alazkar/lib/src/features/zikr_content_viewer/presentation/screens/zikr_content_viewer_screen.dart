@@ -207,9 +207,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
         return;
       }
       // Move on past the zikr just finished, never back to one skipped.
-      final next = current.azkar.skip(counted + 1).where(
-            (zikr) => current.isCounted(zikr) && zikr.count > 0,
-          );
+      final next = current.azkar.skip(counted + 1).where(current.isPending);
       if (next.isNotEmpty) _bringIntoView(next.first.id);
     });
   }

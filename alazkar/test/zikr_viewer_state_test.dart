@@ -6,11 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const title = ZikrTitle(id: 1, order: 1, name: 'قسم', freq: 'd');
 
-  Zikr zikr(int id, int count) => Zikr(
+  Zikr zikr(int id, int count, {String body = 'نص'}) => Zikr(
         id: id,
         titleId: 1,
         order: id,
-        body: 'نص',
+        body: body,
         source: '',
         fadl: '',
         hokm: '',
@@ -72,5 +72,29 @@ void main() {
     );
 
     expect(s.keyTarget, isNull);
+  });
+
+  test('«أو:» alternatives count as one choice, done by any one of them', () {
+    final initial = [
+      zikr(1, 33),
+      zikr(2, 100, body: 'أو: سبحان الله (٣٣)'),
+      zikr(3, 30, body: 'أو: سبحان الله (١٠)'),
+      zikr(4, 1),
+    ];
+    final s = state(
+      initial: initial,
+      current: [
+        zikr(1, 33),
+        zikr(2, 0, body: 'أو: سبحان الله (٣٣)'),
+        zikr(3, 30, body: 'أو: سبحان الله (١٠)'),
+        zikr(4, 1),
+      ],
+    );
+
+    expect(s.countedTotal, 2);
+    expect(s.finishedCount, 1);
+    expect(s.isPending(s.azkar[0]), isFalse, reason: 'its choice is done');
+    expect(s.isPending(s.azkar[2]), isFalse);
+    expect(s.keyTarget?.id, 4, reason: 'the keys skip the done choice');
   });
 }
