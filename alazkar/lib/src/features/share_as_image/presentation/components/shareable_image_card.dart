@@ -48,15 +48,19 @@ class ShareableImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const imageBackgroundColor = Color(0xff1a110e);
-    const secondaryColor = Color(0xfffeb99c);
-    //todo depened on zikr hokm
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final imageBackgroundColor =
+        isDark ? const Color(0xff1a110e) : colorScheme.surface;
+    final secondaryColor =
+        isDark ? const Color(0xfffeb99c) : colorScheme.primary;
+    final textColor = isDark ? Colors.white : colorScheme.onSurface;
     final secondaryElementsColor = Colors.brown.withValues(alpha: .15);
 
     final mainTextStyle = TextStyle(
       fontSize: 150,
       fontFamily: settings.mainFontFamily,
-      color: Colors.white,
+      color: textColor,
     );
 
     final secondaryTextStyle = TextStyle(
@@ -75,14 +79,14 @@ class ShareableImageCard extends StatelessWidget {
           Image.asset(
             "assets/images/grid.png",
             fit: BoxFit.cover,
-            color: Colors.white.withValues(alpha: .07),
+            color: textColor.withValues(alpha: isDark ? .07 : .04),
           ),
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: RadialGradient(
                 colors: [
                   imageBackgroundColor,
-                  Colors.transparent,
+                  imageBackgroundColor.withValues(alpha: 0),
                 ],
                 radius: 1,
               ),
@@ -92,7 +96,9 @@ class ShareableImageCard extends StatelessWidget {
             margin: const EdgeInsets.all(40).copyWith(top: 60, bottom: 60),
             padding: const EdgeInsets.all(25),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .11),
+              color: isDark
+                  ? Colors.white.withValues(alpha: .11)
+                  : Colors.white.withValues(alpha: .6),
               border: Border.all(
                 color: secondaryElementsColor,
                 width: 5,
