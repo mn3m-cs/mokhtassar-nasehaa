@@ -26,6 +26,12 @@ class SettingsStorage {
   Future<void> changePraiseWithVolumeKeysStatus({required bool value}) =>
       _box.write(praiseWithVolumeKeysKey, value);
 
+  ///MARK: vibrateOnCountDone
+  static const vibrateOnCountDoneKey = 'vibrateOnCountDone';
+  bool get vibrateOnCountDone => _box.read(vibrateOnCountDoneKey) ?? true;
+  Future<void> changeVibrateOnCountDoneStatus({required bool value}) =>
+      _box.write(vibrateOnCountDoneKey, value);
+
   ///MARK: continuousReading
   static const continuousReadingKey = 'continuousReading';
   bool get continuousReading => _box.read(continuousReadingKey) ?? false;

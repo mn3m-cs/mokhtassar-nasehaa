@@ -53,6 +53,10 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   bool isCounted(Zikr zikr) => (initialCounts[zikr.id] ?? 0) > 0;
 
   /// A zikr the book offers in place of the one before it, printed «أو:».
+  /// True when this tap ends a zikr that was to be said more than once.
+  bool completesRepeated(Zikr zikr) =>
+      zikr.count == 1 && (initialCounts[zikr.id] ?? 0) > 1;
+
   static bool isAlternative(Zikr zikr) => zikr.body.startsWith('أو:');
 
   /// The counted azkar grouped into choices: a zikr opens a choice, and the

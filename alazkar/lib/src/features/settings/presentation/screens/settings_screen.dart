@@ -4,6 +4,7 @@ import 'package:alazkar/src/features/settings/presentation/components/font_size_
 import 'package:alazkar/src/features/settings/presentation/components/night_mode_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/praise_with_volume_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/settings_group_title.dart';
+import 'package:alazkar/src/features/settings/presentation/components/vibrate_on_count_done_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/zikr_font_tile.dart';
 // import 'package:alazkar/src/features/settings/presentation/components/show_only_with_fadl_switch.dart';
 // import 'package:alazkar/src/features/settings/presentation/components/show_text_in_bracket_switch.dart';
@@ -44,6 +45,7 @@ class SettingsScreen extends StatelessWidget {
           // Hidden: removing bracketed text alters the book's wording.
           // const ShowTextInBracketsSwitch(),
           const PraiseWithVolumeSwitch(),
+          const VibrateOnCountDoneSwitch(),
           // Hidden: each section now ends with a button to the next one.
           // const ContinuousReadingSwitch(),
           const FontSizeTile(),
