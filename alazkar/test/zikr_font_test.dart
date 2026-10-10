@@ -1,39 +1,18 @@
 import 'dart:io';
 
-import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/features/theme/domain/models/zikr_font.dart';
 import 'package:alazkar/src/features/theme/domain/repository/theme_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _MemoryStorage implements KVStorage {
-  final Map<String, dynamic> _data = {};
-
-  @override
-  T? read<T>(String key) => _data[key] as T?;
-
-  @override
-  Future<void> write(String key, dynamic value) async => _data[key] = value;
-
-  @override
-  bool hasData(String key) => _data.containsKey(key);
-
-  @override
-  Future<void> remove(String key) async => _data.remove(key);
-
-  @override
-  Future<void> clear() async => _data.clear();
-
-  @override
-  Iterable<String> get keys => _data.keys;
-}
+import 'support/memory_storage.dart';
 
 void main() {
   test('the azkar text starts in Noto Naskh', () {
-    expect(ThemeStorage(_MemoryStorage()).getZikrFont, ZikrFont.notoNaskh);
+    expect(ThemeStorage(MemoryStorage()).getZikrFont, ZikrFont.notoNaskh);
   });
 
   test('a chosen font is remembered', () async {
-    final storage = ThemeStorage(_MemoryStorage());
+    final storage = ThemeStorage(MemoryStorage());
 
     await storage.setZikrFont(ZikrFont.amiri);
 
@@ -41,7 +20,7 @@ void main() {
   });
 
   test('an unknown stored font falls back to Noto Naskh', () async {
-    final box = _MemoryStorage();
+    final box = MemoryStorage();
     await box.write("ZikrFont", "removedFont");
 
     expect(ThemeStorage(box).getZikrFont, ZikrFont.notoNaskh);

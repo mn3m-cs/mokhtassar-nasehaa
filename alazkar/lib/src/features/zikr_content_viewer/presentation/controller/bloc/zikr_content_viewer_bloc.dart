@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:alazkar/app.dart';
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
+import 'package:alazkar/src/core/manager/vibration_manager.dart';
 import 'package:alazkar/src/core/manager/volume_button_manager.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_extension.dart';
@@ -103,7 +104,10 @@ class ZikrContentViewerBloc
     if (event.zikr.count == 0) return;
 
     final countToSet = event.zikr.count - 1;
-    if (countToSet == 0) {
+    if (state.completesRepeated(event.zikr) &&
+        settingsStorage.vibrateOnCountDone) {
+      VibrationManager.countDone();
+    } else if (countToSet == 0) {
       HapticFeedback.mediumImpact();
     } else {
       HapticFeedback.lightImpact();

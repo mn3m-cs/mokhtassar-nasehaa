@@ -1,5 +1,6 @@
 import 'package:alazkar/app.dart';
 import 'package:alazkar/services.dart';
+import 'package:alazkar/src/core/manager/vibration_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -65,6 +66,21 @@ void main() {
       });
     expect(readingOrder, expected, reason: 'favourite tiles in book order');
 
+    // The vibration's native side is the only thing replaced, so the
+    // journey can see when the app asks the phone to vibrate.
+    final vibrations = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      VibrationManager.channel,
+      (call) async {
+        vibrations.add(call.method);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(VibrationManager.channel, null),
+    );
+
     // Tapping a zikr's text counts it and marks it done in the header.
     await openSection(tester, 'أذكار الصباح');
     expect(find.text('أتممت 0 من 27'), findsOneWidget);
@@ -77,6 +93,19 @@ void main() {
       findsOneWidget,
       reason: 'done',
     );
+    expect(vibrations, isEmpty, reason: 'a zikr said once does not vibrate');
+
+    // A zikr said three times vibrates on its third tap, not before.
+    final radeetu = find.textContaining('رَضِيتُ باللهِ', findRichText: true);
+    for (var tap = 1; tap <= 3; tap++) {
+      await tester.ensureVisible(radeetu.first);
+      await tester.pumpAndSettle();
+      await tester.tap(radeetu.first);
+      await tester.pumpAndSettle();
+      expect(vibrations, tap < 3 ? isEmpty : ['count_done'],
+          reason: 'tap $tap');
+    }
+    expect(find.text('أتممت 2 من 27'), findsOneWidget);
 
     // The section ends with the next section in book order.
     await tester.scrollUntilVisible(

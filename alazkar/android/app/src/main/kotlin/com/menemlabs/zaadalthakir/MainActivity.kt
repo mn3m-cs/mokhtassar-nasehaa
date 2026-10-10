@@ -2,6 +2,11 @@ package com.menemlabs.zaadalthakir
 
 
 import io.flutter.embedding.android.FlutterActivity
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.KeyEvent
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -17,6 +22,32 @@ class MainActivity: FlutterActivity() {
             if (call.method == "activate_volumeBtn") {
                 activateVolumeDispatch = call.arguments as Boolean
             }
+        }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "vibration_channel")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "count_done") {
+                    vibrateCountDone()
+                    result.success(null)
+                } else {
+                    result.notImplemented()
+                }
+            }
+    }
+
+    private fun vibrateCountDone() {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        if (!vibrator.hasVibrator()) return
+        val pattern = longArrayOf(0, 90, 110, 90)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(pattern, -1)
         }
     }
 
