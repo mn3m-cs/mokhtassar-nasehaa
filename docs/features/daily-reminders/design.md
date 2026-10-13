@@ -2,7 +2,7 @@
 
 **Ticket:** #126 (daily reminders)
 **Intent:** [intent.md](intent.md)
-**Status:** Approved in conversation, section by section, on 2026-10-13
+**Status:** Approved in conversation, section by section, on 2026-10-13. Revised 2026-10-13: entries hold local date and time instead of an absolute moment, so a time-zone change keeps the local time.
 **Follow-up ticket:** #134 (periodic and spoken reminders), out of scope here
 
 ## Summary
@@ -46,7 +46,7 @@ The phase 1 default for the morning and evening is a fixed time (morning 06:00, 
 | Unit | Purpose | Depends on |
 |---|---|---|
 | `PrayerTimesCalculator` (phase 2) | Coordinates + method + madhab + date → Fajr, Asr, Maghrib | The prayer-times library only |
-| `ReminderPlanner` | Settings + "now" (+ calculator in phase 2) → sorted list of `(epochMillis, titleId)` for the next 90 days | Pure; no platform calls |
+| `ReminderPlanner` | Settings + "now" (+ calculator in phase 2) → sorted list of `(local date, minute of day, titleId, title, body)` for the next 90 days | Pure; no platform calls |
 | `ReminderStorage` | Reads and writes reminder settings, location and method on the existing `KVStorage` | `KVStorage` |
 | `ReminderChannel` | Sends the list to Android; asks for the notification and location permissions; delivers "open section N" from a tapped notification | `MethodChannel("reminder_channel")` |
 | `RemindersCubit` + `RemindersScreen` | The settings screen | All of the above |
@@ -57,7 +57,7 @@ A reminder setting is `{enabled, kind, minuteOfDay}`, where `kind` is one of `fi
 
 | Unit | Purpose |
 |---|---|
-| `ReminderScheduler` | Stores the list in `SharedPreferences`, drops past entries, sets one inexact `AlarmManager.setWindow` alarm (15-minute window) for the earliest entry |
+| `ReminderScheduler` | Stores the list in `SharedPreferences`, converts each local date and minute to a moment in the phone's current time zone, drops past entries, and sets one inexact `AlarmManager.setWindow` alarm (15-minute window) for the earliest entry |
 | `ReminderReceiver` | Fires on the alarm: posts the notification, then asks the scheduler for the next entry |
 | `BootReceiver` | On `BOOT_COMPLETED`, `TIME_SET`, `TIMEZONE_CHANGED`: reschedules from the stored list |
 | Notification | Channel «التذكير»; the title is the section's title from the book; tapping it opens `MainActivity` with the title id |
@@ -74,6 +74,8 @@ Permissions added: `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, and in phase 
 4. `ReminderScheduler` stores it and sets an alarm for the earliest entry.
 5. At that time `ReminderReceiver` posts the notification and sets the next alarm.
 6. After a reboot or a clock change, `BootReceiver` sets the alarm again from the stored list.
+
+Entries carry the local date and minute, not an absolute moment, so after a time-zone change the same list fires at the same local time. Entries more than an hour overdue (the phone was off) are dropped instead of shown late.
 
 The notification titles are carried in the list, read from the database's titles table by id, so the Kotlin side contains no Arabic text of its own.
 
