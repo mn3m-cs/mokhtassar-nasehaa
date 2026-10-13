@@ -146,13 +146,13 @@ None. The owner confirmed the product choices on 2026-10-13.
 
 | Criterion | Evidence | Status |
 | --- | --- | --- |
-| AC-001 | Device journey, Android 13+ emulator | Pending |
-| AC-002 | Device journey with the permission revoked | Pending |
-| AC-003 | Unit tests + `dumpsys alarm` / `dumpsys notification` | Pending |
-| AC-004 | Device journey + manual cold start | Pending |
-| AC-005 | Emulator reboot and time-zone change | Pending |
-| AC-006 | `dumpsys alarm` + unit test | Pending |
-| AC-007 | `aapt dump permissions` + APK size | Pending |
+| AC-001 | Emulator API 34, fresh install: no prompt at launch, system prompt when the switch is turned on | Verified (phase 1 pull request) |
+| AC-002 | Emulator: deny → switch off, blocked line, no alarm; `pm revoke` → blocked line on next launch; `reminders_cubit_test.dart` | Verified |
+| AC-003 | `reminder_planner_test.dart`; emulator notifications titled from the database, inside the window. Under power saving (Doze) an inexact alarm can arrive later than 15 minutes; it is then still shown (`ReminderDueTest`) | Verified, with the Doze caveat |
+| AC-004 | Emulator: tap with the app closed, with another section open, and with a share sheet above the app | Verified |
+| AC-005 | Emulator: time zone moved to Asia/Dubai kept the local time; power-off across a reminder showed it on boot | Verified |
+| AC-006 | `reminders_cubit_test.dart`; emulator: one alarm after each change | Verified |
+| AC-007 | No exact-alarm permission; arm64 APK 22,711,350 → 23,039,974 bytes (+321 KB) | Verified |
 | AC-008 | Unit test against timetables | Pending |
 | AC-009 | Device journey, permission granted and revoked | Pending |
 | AC-010 | Unit test | Pending |
