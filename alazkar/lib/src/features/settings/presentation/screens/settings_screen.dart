@@ -1,4 +1,5 @@
 import 'package:alazkar/src/features/about/presentation/screens/about_screen.dart';
+import 'package:alazkar/src/features/reminders/presentation/screens/reminders_screen.dart';
 // import 'package:alazkar/src/features/settings/presentation/components/continuous_reading_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/font_size_tile.dart';
 import 'package:alazkar/src/features/settings/presentation/components/night_mode_switch.dart';
@@ -11,6 +12,7 @@ import 'package:alazkar/src/features/settings/presentation/components/zikr_font_
 // import 'package:alazkar/src/features/theme/presentation/screens/theme_screen.dart';
 // import 'package:alazkar/src/features/zikr_source_filter/presentation/screens/select_zikr_hokm_screen.dart';
 // import 'package:alazkar/src/features/zikr_source_filter/presentation/screens/select_zikr_source_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -46,6 +48,18 @@ class SettingsScreen extends StatelessWidget {
           // const ShowTextInBracketsSwitch(),
           const PraiseWithVolumeSwitch(),
           const VibrateOnCountDoneSwitch(),
+          if (defaultTargetPlatform == TargetPlatform.android)
+            ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('التذكير'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const RemindersScreen(),
+                  ),
+                );
+              },
+            ),
           // Hidden: each section now ends with a button to the next one.
           // const ContinuousReadingSwitch(),
           const FontSizeTile(),
