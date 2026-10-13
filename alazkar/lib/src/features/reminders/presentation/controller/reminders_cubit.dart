@@ -13,6 +13,10 @@ class RemindersCubit extends Cubit<RemindersState> {
   final Future<Map<int, String>> Function() loadTitles;
   final DateTime Function() clock;
 
+  /// The reader refused the permission in this session; the blocked line
+  /// stays until notifications are allowed, even with every switch off.
+  bool _refused = false;
+
   RemindersCubit(
     this.storage,
     this.platform,
@@ -25,18 +29,24 @@ class RemindersCubit extends Cubit<RemindersState> {
   /// revoked in the phone's settings, and plans the list again so it
   /// never runs out while the app is in use.
   Future<void> start() async {
-    final titles = await loadTitles();
+    emit(state.copyWith(titles: await loadTitles()));
+    await refreshPermission();
+    await _reschedule();
+  }
+
+  /// Reads the phone's notification setting again, so the blocked line
+  /// appears and clears without restarting the app.
+  Future<void> refreshPermission() async {
     final anyOn = state.settings.values.any((setting) => setting.enabled);
     final allowed = await platform.notificationsAllowed();
-    emit(
-      state.copyWith(titles: titles, notificationsBlocked: anyOn && !allowed),
-    );
-    await _reschedule();
+    if (allowed) _refused = false;
+    emit(state.copyWith(notificationsBlocked: (anyOn || _refused) && !allowed));
   }
 
   /// Returns false when the reader refused the notification permission.
   Future<bool> setEnabled(ReminderSlot slot, bool enabled) async {
     if (enabled && !await platform.requestNotificationPermission()) {
+      _refused = true;
       emit(state.copyWith(notificationsBlocked: true));
       return false;
     }

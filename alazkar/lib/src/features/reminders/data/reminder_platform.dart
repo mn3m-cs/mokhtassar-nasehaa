@@ -6,6 +6,10 @@ abstract class ReminderPlatform {
   Future<void> schedule(List<PlannedReminder> reminders);
   Future<bool> notificationsAllowed();
   Future<bool> requestNotificationPermission();
+
+  /// The app's page in the phone settings, where notifications and
+  /// background work are allowed.
+  Future<void> openAppSettings();
 }
 
 class ReminderChannel implements ReminderPlatform {
@@ -33,6 +37,12 @@ class ReminderChannel implements ReminderPlatform {
     if (!_isAndroid) return false;
     return await channel.invokeMethod<bool>('requestNotificationPermission') ??
         false;
+  }
+
+  @override
+  Future<void> openAppSettings() async {
+    if (!_isAndroid) return;
+    await channel.invokeMethod<void>('openAppSettings');
   }
 
   /// The section a tapped notification asked for when it started the app.

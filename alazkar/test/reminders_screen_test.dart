@@ -11,6 +11,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/memory_storage.dart';
 
 class _GrantingPlatform implements ReminderPlatform {
+  int settingsOpened = 0;
+
+  @override
+  Future<void> openAppSettings() async => settingsOpened++;
+
   @override
   Future<void> schedule(List<PlannedReminder> reminders) async {}
 
@@ -22,11 +27,14 @@ class _GrantingPlatform implements ReminderPlatform {
 }
 
 void main() {
+  late _GrantingPlatform platform;
+
   setUp(() async {
     await sl.reset();
+    platform = _GrantingPlatform();
     final cubit = RemindersCubit(
       ReminderStorage(MemoryStorage()),
-      _GrantingPlatform(),
+      platform,
       () async => {1: 'أذكار الصباح', 2: 'أذكار المساء', 18: 'أذكار النوم'},
     );
     await cubit.start();
@@ -56,5 +64,27 @@ void main() {
 
     expect(find.byType(TimePickerDialog), findsOneWidget);
     expect(find.byIcon(Icons.keyboard_outlined), findsNothing);
+  });
+
+  testWidgets(
+      'the screen links to the phone settings for readers whose '
+      'reminders do not arrive', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        locale: Locale('ar', 'EG'),
+        supportedLocales: [Locale('ar', 'EG')],
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: RemindersScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('reminder-app-settings')));
+    await tester.pumpAndSettle();
+
+    expect(platform.settingsOpened, 1);
   });
 }

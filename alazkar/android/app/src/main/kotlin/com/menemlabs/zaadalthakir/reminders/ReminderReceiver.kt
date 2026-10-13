@@ -6,15 +6,16 @@ import android.content.Intent
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val now = System.currentTimeMillis()
-        ReminderStore.load(context)
-            .filter { it.atMillis() <= now && it.atMillis() > now - STALE_MS }
-            .forEach { ReminderNotifier.show(context, it) }
-        ReminderScheduler.scheduleNext(context)
+        // The phone was on, so a late alarm was held back by power saving:
+        // the missed reminder is still shown, however late.
+        postDue(context, staleMs = null)
     }
 
     companion object {
-        /** A reminder more than an hour late (the phone was off) is skipped. */
-        private const val STALE_MS = 60 * 60 * 1000L
+        fun postDue(context: Context, staleMs: Long?) {
+            ReminderDue.toShow(ReminderStore.load(context), System.currentTimeMillis(), staleMs)
+                .forEach { ReminderNotifier.show(context, it) }
+            ReminderScheduler.scheduleNext(context)
+        }
     }
 }

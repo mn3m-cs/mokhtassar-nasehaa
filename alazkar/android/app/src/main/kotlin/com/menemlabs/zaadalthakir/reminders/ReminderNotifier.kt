@@ -26,7 +26,10 @@ object ReminderNotifier {
             )
         }
         val open = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            // Clears a share sheet or mail screen left above the app, so the
+            // tap reaches MainActivity instead of only bringing the task forward.
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra(EXTRA_TITLE_ID, reminder.titleId)
         }
         val content = PendingIntent.getActivity(

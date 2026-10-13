@@ -10,6 +10,7 @@ class FakeReminderPlatform implements ReminderPlatform {
   bool allowed;
   bool grants;
   final List<List<PlannedReminder>> scheduled = [];
+  int settingsOpened = 0;
 
   FakeReminderPlatform({this.allowed = true, this.grants = true});
 
@@ -19,6 +20,9 @@ class FakeReminderPlatform implements ReminderPlatform {
 
   @override
   Future<bool> notificationsAllowed() async => allowed;
+
+  @override
+  Future<void> openAppSettings() async => settingsOpened++;
 
   @override
   Future<bool> requestNotificationPermission() async {
@@ -96,6 +100,48 @@ void main() {
     await c.setEnabled(ReminderSlot.sleep, false);
 
     expect(platform.scheduled.last, isEmpty);
+  });
+
+  test('the blocked line follows the phone settings without a restart',
+      () async {
+    final platform = FakeReminderPlatform();
+    final c = cubit(platform);
+    await c.start();
+    await c.setEnabled(ReminderSlot.morning, true);
+
+    platform.allowed = false;
+    await c.refreshPermission();
+    expect(c.state.notificationsBlocked, isTrue);
+
+    platform.allowed = true;
+    await c.refreshPermission();
+    expect(c.state.notificationsBlocked, isFalse);
+  });
+
+  test('a reader who never asked for reminders is not told they are blocked',
+      () async {
+    final c = cubit(FakeReminderPlatform(allowed: false, grants: false));
+    await c.start();
+
+    await c.refreshPermission();
+
+    expect(c.state.notificationsBlocked, isFalse);
+  });
+
+  test('a refusal stays reported after returning from the permission dialog',
+      () async {
+    final platform = FakeReminderPlatform(allowed: false, grants: false);
+    final c = cubit(platform);
+    await c.start();
+    await c.setEnabled(ReminderSlot.morning, true);
+
+    await c.refreshPermission();
+
+    expect(c.state.notificationsBlocked, isTrue);
+
+    platform.allowed = true;
+    await c.refreshPermission();
+    expect(c.state.notificationsBlocked, isFalse);
   });
 
   test('a permission revoked in the phone settings shows as blocked on start',

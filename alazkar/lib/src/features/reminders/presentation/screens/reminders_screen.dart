@@ -8,8 +8,38 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 const String kNotificationsBlocked =
     'الإشعارات ممنوعة لهذا التطبيق، يمكنك السماح بها من إعدادات الهاتف';
 
-class RemindersScreen extends StatelessWidget {
+const String kAppSettingsHint =
+    'إن لم تصلك التذكيرات في وقتها، فاسمح للتطبيق بالعمل في الخلفية من إعدادات الهاتف';
+
+class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
+
+  @override
+  State<RemindersScreen> createState() => _RemindersScreenState();
+}
+
+class _RemindersScreenState extends State<RemindersScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    sl<RemindersCubit>().refreshPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// The reader may have just allowed notifications in the phone settings.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      sl<RemindersCubit>().refreshPermission();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +69,13 @@ class RemindersScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                ListTile(
+                  key: const ValueKey('reminder-app-settings'),
+                  leading: const Icon(Icons.battery_saver),
+                  title: const Text(kAppSettingsHint),
+                  onTap: () =>
+                      context.read<RemindersCubit>().platform.openAppSettings(),
+                ),
               ],
             );
           },

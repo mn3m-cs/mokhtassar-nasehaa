@@ -55,6 +55,15 @@ class MainActivity: FlutterActivity() {
                     }
                     "notificationsAllowed" -> result.success(notificationsAllowed())
                     "requestNotificationPermission" -> requestNotificationPermission(result)
+            "openAppSettings" -> {
+                startActivity(
+                    Intent(
+                        android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        android.net.Uri.fromParts("package", packageName, null),
+                    )
+                )
+                result.success(null)
+            }
                     "takeLaunchTitleId" -> {
                         result.success(launchTitleId)
                         launchTitleId = null
