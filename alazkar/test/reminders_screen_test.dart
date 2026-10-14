@@ -1,6 +1,7 @@
 import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/features/reminders/data/models/reminder.dart';
 import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
+import 'package:alazkar/src/features/reminders/data/repository/city_repository.dart';
 import 'package:alazkar/src/features/reminders/data/repository/reminder_storage.dart';
 import 'package:alazkar/src/features/reminders/presentation/controller/reminders_cubit.dart';
 import 'package:alazkar/src/features/reminders/presentation/screens/reminders_screen.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/memory_storage.dart';
+import 'support/test_cities.dart';
 
 class _GrantingPlatform implements ReminderPlatform {
   int settingsOpened = 0;
@@ -41,6 +43,7 @@ void main() {
       ReminderStorage(MemoryStorage()),
       platform,
       () async => {1: 'أذكار الصباح', 2: 'أذكار المساء', 18: 'أذكار النوم'},
+      CityRepository(read: () async => kTestCitiesJson),
     );
     await cubit.start();
     sl.registerSingleton(cubit);

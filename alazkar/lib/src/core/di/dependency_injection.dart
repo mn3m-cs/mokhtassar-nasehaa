@@ -7,6 +7,7 @@ import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
 import 'package:alazkar/src/features/quran/data/repository/uthmani_repository.dart';
 import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
+import 'package:alazkar/src/features/reminders/data/repository/city_repository.dart';
 import 'package:alazkar/src/features/reminders/data/repository/reminder_storage.dart';
 import 'package:alazkar/src/features/reminders/presentation/components/reminder_launch_listener.dart';
 import 'package:alazkar/src/features/reminders/presentation/controller/reminders_cubit.dart';
@@ -43,6 +44,7 @@ Future<void> initSL() async {
   sl.registerLazySingleton(() => ZikrViewerRepo(sl()));
   sl.registerLazySingleton(() => SearchRepo(sl()));
   sl.registerLazySingleton(() => ReminderStorage(sl()));
+  sl.registerLazySingleton(() => CityRepository());
 
   ///MARK: Init Repo
   sl.registerLazySingleton(() => UthmaniRepository());
@@ -62,7 +64,7 @@ Future<void> initSL() async {
   sl.registerLazySingleton(() => SettingsCubit(sl()));
   sl.registerLazySingleton(() => ZikrSourceFilterCubit(sl()));
   sl.registerLazySingleton(
-    () => RemindersCubit(sl(), sl(), () => loadReminderTitles(sl())),
+    () => RemindersCubit(sl(), sl(), () => loadReminderTitles(sl()), sl()),
   );
 
   /// Factory BLoC

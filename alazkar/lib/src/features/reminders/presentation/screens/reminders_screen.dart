@@ -111,8 +111,10 @@ class _ReminderCard extends StatelessWidget {
             title: Text(title),
             value: setting.enabled,
             onChanged: (value) async {
-              final ok = await cubit.setEnabled(slot, value);
-              if (!ok) showToast(kNotificationsBlocked);
+              final result = await cubit.setEnabled(slot, value);
+              if (result == ReminderToggle.notificationsRefused) {
+                showToast(kNotificationsBlocked);
+              }
             },
           ),
           ListTile(
