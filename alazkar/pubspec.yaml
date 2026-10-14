@@ -10,6 +10,7 @@ environment:
   flutter: "3.32.0"
 
 dependencies:
+  adhan: 2.0.0+1
   auto_size_text: ^3.0.0
   bloc: ^9.0.1
   bot_toast: ^4.1.3
