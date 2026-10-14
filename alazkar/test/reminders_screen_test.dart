@@ -4,6 +4,7 @@ import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
 import 'package:alazkar/src/features/reminders/data/repository/city_repository.dart';
 import 'package:alazkar/src/features/reminders/data/repository/reminder_storage.dart';
 import 'package:alazkar/src/features/reminders/presentation/controller/reminders_cubit.dart';
+import 'package:alazkar/src/features/reminders/presentation/screens/city_picker_screen.dart';
 import 'package:alazkar/src/features/reminders/presentation/screens/reminders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -49,11 +50,7 @@ void main() {
     sl.registerSingleton(cubit);
   });
 
-  testWidgets(
-      'the time is picked on the dial only, because typed Arabic-Indic '
-      'hours are rejected by the picker', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
+  Widget app() => const MaterialApp(
         locale: Locale('ar', 'EG'),
         supportedLocales: [Locale('ar', 'EG')],
         localizationsDelegates: [
@@ -62,8 +59,12 @@ void main() {
           GlobalCupertinoLocalizations.delegate,
         ],
         home: RemindersScreen(),
-      ),
-    );
+      );
+
+  testWidgets(
+      'the time is picked on the dial only, because typed Arabic-Indic '
+      'hours are rejected by the picker', (tester) async {
+    await tester.pumpWidget(app());
     await tester.tap(find.byKey(const ValueKey('reminder-switch-sleep')));
     await tester.pumpAndSettle();
 
@@ -77,22 +78,101 @@ void main() {
   testWidgets(
       'the screen links to the phone settings for readers whose '
       'reminders do not arrive', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        locale: Locale('ar', 'EG'),
-        supportedLocales: [Locale('ar', 'EG')],
-        localizationsDelegates: [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        home: RemindersScreen(),
-      ),
-    );
+    await tester.pumpWidget(app());
 
     await tester.tap(find.byKey(const ValueKey('reminder-app-settings')));
     await tester.pumpAndSettle();
 
     expect(platform.settingsOpened, 1);
+  });
+
+  testWidgets(
+      'the morning is set in minutes after Fajr, 5 to 60, and shows '
+      "today's time; only sleep has a clock time", (tester) async {
+    platform.location = (latitude: 30.01, longitude: 31.21);
+    await tester.pumpWidget(app());
+
+    await tester.tap(find.byKey(const ValueKey('reminder-switch-morning')));
+    await tester.pumpAndSettle();
+
+    final offset = tester.widget<DropdownButton<int>>(
+      find.byKey(const ValueKey('reminder-offset-morning')),
+    );
+    expect(offset.value, 30);
+    expect(offset.items!.map((item) => item.value), kOffsetChoices);
+    expect(find.text('بعد الفجر'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('reminder-today-morning')), findsOneWidget);
+    expect(find.textContaining('القاهرة'), findsOneWidget);
+    expect(find.byIcon(Icons.schedule), findsOneWidget);
+  });
+
+  testWidgets('the evening offers after Asr or before Maghrib', (tester) async {
+    platform.location = (latitude: 30.01, longitude: 31.21);
+    await tester.pumpWidget(app());
+    await tester.tap(find.byKey(const ValueKey('reminder-switch-evening')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('قبل المغرب'));
+    await tester.pumpAndSettle();
+
+    expect(
+      sl<RemindersCubit>().state.settings[ReminderSlot.evening]!.kind,
+      ReminderKind.beforeMaghrib,
+    );
+  });
+
+  testWidgets(
+      'a refused location opens the city list, and a picked city turns '
+      'the morning on', (tester) async {
+    await tester.pumpWidget(app());
+
+    await tester.tap(find.byKey(const ValueKey('reminder-switch-morning')));
+    await tester.pumpAndSettle();
+    expect(find.byType(CityPickerScreen), findsOneWidget);
+
+    await tester.enterText(find.byKey(const ValueKey('city-search')), 'مكه');
+    await tester.pumpAndSettle();
+    expect(find.text('القاهرة'), findsNothing);
+    await tester.tap(find.text('مكة المكرمة'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CityPickerScreen), findsNothing);
+    expect(
+      tester
+          .widget<SwitchListTile>(
+            find.byKey(const ValueKey('reminder-switch-morning')),
+          )
+          .value,
+      isTrue,
+    );
+    expect(find.text('مكة المكرمة، السعودية'), findsOneWidget);
+  });
+
+  testWidgets(
+      'leaving the city list without a choice keeps the morning off and '
+      'says a location is needed', (tester) async {
+    await tester.pumpWidget(app());
+
+    await tester.tap(find.byKey(const ValueKey('reminder-switch-morning')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('city-search')), 'لندن');
+    await tester.pumpAndSettle();
+    expect(find.text('لا توجد نتائج'), findsOneWidget);
+    // pageBack() looks for the English "Back" tooltip; this app is in Arabic.
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<SwitchListTile>(
+            find.byKey(const ValueKey('reminder-switch-morning')),
+          )
+          .value,
+      isFalse,
+    );
+    // The line sits under the place card, below the test screen's fold.
+    await tester.scrollUntilVisible(find.text(kLocationNeeded), 200);
+    expect(find.text(kLocationNeeded), findsOneWidget);
   });
 }
