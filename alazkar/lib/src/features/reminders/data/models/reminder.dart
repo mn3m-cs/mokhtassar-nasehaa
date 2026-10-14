@@ -1,34 +1,88 @@
 import 'package:equatable/equatable.dart';
 
-enum ReminderSlot {
-  morning(titleId: 1, defaultMinuteOfDay: 6 * 60),
-  evening(titleId: 2, defaultMinuteOfDay: 17 * 60),
-  sleep(titleId: 18, defaultMinuteOfDay: 22 * 60);
+const int kDefaultSleepMinute = 22 * 60;
+const int kDefaultOffsetMinutes = 30;
+const List<int> kOffsetChoices = [
+  5,
+  10,
+  15,
+  20,
+  25,
+  30,
+  35,
+  40,
+  45,
+  50,
+  55,
+  60
+];
 
-  const ReminderSlot({
-    required this.titleId,
-    required this.defaultMinuteOfDay,
-  });
+enum ReminderKind {
+  fixed(''),
+  afterFajr('بعد الفجر'),
+  afterAsr('بعد العصر'),
+  beforeMaghrib('قبل المغرب');
+
+  const ReminderKind(this.label);
+
+  final String label;
+
+  bool get needsPrayerTimes => this != fixed;
+}
+
+enum ReminderSlot {
+  morning(titleId: 1, kinds: [ReminderKind.afterFajr]),
+  evening(
+    titleId: 2,
+    kinds: [ReminderKind.afterAsr, ReminderKind.beforeMaghrib],
+  ),
+  sleep(titleId: 18, kinds: [ReminderKind.fixed]);
+
+  const ReminderSlot({required this.titleId, required this.kinds});
 
   final int titleId;
-  final int defaultMinuteOfDay;
+
+  /// The kinds the reader can choose from; the first is the default.
+  final List<ReminderKind> kinds;
+
+  ReminderKind get defaultKind => kinds.first;
+
+  bool get needsPlace => defaultKind.needsPrayerTimes;
 }
 
 class ReminderSetting extends Equatable {
   final bool enabled;
+  final ReminderKind kind;
+
+  /// The clock time, for [ReminderKind.fixed] only.
   final int minuteOfDay;
 
-  const ReminderSetting({required this.enabled, required this.minuteOfDay});
+  /// Minutes from the prayer, for the prayer-relative kinds only.
+  final int offsetMinutes;
 
-  ReminderSetting copyWith({bool? enabled, int? minuteOfDay}) {
+  const ReminderSetting({
+    required this.enabled,
+    this.kind = ReminderKind.fixed,
+    this.minuteOfDay = kDefaultSleepMinute,
+    this.offsetMinutes = kDefaultOffsetMinutes,
+  });
+
+  ReminderSetting copyWith({
+    bool? enabled,
+    ReminderKind? kind,
+    int? minuteOfDay,
+    int? offsetMinutes,
+  }) {
     return ReminderSetting(
       enabled: enabled ?? this.enabled,
+      kind: kind ?? this.kind,
       minuteOfDay: minuteOfDay ?? this.minuteOfDay,
+      offsetMinutes: offsetMinutes ?? this.offsetMinutes,
     );
   }
 
   @override
-  List<Object> get props => [enabled, minuteOfDay];
+  List<Object> get props => [enabled, kind, minuteOfDay, offsetMinutes];
 }
 
 class PlannedReminder extends Equatable {

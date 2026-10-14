@@ -52,14 +52,14 @@ void main() {
     final c = cubit(platform, storage: storage);
     await c.start();
 
-    final ok = await c.setEnabled(ReminderSlot.evening, true);
+    final ok = await c.setEnabled(ReminderSlot.sleep, true);
 
     expect(ok, isTrue);
-    expect(c.state.settings[ReminderSlot.evening]!.enabled, isTrue);
-    expect(storage.read(ReminderSlot.evening).enabled, isTrue);
-    expect(platform.scheduled.last.first.at, DateTime(2026, 10, 13, 17));
-    expect(platform.scheduled.last.first.title, 'أذكار المساء');
-    expect(platform.scheduled.last.map((r) => r.titleId).toSet(), {2});
+    expect(c.state.settings[ReminderSlot.sleep]!.enabled, isTrue);
+    expect(storage.read(ReminderSlot.sleep).enabled, isTrue);
+    expect(platform.scheduled.last.first.at, DateTime(2026, 10, 13, 22));
+    expect(platform.scheduled.last.first.title, 'أذكار النوم');
+    expect(platform.scheduled.last.map((r) => r.titleId).toSet(), {18});
   });
 
   test('a refused permission leaves the reminder off and schedules nothing',
@@ -80,9 +80,9 @@ void main() {
     final platform = FakeReminderPlatform();
     final c = cubit(platform);
     await c.start();
-    await c.setEnabled(ReminderSlot.evening, true);
+    await c.setEnabled(ReminderSlot.sleep, true);
 
-    await c.setMinuteOfDay(ReminderSlot.evening, 18 * 60 + 30);
+    await c.setMinuteOfDay(ReminderSlot.sleep, 18 * 60 + 30);
 
     expect(
       platform.scheduled.last
@@ -148,8 +148,8 @@ void main() {
       () async {
     final storage = ReminderStorage(MemoryStorage());
     await storage.write(
-      ReminderSlot.morning,
-      const ReminderSetting(enabled: true, minuteOfDay: 6 * 60),
+      ReminderSlot.sleep,
+      const ReminderSetting(enabled: true),
     );
     final c = cubit(FakeReminderPlatform(allowed: false), storage: storage);
 
