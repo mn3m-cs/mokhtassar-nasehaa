@@ -154,7 +154,7 @@ None. The owner confirmed the product choices on 2026-10-13.
 | AC-004 | Emulator: tap with the app closed, with another section open, and with a share sheet above the app | Verified |
 | AC-005 | Emulator: time zone moved to Asia/Dubai kept the local time; power-off across a reminder showed it on boot | Verified |
 | AC-006 | `reminders_cubit_test.dart`; emulator: one alarm after each change | Verified |
-| AC-007 | No exact-alarm permission; arm64 APK 22,711,350 → 23,039,974 bytes (+321 KB) | Verified |
-| AC-008 | Unit test against timetables | Pending |
-| AC-009 | Device journey, permission granted and revoked | Pending |
-| AC-010 | Unit test | Pending |
+| AC-007 | No exact-alarm permission, no internet permission; arm64 APK 22,711,350 (main) → 23,039,974 (phase 1) → 23,250,305 bytes (phase 2): +526 KB in all | Verified |
+| AC-008 | `prayer_times_calculator_test.dart`: Cairo (Egyptian survey authority, winter and summer time) and Makkah (Umm al-Qura, winter and summer) within 2 minutes; `reminder_planner_test.dart`: each of 90 days is that day's Fajr + 30, the summer-time change day moves with the clock; emulator: one alarm at Fajr + 30 the next morning | Verified |
+| AC-009 | Emulator API 34, fresh install: location granted → «القاهرة، مصر» and today's times; no fix available → city list after the provider gives up (about 30 s, with progress shown); location services off → city list within seconds; city list left without a choice → switch off and the location line shown; Makkah picked → switch on. `reminders_cubit_test.dart`, `reminders_screen_test.dart`; the journey with a mocked location. No network code in the reminders feature | Verified |
+| AC-010 | `reminders_cubit_test.dart` (Cairo → Riyadh switches method; a chosen method stays); emulator: Makkah → «تقويم أم القرى», then device location in Cairo → «الهيئة المصرية العامة للمساحة» | Verified |

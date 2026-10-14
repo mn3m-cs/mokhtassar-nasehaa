@@ -1,7 +1,9 @@
 import 'package:alazkar/app.dart';
 import 'package:alazkar/services.dart';
 import 'package:alazkar/src/core/manager/vibration_manager.dart';
+import 'package:alazkar/src/features/reminders/data/models/prayer_method.dart';
 import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
+import 'package:alazkar/src/features/reminders/domain/prayer_times_calculator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -217,6 +219,8 @@ void main() {
             return grant;
           case 'notificationsAllowed':
             return grant;
+          case 'requestLocation':
+            return {'latitude': 30.0444, 'longitude': 31.2357};
         }
         return null;
       },
@@ -237,8 +241,25 @@ void main() {
     await tester.pumpAndSettle();
     final morning = scheduled.last.cast<Map<Object?, Object?>>();
     expect(morning.map((e) => e['titleId']).toSet(), {1});
-    expect(morning.map((e) => e['minuteOfDay']).toSet(), {6 * 60});
     expect(morning.first['title'], 'أذكار الصباح');
+    expect(morning.map((e) => e['minuteOfDay']).toSet().length, greaterThan(1));
+    final first = morning.first;
+    final fajr = PrayerTimesCalculator(
+      latitude: 30.0444,
+      longitude: 31.2357,
+      method: PrayerMethod.egyptian,
+      madhab: AsrMadhab.majority,
+    )
+        .dayOf(
+          DateTime(
+            first['year']! as int,
+            first['month']! as int,
+            first['day']! as int,
+          ),
+        )
+        .fajr;
+    expect(first['minuteOfDay'], fajr + 30);
+    expect(find.textContaining('القاهرة'), findsOneWidget);
 
     grant = false;
     await tester.tap(find.byKey(const ValueKey('reminder-switch-evening')));
