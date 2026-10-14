@@ -89,6 +89,7 @@ class _RemindersScreenState extends State<RemindersScreen>
         body: BlocBuilder<RemindersCubit, RemindersState>(
           builder: (context, state) {
             final placeShown = state.locationNeeded ||
+                state.locating ||
                 state.settings.entries.any(
                   (entry) => entry.value.enabled && entry.key.needsPlace,
                 );
@@ -102,10 +103,10 @@ class _RemindersScreenState extends State<RemindersScreen>
                     setting: state.settings[slot]!,
                     today: state.today,
                   ),
-                if (placeShown) _PlaceCard(state: state),
                 if (state.locationNeeded) const _Warning(text: kLocationNeeded),
                 if (state.notificationsBlocked)
                   const _Warning(text: kNotificationsBlocked),
+                if (placeShown) _PlaceCard(state: state),
                 ListTile(
                   key: const ValueKey('reminder-app-settings'),
                   leading: const Icon(Icons.battery_saver),

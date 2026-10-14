@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/features/reminders/data/models/reminder.dart';
 import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
@@ -30,8 +32,12 @@ class _GrantingPlatform implements ReminderPlatform {
 
   LatLng? location;
 
+  /// When set, the phone is still looking for its location.
+  Completer<LatLng?>? pending;
+
   @override
-  Future<LatLng?> requestLocation() async => location;
+  Future<LatLng?> requestLocation() =>
+      pending?.future ?? Future.value(location);
 }
 
 void main() {
@@ -171,8 +177,34 @@ void main() {
           .value,
       isFalse,
     );
-    // The line sits under the place card, below the test screen's fold.
     await tester.scrollUntilVisible(find.text(kLocationNeeded), 200);
     expect(find.text(kLocationNeeded), findsOneWidget);
+    // Above the place card, so a short phone shows it without scrolling
+    // past the card.
+    expect(
+      tester.getTopLeft(find.text(kLocationNeeded)).dy,
+      lessThan(
+        tester.getTopLeft(find.byKey(const ValueKey('reminder-place'))).dy,
+      ),
+    );
+  });
+
+  testWidgets(
+      'the place card shows progress while the phone looks for its '
+      'location', (tester) async {
+    platform.pending = Completer<LatLng?>();
+    await tester.pumpWidget(app());
+
+    await tester.tap(find.byKey(const ValueKey('reminder-switch-morning')));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.scrollUntilVisible(find.byType(LinearProgressIndicator), 200);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+    platform.pending!.complete((latitude: 30.01, longitude: 31.21));
+    await tester.pumpAndSettle();
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.textContaining('القاهرة'), findsOneWidget);
   });
 }
