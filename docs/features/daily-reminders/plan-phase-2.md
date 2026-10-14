@@ -390,7 +390,9 @@ Expected: `No issues found!` before the commit.
 
 **Data sources:** places, coordinates, population and country from GeoNames `cities15000` (CC BY 4.0, attribution required); Arabic city and country names from Wikidata labels, matched by GeoNames ID (property P1566) and ISO country code (P297) (CC0). Selection: every capital (feature code `PPLC`), plus cities of at least 150,000 people in the Arab countries, at least 700,000 in the other Muslim-majority countries, and at least 2,000,000 elsewhere. On 2026-10-14 that rule selected 704 places before dropping those with no Arabic label. The file is a JSON list of `[name, countryName, countryCode, latitude, longitude]`, one place per line, sorted by country name then city name.
 
-- [ ] **Step 1: Write the failing generator test**
+> **Done before execution (2026-10-14):** Steps 1–5 were run locally, because the generator needs `download.geonames.org` and `query.wikidata.org`. The committed `data_pipeline/build_cities.py` supersedes the listing below: when Wikidata has no label for a GeoNames ID, it matches by English name and country and keeps that label only if GeoNames lists the same Arabic name, else takes the place's only Arabic alternate name. Result: 653 places; 46 left out, mostly districts and suburbs (among them Al Hufuf, Unaizah, Hong Kong, Monaco). Start Task 2 at Step 6.
+
+- [x] **Step 1: Write the failing generator test**
 
 Create `data_pipeline/test_build_cities.py`:
 
@@ -456,12 +458,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `python3 -m unittest discover -s data_pipeline -p 'test_build_cities.py'`
 Expected: `ModuleNotFoundError: No module named 'build_cities'`.
 
-- [ ] **Step 3: Write the generator**
+- [x] **Step 3: Write the generator**
 
 Create `data_pipeline/build_cities.py`:
 
@@ -571,12 +573,12 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 4: Run the generator test to verify it passes**
+- [x] **Step 4: Run the generator test to verify it passes**
 
 Run: `python3 -m unittest discover -s data_pipeline -p 'test_build_cities.py'`
 Expected: `Ran 4 tests` … `OK`.
 
-- [ ] **Step 5: Generate the list**
+- [x] **Step 5: Generate the list**
 
 Run: `python3 data_pipeline/build_cities.py`
 Expected: `selected 7xx places`, two `… have an Arabic name` lines, and `wrote N places` with N between 500 and 720. Open the file and read the first 30 lines: names are Arabic, countries are Arabic, coordinates are plausible. If a country has no Arabic name its places are missing; name that in the commit message.
