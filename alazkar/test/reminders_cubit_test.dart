@@ -11,8 +11,11 @@ class FakeReminderPlatform implements ReminderPlatform {
   bool grants;
   final List<List<PlannedReminder>> scheduled = [];
   int settingsOpened = 0;
+  LatLng? location;
+  int locationRequests = 0;
 
-  FakeReminderPlatform({this.allowed = true, this.grants = true});
+  FakeReminderPlatform(
+      {this.allowed = true, this.grants = true, this.location});
 
   @override
   Future<void> schedule(List<PlannedReminder> reminders) async =>
@@ -28,6 +31,12 @@ class FakeReminderPlatform implements ReminderPlatform {
   Future<bool> requestNotificationPermission() async {
     allowed = grants;
     return grants;
+  }
+
+  @override
+  Future<LatLng?> requestLocation() async {
+    locationRequests++;
+    return location;
   }
 }
 

@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import com.menemlabs.zaadalthakir.reminders.ReminderNotifier
 import com.menemlabs.zaadalthakir.reminders.ReminderScheduler
 import com.menemlabs.zaadalthakir.reminders.ReminderStore
+import com.menemlabs.zaadalthakir.reminders.DeviceLocation
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
@@ -23,6 +24,7 @@ class MainActivity: FlutterActivity() {
      private var activateVolumeDispatch:Boolean = false
     private var reminderChannel: MethodChannel? = null
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private var pendingLocationResult: MethodChannel.Result? = null
     private var launchTitleId: Int? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -64,6 +66,7 @@ class MainActivity: FlutterActivity() {
                 )
                 result.success(null)
             }
+                    "requestLocation" -> requestLocation(result)
                     "takeLaunchTitleId" -> {
                         result.success(launchTitleId)
                         launchTitleId = null
@@ -108,17 +111,39 @@ class MainActivity: FlutterActivity() {
         requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
     }
 
+    private fun requestLocation(result: MethodChannel.Result) {
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            readLocation(result)
+            return
+        }
+        pendingLocationResult = result
+        requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), REQUEST_LOCATION)
+    }
+
+    private fun readLocation(result: MethodChannel.Result) {
+        DeviceLocation.read(this) { location ->
+            result.success(location?.let { mapOf("latitude" to it.latitude, "longitude" to it.longitude) })
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode != REQUEST_NOTIFICATIONS) return
-        pendingPermissionResult?.success(
-            grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
-        )
-        pendingPermissionResult = null
+        val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
+        when (requestCode) {
+            REQUEST_NOTIFICATIONS -> {
+                pendingPermissionResult?.success(granted)
+                pendingPermissionResult = null
+            }
+            REQUEST_LOCATION -> {
+                val result = pendingLocationResult ?: return
+                pendingLocationResult = null
+                if (granted) readLocation(result) else result.success(null)
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -131,6 +156,7 @@ class MainActivity: FlutterActivity() {
 
     companion object {
         private const val REQUEST_NOTIFICATIONS = 4101
+        private const val REQUEST_LOCATION = 4102
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

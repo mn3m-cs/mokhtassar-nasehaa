@@ -2,6 +2,8 @@ import 'package:alazkar/src/features/reminders/data/models/reminder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+typedef LatLng = ({double latitude, double longitude});
+
 abstract class ReminderPlatform {
   Future<void> schedule(List<PlannedReminder> reminders);
   Future<bool> notificationsAllowed();
@@ -10,6 +12,10 @@ abstract class ReminderPlatform {
   /// The app's page in the phone settings, where notifications and
   /// background work are allowed.
   Future<void> openAppSettings();
+
+  /// The approximate device location, read once. Asks for the permission
+  /// first; null when it is refused or the phone has no location.
+  Future<LatLng?> requestLocation();
 }
 
 class ReminderChannel implements ReminderPlatform {
@@ -43,6 +49,18 @@ class ReminderChannel implements ReminderPlatform {
   Future<void> openAppSettings() async {
     if (!_isAndroid) return;
     await channel.invokeMethod<void>('openAppSettings');
+  }
+
+  @override
+  Future<LatLng?> requestLocation() async {
+    if (!_isAndroid) return null;
+    final location =
+        await channel.invokeMapMethod<String, double>('requestLocation');
+    if (location == null) return null;
+    return (
+      latitude: location['latitude']!,
+      longitude: location['longitude']!,
+    );
   }
 
   /// The section a tapped notification asked for when it started the app.

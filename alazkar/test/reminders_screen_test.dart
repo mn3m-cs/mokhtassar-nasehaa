@@ -24,6 +24,11 @@ class _GrantingPlatform implements ReminderPlatform {
 
   @override
   Future<bool> requestNotificationPermission() async => true;
+
+  LatLng? location;
+
+  @override
+  Future<LatLng?> requestLocation() async => location;
 }
 
 void main() {
