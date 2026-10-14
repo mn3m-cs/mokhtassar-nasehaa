@@ -2,7 +2,7 @@
 
 **Ticket:** #126 (daily reminders)
 **Status:** Approved
-**Revision:** 2
+**Revision:** 3
 **Approval required before risky work:** No. The change adds a runtime permission and scheduled alarms, but touches no existing data and no content.
 
 ## Revision Log
@@ -10,6 +10,7 @@
 | Rev | Date | Changed criteria | Reason |
 | --- | --- | --- | --- |
 | 1 | 2026-10-12 | — | Initial draft |
+| 3 | 2026-10-14 | Scope, constraints, AC-008 | After trying phase 1, the owner ruled out a clock time for the morning and evening: their reminders are only «بعد الفجر» / «بعد العصر» / «قبل المغرب» by 5–60 minutes (default 30). Phases 1 and 2 ship together |
 | 2 | 2026-10-13 | Scope, assumptions, AC-003, AC-008 to AC-010 | Owner added prayer-relative times and chose device location with a city-list fallback; design in [design.md](design.md) |
 
 ## Goal
@@ -19,11 +20,11 @@ A reader who turns on a reminder gets a notification every day at the time they 
 ## Scope
 
 **In scope**
-- Three reminders, one each for «أذكار الصباح» (title 1), «أذكار المساء» (title 2) and «أذكار النوم» (title 18). Each has its own on/off switch and time in Settings.
+- Three reminders, one each for «أذكار الصباح» (title 1), «أذكار المساء» (title 2) and «أذكار النوم» (title 18), each with its own on/off switch in Settings. The morning fires a chosen number of minutes after Fajr; the evening a chosen number of minutes after Asr or before Maghrib; sleep at a clock time the reader picks.
 - The notification permission, asked for only when the reader turns a reminder on.
 - Reminders keep working after a reboot, a time change and a time-zone change.
 - Tapping the notification opens the section, whether the app was closed or already open.
-- Prayer-relative times (phase 2): the morning half an hour after Fajr; the evening half an hour after Asr or half an hour before Maghrib. Prayer times are computed on the phone from the approximate device location, or from a city the reader picks.
+- Prayer times are computed on the phone from the approximate device location, or from a city the reader picks. The offset is 5 to 60 minutes in steps of 5, default 30.
 
 **Out of scope**
 - Times tied to sunrise or sunset, or to prayers other than Fajr, Asr and Maghrib.
@@ -48,7 +49,8 @@ A reader who turns on a reminder gets a notification every day at the time they 
 - The owner chose the three sections and put reminders first (2026-10-10).
 - Confirmed 2026-10-13: reminders are off until the reader turns one on; the notification shows the section's title from the book; up to 15 minutes late is acceptable.
 - Added 2026-10-13: the morning half an hour after Fajr; the evening half an hour after Asr or before Maghrib. Location from the device first, a city list as the fallback.
-- Defaults on first turn-on: morning after Fajr + 30 minutes, evening after Asr + 30 minutes, sleep 22:00. Until phase 2 ships, the morning and evening default to 06:00 and 17:00.
+- Defaults on first turn-on: morning after Fajr + 30 minutes, evening after Asr + 30 minutes, sleep 22:00.
+- Ruled 2026-10-14: no clock time for the morning or evening (the morning azkar's time runs from after Fajr to sunrise). Phase 1 is not released on its own.
 
 ## Risk Review
 
@@ -117,16 +119,16 @@ A reader who turns on a reminder gets a notification every day at the time they 
 - **Priority:** Important
 
 ### AC-008: A prayer-relative reminder follows the day's prayer time (phase 2)
-- **Scenario:** the morning reminder is set to «بعد الفجر بنصف ساعة», with Cairo as the location.
+- **Scenario:** the morning reminder is set to 30 minutes after Fajr, with Cairo as the location. The reader can choose 5 to 60 minutes in steps of 5, and for the evening either after Asr or before Maghrib; there is no clock time for either.
 - **Action:** compute the planned times for the next 90 days.
 - **Expected:** each day's time is that day's Fajr in Cairo plus 30 minutes, within 2 minutes of the official Egyptian timetable.
 - **Verification:** unit test against published timetables for Cairo and Makkah.
 - **Priority:** Required
 
 ### AC-009: Location comes from the device, or from the city list when refused (phase 2)
-- **Scenario:** the reader picks a prayer-relative option for the first time.
+- **Scenario:** the reader turns on the morning or evening reminder for the first time.
 - **Action:** grant, then on a fresh install refuse, the approximate-location permission.
-- **Expected:** if granted, the nearest city's name is shown; if refused, the city list opens; with no city chosen, the option falls back to «وقت أختاره».
+- **Expected:** if granted, the nearest city's name is shown; if refused, the city list opens; with no city chosen, the morning or evening reminder stays off and the screen says a location is needed.
 - **Must not:** send the location anywhere, or read it in the background.
 - **Verification:** device journey with the permission granted and revoked; code review that no network call is made.
 - **Priority:** Required

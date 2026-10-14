@@ -2,12 +2,12 @@
 
 **Ticket:** #126 (daily reminders)
 **Intent:** [intent.md](intent.md)
-**Status:** Approved in conversation, section by section, on 2026-10-13. Revised 2026-10-13: entries hold local date and time instead of an absolute moment, so a time-zone change keeps the local time.
+**Status:** Revised 2026-10-14 after the owner tried phase 1: the morning and evening have no clock time; they are prayer-relative only, by 5–60 minutes. Phases 1 and 2 ship together. Earlier: approved in conversation, section by section, on 2026-10-13. Revised 2026-10-13: entries hold local date and time instead of an absolute moment, so a time-zone change keeps the local time.
 **Follow-up ticket:** #134 (periodic and spoken reminders), out of scope here
 
 ## Summary
 
-The reader can turn on three daily reminders: «أذكار الصباح», «أذكار المساء» and «أذكار النوم». Each fires either at a time the reader picks or at a time tied to the prayer: half an hour after Fajr for the morning, half an hour after Asr or half an hour before Maghrib for the evening.
+The reader can turn on three daily reminders: «أذكار الصباح», «أذكار المساء» and «أذكار النوم». The morning fires a chosen number of minutes after Fajr; the evening a chosen number of minutes after Asr or before Maghrib; sleep at a clock time the reader picks. The minutes are 5 to 60 in steps of 5, default 30.
 
 The Dart side computes the next 90 days of trigger times and hands them to Android. Android keeps the list and sets one system alarm at a time, so reminders keep coming while the app is closed, without running Dart in the background.
 
@@ -15,8 +15,10 @@ The work ships in two pull requests:
 
 | Phase | Delivers |
 |---|---|
-| 1 | Fixed-time reminders: settings screen, notification, permission, reboot and clock-change handling |
-| 2 | Prayer-relative times: prayer-time calculation, location, city list, calculation method |
+| 1 | Scheduling, notification, permission, reboot and clock-change handling, settings screen (built and verified; pull request #135, not released alone) |
+| 2 | Prayer-relative morning and evening: prayer-time calculation, location, city list, calculation method; the morning and evening clock times are removed |
+
+Both phases are released together.
 
 ## Decisions taken with the owner
 
@@ -25,13 +27,16 @@ The work ships in two pull requests:
 | Sections | Morning (title 1), evening (title 2), sleep (title 18) |
 | Default state | All off until the reader turns one on |
 | Defaults on first turn-on | Morning: after Fajr + 30 min. Evening: after Asr + 30 min. Sleep: 22:00 |
-| Evening options | Fixed time, Asr + 30 min, or Maghrib − 30 min |
+| Morning options | After Fajr by N minutes only (no clock time) |
+| Evening options | After Asr by N minutes, or before Maghrib by N minutes (no clock time) |
+| Sleep options | A clock time only |
+| Minutes N | 5 to 60 in steps of 5, default 30 |
 | Notification text | The section's title from the book, nothing else |
 | Lateness | Up to 15 minutes is acceptable, so no exact-alarm permission |
 | Location | Approximate device location first; the city list if refused or unavailable |
 | Scheduling approach | Precomputed 90-day list handed to Android (approach 1 of 3) |
 
-The phase 1 default for the morning and evening is a fixed time (morning 06:00, evening 17:00), because prayer-relative times arrive only in phase 2.
+Phase 1 shipped the morning and evening with a clock time as a stepping stone; phase 2 replaces it, and phase 1 is not released alone.
 
 ## Approaches considered
 
@@ -51,7 +56,7 @@ The phase 1 default for the morning and evening is a fixed time (morning 06:00, 
 | `ReminderChannel` | Sends the list to Android; asks for the notification and location permissions; delivers "open section N" from a tapped notification | `MethodChannel("reminder_channel")` |
 | `RemindersCubit` + `RemindersScreen` | The settings screen | All of the above |
 
-A reminder setting is `{enabled, kind, minuteOfDay}`, where `kind` is one of `fixed`, `afterFajr`, `afterAsr`, `beforeMaghrib`. The 30-minute offset is a constant, not a setting.
+A reminder setting is `{enabled, kind, minuteOfDay, offsetMinutes}`. `kind` is `fixed` (sleep only, uses `minuteOfDay`), `afterFajr` (morning only), `afterAsr` or `beforeMaghrib` (evening). `offsetMinutes` is 5–60 in steps of 5, default 30.
 
 ### Android (Kotlin, no new library)
 
@@ -83,10 +88,10 @@ The notification titles are carried in the list, read from the database's titles
 
 A new «التذكير» entry in Settings opens a screen with three cards:
 
-- **«أذكار الصباح»:** switch; time choice «وقت أختاره» or «بعد الفجر بنصف ساعة». For a fixed time, the time is shown and tappable. For a prayer-relative time, today's computed time is shown, for example «اليوم: ٥:١٢ ص».
-- **«أذكار المساء»:** the same, with «وقت أختاره», «بعد العصر بنصف ساعة» and «قبل المغرب بنصف ساعة».
-- **«أذكار النوم»:** switch and «وقت أختاره» only.
-- **«الموقع» (phase 2),** shown only when a prayer-relative option is chosen:
+- **«أذكار الصباح»:** switch; «بعد الفجر بـ N دقيقة», where N is picked from 5 to 60 in steps of 5; today's computed time is shown, for example «اليوم: ٥:١٢ ص».
+- **«أذكار المساء»:** switch; «بعد العصر» or «قبل المغرب», by N minutes picked the same way; today's computed time is shown.
+- **«أذكار النوم»:** switch and a clock time.
+- **«الموقع»,** shown as soon as the morning or evening reminder is on:
   - the current city (nearest city to the device location, or the chosen one);
   - «تحديث موقعي» and «اختيار مدينة», the latter a searchable list;
   - «طريقة الحساب», set from the country and changeable;
@@ -94,11 +99,11 @@ A new «التذكير» entry in Settings opens a screen with three cards:
 
 Permissions are asked in context only:
 - **Notification:** when the first reminder is turned on.
-- **Location:** when the first prayer-relative option is chosen. If refused, the city list opens.
+- **Location:** when the morning or evening reminder is first turned on. If refused, the city list opens.
 
 ## Prayer times and location (phase 2)
 
-- **Library:** a small open-source prayer-times library, computing on the phone with no network. Its licence and size are checked before it is adopted. Times are computed in the phone's local time zone, so summer time follows automatically. For high latitudes the library's standard rule applies.
+- **Library:** `adhan` 2.0.0 (MIT, pure Dart, no dependencies), computing on the phone with no network. It covers every method in the table below, both Asr madhabs, and the high-latitude rules. Times are computed in the phone's local time zone, so summer time follows automatically. For high latitudes the library's standard rule applies.
 - **Default calculation method by country**, changeable by the reader. Once the reader picks a method, it stays even if the country changes.
 
   | Country | Method |
@@ -121,7 +126,7 @@ Permissions are asked in context only:
 |---|---|
 | Notification permission refused | The switch returns to off; message «الإشعارات ممنوعة لهذا التطبيق، يمكنك السماح بها من إعدادات الهاتف»; nothing is scheduled |
 | Permission revoked later in system settings | Checked on each app start; the card shows that notifications are blocked |
-| Location refused or unavailable | The city list opens; if no city is chosen, the option falls back to «وقت أختاره» |
+| Location refused or unavailable | The city list opens; if no city is chosen, the morning or evening reminder stays off and the screen says a location is needed |
 | List running out (under 7 days left, app not opened) | Those notifications carry a second line, «افتح التطبيق لتجديد التذكير». This is app text, not the book's, and is shown to the owner before release |
 | Phone kills background apps | Unaffected: the system alarm wakes a receiver, with no background service. The screen links to the battery setting for readers whose notifications still do not arrive |
 
