@@ -44,7 +44,7 @@ object ReminderNotifier {
             @Suppress("DEPRECATION")
             Notification.Builder(context)
         }
-        builder.setSmallIcon(R.drawable.ic_launcher_monochrome)
+        builder.setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(reminder.title)
             .setContentIntent(content)
             .setAutoCancel(true)
