@@ -126,6 +126,26 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     });
   }
 
+  Future<void> _confirmRestart() async {
+    final restart = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("إعادة العدّ من البداية؟"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("إلغاء"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("إعادة"),
+          ),
+        ],
+      ),
+    );
+    if (restart ?? false) _bloc.add(ZikrContentViewerRestartEvent());
+  }
+
   GlobalKey _keyFor(int zikrId) => _cardKeys.putIfAbsent(zikrId, GlobalKey.new);
 
   void _bringIntoView(int zikrId) {
@@ -173,8 +193,9 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     return card.localToGlobal(Offset.zero).dy >= pageBottom;
   }
 
-  /// A new section starts at its top, or at the zikr a search result named.
-  /// Finishing a zikr brings the next unfinished one after it into view; a
+  /// A new section starts at its top, at the zikr a search result named, or
+  /// at the zikr the reader left earlier today; starting it again goes back
+  /// to its top. Finishing a zikr brings the next unfinished one after it into view; a
   /// count below the page, from the volume keys, scrolls down to show it.
   void _onStateChange(
     ZikrContentViewerState previous,
@@ -190,7 +211,15 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
         final focus = current.azkar
             .where((zikr) => zikr.order == current.focusOrder)
             .firstOrNull;
-        if (focus != null) _bringIntoView(focus.id);
+        if (focus != null) {
+          _bringIntoView(focus.id);
+        } else if (current.resumeZikrId != null) {
+          _bringIntoView(current.resumeZikrId!);
+        }
+        return;
+      }
+      if (previous.hasProgress && !current.hasProgress) {
+        if (_scrollController.hasClients) _scrollController.jumpTo(0);
         return;
       }
       final counted = current.azkar.indexWhere(
@@ -263,7 +292,16 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                     ),
                 ],
               ),
-              actions: [BookmarkTitleButton(titleId: state.zikrTitle.id)],
+              actions: [
+                if (state.hasProgress)
+                  IconButton(
+                    key: const ValueKey('reader-restart'),
+                    tooltip: "البدء من جديد",
+                    icon: const Icon(Icons.restart_alt),
+                    onPressed: _confirmRestart,
+                  ),
+                BookmarkTitleButton(titleId: state.zikrTitle.id),
+              ],
             ),
             body: NotificationListener<ScrollEndNotification>(
               onNotification: (_) {
