@@ -84,6 +84,39 @@ void main() {
           .setMockMethodCallHandler(VibrationManager.channel, null),
     );
 
+    // Counting is kept for the day: a section left and opened again shows
+    // the same progress, until the reader starts it again.
+    {
+      String progress() => tester
+          .widget<Text>(find.textContaining(RegExp(r'^أتممت \d+ من \d+$')))
+          .data!;
+
+      await openSection(tester, 'أذكار الصباح');
+      await tester
+          .tap(find.textContaining('أصبحنا على', findRichText: true).first);
+      await tester.pumpAndSettle();
+      final next = find.textContaining('رَضِيتُ باللهِ', findRichText: true);
+      await tester.ensureVisible(next.first);
+      await tester.pumpAndSettle();
+      await tester.tap(next.first);
+      await tester.pumpAndSettle();
+      final left = progress();
+      expect(left, isNot(startsWith('أتممت 0 ')), reason: 'counted');
+
+      await backHome(tester);
+      await openSection(tester, 'أذكار الصباح');
+      expect(find.text(left), findsOneWidget, reason: 'progress kept');
+
+      await tester.tap(find.byKey(const ValueKey('reader-restart')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('إعادة'));
+      await tester.pumpAndSettle();
+      final total = left.split(' ').last;
+      expect(find.text('أتممت 0 من $total'), findsOneWidget, reason: 'restart');
+      expect(find.byKey(const ValueKey('reader-restart')), findsNothing);
+      await backHome(tester);
+    }
+
     // Tapping a zikr's text counts it and marks it done in the header.
     await openSection(tester, 'أذكار الصباح');
     expect(find.text('أتممت 0 من 27'), findsOneWidget);
@@ -131,9 +164,9 @@ void main() {
     await tester.tap(find.text('الباب السابق'));
     await tester.pumpAndSettle();
     expect(
-      find.text('أتممت 0 من 27'),
+      find.text('أتممت 2 من 27'),
       findsOneWidget,
-      reason: 'previous section',
+      reason: 'previous section, as it was left',
     );
     await backHome(tester);
 
