@@ -21,6 +21,7 @@ import 'package:alazkar/src/features/share_as_image/presentation/controller/cubi
 import 'package:alazkar/src/features/theme/domain/repository/theme_storage.dart';
 import 'package:alazkar/src/features/theme/presentation/controller/cubit/theme_cubit.dart';
 import 'package:alazkar/src/features/ui/data/repository/ui_repo.dart';
+import 'package:alazkar/src/features/zikr_content_viewer/data/repository/reading_progress_storage.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/data/repository/zikr_viewer_repo.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/controller/bloc/zikr_content_viewer_bloc.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/repository/zikr_filter_storage.dart';
@@ -44,6 +45,7 @@ Future<void> initSL() async {
   sl.registerLazySingleton(() => ZikrViewerRepo(sl()));
   sl.registerLazySingleton(() => SearchRepo(sl()));
   sl.registerLazySingleton(() => ReminderStorage(sl()));
+  sl.registerLazySingleton(() => ReadingProgressStorage(sl()));
   sl.registerLazySingleton(() => CityRepository());
 
   ///MARK: Init Repo
