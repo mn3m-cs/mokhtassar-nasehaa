@@ -1,49 +1,15 @@
 import 'package:alazkar/src/features/reminders/data/models/place.dart';
 import 'package:alazkar/src/features/reminders/data/models/prayer_method.dart';
 import 'package:alazkar/src/features/reminders/data/models/reminder.dart';
-import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
 import 'package:alazkar/src/features/reminders/data/repository/city_repository.dart';
 import 'package:alazkar/src/features/reminders/data/repository/reminder_storage.dart';
 import 'package:alazkar/src/features/reminders/domain/prayer_times_calculator.dart';
 import 'package:alazkar/src/features/reminders/presentation/controller/reminders_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/fake_reminder_platform.dart';
 import 'support/memory_storage.dart';
 import 'support/test_cities.dart';
-
-class FakeReminderPlatform implements ReminderPlatform {
-  bool allowed;
-  bool grants;
-  final List<List<PlannedReminder>> scheduled = [];
-  int settingsOpened = 0;
-  LatLng? location;
-  int locationRequests = 0;
-
-  FakeReminderPlatform(
-      {this.allowed = true, this.grants = true, this.location});
-
-  @override
-  Future<void> schedule(List<PlannedReminder> reminders) async =>
-      scheduled.add(reminders);
-
-  @override
-  Future<bool> notificationsAllowed() async => allowed;
-
-  @override
-  Future<void> openAppSettings() async => settingsOpened++;
-
-  @override
-  Future<bool> requestNotificationPermission() async {
-    allowed = grants;
-    return grants;
-  }
-
-  @override
-  Future<LatLng?> requestLocation() async {
-    locationRequests++;
-    return location;
-  }
-}
 
 void main() {
   const titles = {1: 'أذكار الصباح', 2: 'أذكار المساء', 18: 'أذكار النوم'};
@@ -352,5 +318,15 @@ void main() {
 
     expect(c.state.locationNeeded, isTrue);
     expect(platform.scheduled.last, isEmpty);
+  });
+
+  test('a reminder turned on before the titles load still carries its title',
+      () async {
+    final platform = FakeReminderPlatform();
+    final c = cubit(platform);
+
+    await c.setEnabled(ReminderSlot.sleep, true);
+
+    expect(platform.scheduled.last.first.title, 'أذكار النوم');
   });
 }

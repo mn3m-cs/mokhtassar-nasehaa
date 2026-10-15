@@ -134,7 +134,12 @@ class RemindersCubit extends Cubit<RemindersState> {
     await _reschedule();
   }
 
-  Future<void> _reschedule() {
+  Future<void> _reschedule() async {
+    // A switch turned on before start() finished would otherwise plan
+    // notifications with an empty title.
+    if (state.titles.isEmpty) {
+      emit(state.copyWith(titles: await loadTitles()));
+    }
     final place = state.place;
     final calculator = place == null
         ? null
