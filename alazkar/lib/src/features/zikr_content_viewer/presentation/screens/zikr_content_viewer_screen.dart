@@ -195,8 +195,9 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
 
   /// A new section starts at its top, at the zikr a search result named, or
   /// at the zikr the reader left earlier today; starting it again goes back
-  /// to its top. Finishing a zikr brings the next unfinished one after it into view; a
-  /// count below the page, from the volume keys, scrolls down to show it.
+  /// to its top. Finishing a zikr brings the next unfinished one after it
+  /// into view; a count below the page, from the volume keys, scrolls down to
+  /// show it.
   void _onStateChange(
     ZikrContentViewerState previous,
     ZikrContentViewerState current,
