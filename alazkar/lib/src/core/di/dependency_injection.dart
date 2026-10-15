@@ -71,7 +71,7 @@ Future<void> initSL() async {
 
   /// Factory BLoC
   sl.registerFactory(
-    () => ZikrContentViewerBloc(sl(), sl(), sl(), sl()),
+    () => ZikrContentViewerBloc(sl(), sl(), sl(), sl(), sl()),
   );
   sl.registerFactory(() => ShareImageCubit(sl()));
 }

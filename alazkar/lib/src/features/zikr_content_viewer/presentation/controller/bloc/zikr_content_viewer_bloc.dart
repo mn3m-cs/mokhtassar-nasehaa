@@ -12,6 +12,7 @@ import 'package:alazkar/src/core/utils/show_toast.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
 import 'package:alazkar/src/features/search/data/models/title_paths.dart';
 import 'package:alazkar/src/features/settings/data/repository/settings_storage.dart';
+import 'package:alazkar/src/features/zikr_content_viewer/data/repository/reading_progress_storage.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_share_dialog.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/models/zikr_filter.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/models/zikr_filter_list_extension.dart';
@@ -30,6 +31,7 @@ class ZikrContentViewerBloc
   final SettingsStorage settingsStorage;
   final ZikrFilterStorage zikrFilterStorage;
   final AzkarDBHelper azkarDBHelper;
+  final ReadingProgressStorage readingProgressStorage;
 
   static final MethodChannel _volumeBtnChannel = VolumeButtonManager.channel;
 
@@ -38,6 +40,7 @@ class ZikrContentViewerBloc
     this.settingsStorage,
     this.zikrFilterStorage,
     this.azkarDBHelper,
+    this.readingProgressStorage,
   ) : super(ZikrContentViewerLoadingState()) {
     VolumeButtonManager.setActivationStatus(
       activate: settingsStorage.praiseWithVolumeKeys,
@@ -51,6 +54,7 @@ class ZikrContentViewerBloc
     on<ZikrContentViewerNextTitleEvent>(_nextTitle);
     on<ZikrContentViewerPreviousTitleEvent>(_previousTitle);
     on<ZikrContentViewerFocusEvent>(_focus);
+    on<ZikrContentViewerRestartEvent>(_restart);
   }
 
   Future<void> _start(
@@ -79,17 +83,56 @@ class ZikrContentViewerBloc
     /// filter out zikr
     final List<Filter> filters = zikrFilterStorage.getAllFilters();
     azkarToSet = filters.getFilteredZikr(azkarFromDB);
+    final initialCounts = {for (final zikr in azkarToSet) zikr.id: zikr.count};
 
-    final focusIndex =
-        azkarToSet.indexWhere((zikr) => zikr.order == event.zikrOrder);
+    // Saved counts for azkar the filters now hide are dropped, and a count
+    // is never restored above the book's.
+    final progress = readingProgressStorage.read(event.zikrTitleId);
+    final savedCounts = progress?.counts ?? const <int, int>{};
+    final azkar = azkarToSet.map((zikr) {
+      final saved = savedCounts[zikr.id];
+      if (saved == null) return zikr;
+      return zikr.copyWith(count: saved.clamp(0, zikr.count));
+    }).toList();
+
+    // A search result names the zikr to show; otherwise the reader returns
+    // to the zikr they left.
+    var activeZikrIndex =
+        azkar.indexWhere((zikr) => zikr.order == event.zikrOrder);
+    int? resumeZikrId;
+    if (event.zikrOrder == null) {
+      final resumeIndex =
+          azkar.indexWhere((zikr) => zikr.id == progress?.zikrId);
+      if (resumeIndex != -1) {
+        activeZikrIndex = resumeIndex;
+        resumeZikrId = azkar[resumeIndex].id;
+      }
+    }
+
     emit(
       ZikrContentViewerLoadedState(
         zikrTitle: zikrTitle,
-        azkar: azkarToSet,
-        activeZikrIndex: focusIndex == -1 ? 0 : focusIndex,
-        initialCounts: {for (final zikr in azkarToSet) zikr.id: zikr.count},
+        azkar: azkar,
+        activeZikrIndex: activeZikrIndex == -1 ? 0 : activeZikrIndex,
+        initialCounts: initialCounts,
         sectionPath: sectionPath,
         focusOrder: event.zikrOrder,
+        resumeZikrId: resumeZikrId,
+      ),
+    );
+  }
+
+  /// Keeps the counts and the zikr in view, so the section reopens as it was
+  /// left for the rest of the day.
+  Future<void> _saveProgress(ZikrContentViewerLoadedState state) {
+    return readingProgressStorage.write(
+      state.zikrTitle.id,
+      ReadingProgress(
+        counts: {
+          for (final zikr in state.azkar)
+            if (zikr.count != state.initialCounts[zikr.id]) zikr.id: zikr.count,
+        },
+        zikrId: state.activeZikr?.id,
       ),
     );
   }
@@ -119,23 +162,50 @@ class ZikrContentViewerBloc
     }).toList();
 
     // The zikr just counted becomes the one the keys continue.
-    emit(
-      state.copyWith(
-        azkar: azkarToSet,
-        activeZikrIndex:
-            state.azkar.indexWhere((zikr) => zikr.id == event.zikr.id),
-      ),
+    final stateToSet = state.copyWith(
+      azkar: azkarToSet,
+      activeZikrIndex:
+          state.azkar.indexWhere((zikr) => zikr.id == event.zikr.id),
     );
+    emit(stateToSet);
+    await _saveProgress(stateToSet);
   }
 
-  void _focus(
+  Future<void> _focus(
     ZikrContentViewerFocusEvent event,
     Emitter<ZikrContentViewerState> emit,
-  ) {
+  ) async {
     final state = this.state;
     if (state is! ZikrContentViewerLoadedState) return;
     if (state.activeZikrIndex == event.index) return;
-    emit(state.copyWith(activeZikrIndex: event.index));
+    final stateToSet = state.copyWith(activeZikrIndex: event.index);
+    emit(stateToSet);
+    await _saveProgress(stateToSet);
+  }
+
+  Future<void> _restart(
+    ZikrContentViewerRestartEvent event,
+    Emitter<ZikrContentViewerState> emit,
+  ) async {
+    final state = this.state;
+    if (state is! ZikrContentViewerLoadedState) return;
+    emit(
+      ZikrContentViewerLoadedState(
+        zikrTitle: state.zikrTitle,
+        azkar: state.azkar
+            .map(
+              (zikr) => zikr.copyWith(
+                count: state.initialCounts[zikr.id] ?? zikr.count,
+              ),
+            )
+            .toList(),
+        activeZikrIndex: 0,
+        initialCounts: state.initialCounts,
+        sectionPath: state.sectionPath,
+        focusOrder: state.focusOrder,
+      ),
+    );
+    await readingProgressStorage.clear(state.zikrTitle.id);
   }
 
   Future<String> sharedZikrText(Zikr zikr) async {

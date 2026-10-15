@@ -57,3 +57,6 @@ class ZikrContentViewerFocusEvent extends ZikrContentViewerEvent {
   @override
   List<Object> get props => [index];
 }
+
+/// The reader starts the section again from the book's counts.
+class ZikrContentViewerRestartEvent extends ZikrContentViewerEvent {}
