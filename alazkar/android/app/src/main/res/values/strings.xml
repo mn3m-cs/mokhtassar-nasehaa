@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">زاد الذاكر</string>
+    <string name="reminder_channel_name">التذكير</string>
 </resources>

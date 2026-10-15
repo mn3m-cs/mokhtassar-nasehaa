@@ -1,6 +1,9 @@
 import 'package:alazkar/app.dart';
 import 'package:alazkar/services.dart';
 import 'package:alazkar/src/core/manager/vibration_manager.dart';
+import 'package:alazkar/src/features/reminders/data/models/prayer_method.dart';
+import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
+import 'package:alazkar/src/features/reminders/domain/prayer_times_calculator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -191,5 +194,89 @@ void main() {
     await tester.tap(find.text('الباب التالي'));
     await tester.pumpAndSettle();
     expect(find.text('المقدمة'), findsWidgets, reason: 'next in book order');
+
+    // Reminders: the screen lists the three sections by their book titles,
+    // turning one on hands Android its daily times, and a refused permission
+    // leaves the switch off with an explanation. Only the native side of
+    // the reminder channel is replaced.
+    MyApp.navigatorKey.currentState!.popUntil((route) => route.isFirst);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byTooltip('الإعدادات'),
+      -600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    var grant = true;
+    final scheduled = <List<Object?>>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      ReminderChannel.channel,
+      (call) async {
+        switch (call.method) {
+          case 'schedule':
+            scheduled.add(call.arguments as List<Object?>);
+            return null;
+          case 'requestNotificationPermission':
+            return grant;
+          case 'notificationsAllowed':
+            return grant;
+          case 'requestLocation':
+            return {'latitude': 30.0444, 'longitude': 31.2357};
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(ReminderChannel.channel, null),
+    );
+    await tester.tap(find.byTooltip('الإعدادات'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('التذكير'));
+    await tester.pumpAndSettle();
+    for (final title in ['أذكار الصباح', 'أذكار المساء', 'أذكار النوم']) {
+      expect(find.text(title), findsOneWidget, reason: title);
+    }
+
+    await tester.tap(find.byKey(const ValueKey('reminder-switch-morning')));
+    await tester.pumpAndSettle();
+    final morning = scheduled.last.cast<Map<Object?, Object?>>();
+    expect(morning.map((e) => e['titleId']).toSet(), {1});
+    expect(morning.first['title'], 'أذكار الصباح');
+    expect(morning.map((e) => e['minuteOfDay']).toSet().length, greaterThan(1));
+    final first = morning.first;
+    final fajr = PrayerTimesCalculator(
+      latitude: 30.0444,
+      longitude: 31.2357,
+      method: PrayerMethod.egyptian,
+      madhab: AsrMadhab.majority,
+    )
+        .dayOf(
+          DateTime(
+            first['year']! as int,
+            first['month']! as int,
+            first['day']! as int,
+          ),
+        )
+        .fajr;
+    expect(first['minuteOfDay'], fajr + 30);
+    expect(find.textContaining('القاهرة'), findsOneWidget);
+
+    grant = false;
+    await tester.tap(find.byKey(const ValueKey('reminder-switch-evening')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<SwitchListTile>(
+            find.byKey(const ValueKey('reminder-switch-evening')),
+          )
+          .value,
+      isFalse,
+    );
+    expect(
+      find.text(
+        'الإشعارات ممنوعة لهذا التطبيق، يمكنك السماح بها من إعدادات الهاتف',
+      ),
+      findsWidgets,
+    );
   });
 }

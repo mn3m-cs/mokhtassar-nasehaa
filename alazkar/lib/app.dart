@@ -3,6 +3,7 @@ import 'package:alazkar/src/core/extension/extension_platform.dart';
 import 'package:alazkar/src/core/utils/scroll_behavior.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
 import 'package:alazkar/src/features/home/presentation/screens/home_page_screen.dart';
+import 'package:alazkar/src/features/reminders/presentation/components/reminder_launch_listener.dart';
 import 'package:alazkar/src/features/search/presentation/controller/cubit/search_cubit.dart';
 import 'package:alazkar/src/features/settings/presentation/controller/cubit/settings_cubit.dart';
 import 'package:alazkar/src/features/theme/presentation/controller/cubit/theme_cubit.dart';
@@ -64,7 +65,7 @@ class MyApp extends StatelessWidget {
               }
               return child ?? const SizedBox();
             },
-            home: const HomePageScreen(),
+            home: const ReminderLaunchListener(child: HomePageScreen()),
           );
         },
       ),

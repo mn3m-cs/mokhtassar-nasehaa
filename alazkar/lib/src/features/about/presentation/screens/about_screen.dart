@@ -60,6 +60,16 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
           const Divider(),
+          const ListTile(
+            leading: Icon(Icons.location_city_outlined),
+            title: Text("بيانات المدن"),
+            isThreeLine: true,
+            subtitle: Text(
+              "المواقع من جيونيمز (geonames.org) برخصة المشاع الإبداعي، النسبة ٤٫٠\n"
+              "والأسماء العربية من ويكي بيانات",
+            ),
+          ),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.open_in_browser),
             title: const Text("رابط المشروع المفتوح المصدر"),
