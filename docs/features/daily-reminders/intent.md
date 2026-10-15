@@ -86,7 +86,7 @@ A reader who turns on a reminder gets a notification every day at the time they 
 - **Action:** the device clock reaches T.
 - **Expected:** a notification titled «أذكار الصباح» appears between T and T + 15 minutes, once.
 - **Must not:** show any text that is not the section's title in the book, or fire twice for one day. The one exception is the renewal line when the 90-day list is almost used up (see the design), which the owner sees before release.
-- **Verification:** unit tests for computing the next trigger time; on the emulator, `dumpsys alarm` shows one pending alarm per enabled reminder, and firing the receiver shows the notification in `dumpsys notification`.
+- **Verification:** unit tests for computing the next trigger time; on the emulator, `dumpsys alarm` shows one pending alarm, for the earliest reminder of all the enabled ones (the design keeps a single alarm and walks the stored list), and firing the receiver shows the notification in `dumpsys notification`.
 - **Priority:** Required
 
 ### AC-004: Tapping the notification opens that section
