@@ -7,6 +7,23 @@ import android.content.Intent
 
 object ReminderScheduler {
     private const val WINDOW_MS = 15 * 60 * 1000L
+    private const val STALE_MS = 60 * 60 * 1000L
+
+    /**
+     * Keeps a newly planned list. It starts from now, so a reminder already
+     * due but not yet shown (its alarm runs late, or the app was stopped)
+     * would be lost: it is shown first, see [ReminderDue.owedBeforeReplacing].
+     */
+    fun replace(context: Context, reminders: List<PlannedReminder>) {
+        ReminderDue.owedBeforeReplacing(
+            ReminderStore.load(context),
+            reminders,
+            System.currentTimeMillis(),
+            STALE_MS,
+        ).forEach { ReminderNotifier.show(context, it) }
+        ReminderStore.save(context, reminders)
+        scheduleNext(context)
+    }
 
     /** Drops what has passed and keeps one alarm for the earliest entry. */
     fun scheduleNext(context: Context) {

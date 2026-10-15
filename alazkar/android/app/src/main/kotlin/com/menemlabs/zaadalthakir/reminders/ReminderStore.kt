@@ -51,9 +51,14 @@ object ReminderStore {
             .edit().putString(KEY, array.toString()).commit()
     }
 
+    /** An unreadable list reads as empty, so a receiver never crashes on it. */
     fun load(context: Context): List<PlannedReminder> {
         val json = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY, null) ?: return emptyList()
+        return runCatching { parse(json) }.getOrDefault(emptyList())
+    }
+
+    private fun parse(json: String): List<PlannedReminder> {
         val array = JSONArray(json)
         return (0 until array.length()).map { index ->
             val item = array.getJSONObject(index)

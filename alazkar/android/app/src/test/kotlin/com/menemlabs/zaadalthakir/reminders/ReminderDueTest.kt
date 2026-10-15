@@ -58,6 +58,36 @@ class ReminderDueTest {
     }
 
     @Test
+    fun openingTheAppBeforeALateAlarmStillShowsTheReminderItReplaces() {
+        val sleep = entry(14, 22 * 60, 18)
+        val newList = listOf(entry(15, 22 * 60, 18))
+
+        val owed = ReminderDue.owedBeforeReplacing(listOf(sleep), newList, at(14, 22 * 60 + 2), hour)
+
+        assertEquals(listOf(sleep), owed)
+    }
+
+    @Test
+    fun aReminderTurnedOffAfterItsTimeIsNotShown() {
+        val sleep = entry(14, 22 * 60, 18)
+        val newList = listOf(entry(15, 6 * 60, 1))
+
+        val owed = ReminderDue.owedBeforeReplacing(listOf(sleep), newList, at(14, 22 * 60 + 2), hour)
+
+        assertEquals(emptyList<PlannedReminder>(), owed)
+    }
+
+    @Test
+    fun aReplacedReminderMoreThanAnHourOldIsDropped() {
+        val sleep = entry(14, 22 * 60, 18)
+        val newList = listOf(entry(15, 22 * 60, 18))
+
+        val owed = ReminderDue.owedBeforeReplacing(listOf(sleep), newList, at(14, 23 * 60 + 1), hour)
+
+        assertEquals(emptyList<PlannedReminder>(), owed)
+    }
+
+    @Test
     fun aReminderStillInTheFutureIsNotShown() {
         val shown = ReminderDue.toShow(listOf(entry(14, 6 * 60, 1)), at(14, 5 * 60), staleMs = null)
 

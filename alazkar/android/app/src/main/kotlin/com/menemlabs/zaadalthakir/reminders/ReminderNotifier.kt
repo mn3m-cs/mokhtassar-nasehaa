@@ -11,7 +11,7 @@ import com.menemlabs.zaadalthakir.MainActivity
 import com.menemlabs.zaadalthakir.R
 
 object ReminderNotifier {
-    private const val CHANNEL_ID = "daily_reminders"
+    const val CHANNEL_ID = "daily_reminders"
     const val EXTRA_TITLE_ID = "reminder_title_id"
 
     fun show(context: Context, reminder: PlannedReminder) {

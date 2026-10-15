@@ -51,8 +51,7 @@ class MainActivity: FlutterActivity() {
                     "schedule" -> {
                         @Suppress("UNCHECKED_CAST")
                         val maps = call.arguments as List<Map<String, Any?>>
-                        ReminderStore.save(this, ReminderStore.fromMaps(maps))
-                        ReminderScheduler.scheduleNext(this)
+                        ReminderScheduler.replace(this, ReminderStore.fromMaps(maps))
                         result.success(null)
                     }
                     "notificationsAllowed" -> result.success(notificationsAllowed())
@@ -97,8 +96,14 @@ class MainActivity: FlutterActivity() {
 
 
 
-    private fun notificationsAllowed(): Boolean =
-        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled()
+    /** False also when the reader muted the reminders' own channel. */
+    private fun notificationsAllowed(): Boolean {
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        if (!manager.areNotificationsEnabled()) return false
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true
+        val channel = manager.getNotificationChannel(ReminderNotifier.CHANNEL_ID) ?: return true
+        return channel.importance != NotificationManager.IMPORTANCE_NONE
+    }
 
     private fun requestNotificationPermission(result: MethodChannel.Result) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -107,6 +112,9 @@ class MainActivity: FlutterActivity() {
             result.success(notificationsAllowed())
             return
         }
+        // A second request while the dialog is up answers the first, so its
+        // caller is not left waiting forever.
+        pendingPermissionResult?.success(false)
         pendingPermissionResult = result
         requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
     }
@@ -116,6 +124,7 @@ class MainActivity: FlutterActivity() {
             readLocation(result)
             return
         }
+        pendingLocationResult?.success(null)
         pendingLocationResult = result
         requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), REQUEST_LOCATION)
     }
@@ -151,8 +160,16 @@ class MainActivity: FlutterActivity() {
         titleIdFrom(intent)?.let { reminderChannel?.invokeMethod("openTitle", it) }
     }
 
-    private fun titleIdFrom(intent: Intent?): Int? =
-        intent?.getIntExtra(ReminderNotifier.EXTRA_TITLE_ID, -1)?.takeIf { it > 0 }
+    /**
+     * The section a tapped notification asks for. Reopening the app from
+     * Recents replays the notification's intent with the history flag; that
+     * is not a new tap, so it opens nothing.
+     */
+    private fun titleIdFrom(intent: Intent?): Int? {
+        if (intent == null) return null
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return null
+        return intent.getIntExtra(ReminderNotifier.EXTRA_TITLE_ID, -1).takeIf { it > 0 }
+    }
 
     companion object {
         private const val REQUEST_NOTIFICATIONS = 4101
