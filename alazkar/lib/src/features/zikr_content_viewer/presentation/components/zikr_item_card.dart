@@ -35,7 +35,9 @@ class ZikrItemCard extends StatelessWidget {
     final themeState = context.watch<ThemeCubit>().state;
     if (!isCounted) {
       // A passage to read sits on the page like the book's prose, not in a
-      // card: no background, set as a paragraph.
+      // card: no background, set as a paragraph. Its lines start at the
+      // right and are not justified: Flutter justifies Arabic only by
+      // widening the spaces, which leaves holes in short lines of long words.
       return Padding(
         padding: const EdgeInsetsDirectional.fromSTEB(24, 4, 12, 12),
         child: Column(
@@ -52,7 +54,7 @@ class ZikrItemCard extends StatelessWidget {
                 enableDiacritics: true,
                 fontSize: themeState.fontSize,
                 fontFamily: themeState.zikrFont.family,
-                textAlign: TextAlign.justify,
+                textAlign: TextAlign.start,
               ),
             ),
             if (zikr.fadl.isNotEmpty)
@@ -60,7 +62,7 @@ class ZikrItemCard extends StatelessWidget {
                 padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 12, 0),
                 child: Text(
                   zikr.fadl,
-                  textAlign: TextAlign.justify,
+                  textAlign: TextAlign.start,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     height: 1.7,
                     color: colorScheme.primary,
