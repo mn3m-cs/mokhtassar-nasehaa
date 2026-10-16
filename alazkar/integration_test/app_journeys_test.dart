@@ -1,9 +1,12 @@
 import 'package:alazkar/app.dart';
 import 'package:alazkar/services.dart';
+import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/core/manager/vibration_manager.dart';
+import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/features/reminders/data/models/prayer_method.dart';
 import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
 import 'package:alazkar/src/features/reminders/domain/prayer_times_calculator.dart';
+import 'package:alazkar/src/features/zikr_content_viewer/data/repository/reading_progress_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -84,6 +87,48 @@ void main() {
           .setMockMethodCallHandler(VibrationManager.channel, null),
     );
 
+    // Progress left by an earlier run would change what the journey counts.
+    final box = sl<KVStorage>();
+    for (final key in box.keys
+        .where((key) => key.startsWith('reading_progress_'))
+        .toList()) {
+      await box.remove(key);
+    }
+
+    // The azkar of the day keep their counts until midnight: a section left
+    // and opened again shows the same progress, with no starting again.
+    {
+      String progress() => tester
+          .widget<Text>(find.textContaining(RegExp(r'^أتممت \d+ من \d+$')))
+          .data!;
+
+      await openSection(tester, 'أذكار الصباح');
+      await tester
+          .tap(find.textContaining('أصبحنا على', findRichText: true).first);
+      await tester.pumpAndSettle();
+      final next = find.textContaining('رَضِيتُ باللهِ', findRichText: true);
+      await tester.ensureVisible(next.first);
+      await tester.pumpAndSettle();
+      await tester.tap(next.first);
+      await tester.pumpAndSettle();
+      final left = progress();
+      expect(left, isNot(startsWith('أتممت 0 ')), reason: 'counted');
+
+      await backHome(tester);
+      await openSection(tester, 'أذكار الصباح');
+      expect(find.text(left), findsOneWidget, reason: 'progress kept');
+      expect(
+        find.byKey(const ValueKey('reader-restart')),
+        findsNothing,
+        reason: 'said once a day',
+      );
+      await backHome(tester);
+
+      // The rest of the journey counts the morning azkar from the top, as
+      // on a new day.
+      await sl<ReadingProgressStorage>().clear(1);
+    }
+
     // Tapping a zikr's text counts it and marks it done in the header.
     await openSection(tester, 'أذكار الصباح');
     expect(find.text('أتممت 0 من 27'), findsOneWidget);
@@ -131,9 +176,9 @@ void main() {
     await tester.tap(find.text('الباب السابق'));
     await tester.pumpAndSettle();
     expect(
-      find.text('أتممت 0 من 27'),
+      find.text('أتممت 2 من 27'),
       findsOneWidget,
-      reason: 'previous section',
+      reason: 'previous section, as it was left',
     );
     await backHome(tester);
 
@@ -278,5 +323,40 @@ void main() {
       ),
       findsWidgets,
     );
+
+    // An absolute wird keeps its counts until the reader starts it again.
+    MyApp.navigatorKey.currentState!.popUntil((route) => route.isFirst);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('الأذكار المطلقة'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    // Categories open in place, below the end of the screen.
+    for (final category in ['الأذكار المطلقة', 'التهليل']) {
+      await tester.scrollUntilVisible(
+        find.text(category),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text(category));
+      await tester.pumpAndSettle();
+    }
+    await tester.scrollUntilVisible(
+      find.text('ورد التهليل'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await openSection(tester, 'ورد التهليل');
+    await tester
+        .tap(find.textContaining('أَشْهَدُ أَن', findRichText: true).first);
+    await tester.pumpAndSettle();
+    expect(find.text('أتممت 1 من 5'), findsOneWidget, reason: 'wird counted');
+    await tester.tap(find.byKey(const ValueKey('reader-restart')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'إعادة'));
+    await tester.pumpAndSettle();
+    expect(find.text('أتممت 0 من 5'), findsOneWidget, reason: 'started again');
+    expect(find.byKey(const ValueKey('reader-restart')), findsNothing);
   });
 }

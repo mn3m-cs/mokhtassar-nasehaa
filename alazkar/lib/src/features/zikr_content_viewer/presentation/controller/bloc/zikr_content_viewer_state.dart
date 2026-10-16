@@ -4,7 +4,7 @@ sealed class ZikrContentViewerState extends Equatable {
   const ZikrContentViewerState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 final class ZikrContentViewerLoadingState extends ZikrContentViewerState {}
@@ -27,6 +27,11 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   /// Order of the zikr to bring into view on opening, from a search result.
   final int? focusOrder;
 
+  /// The zikr the reader left on an earlier visit, to bring back into view.
+  final int? resumeZikrId;
+
+  final ProgressKeeping progressKeeping;
+
   const ZikrContentViewerLoadedState({
     required this.zikrTitle,
     required this.azkar,
@@ -34,6 +39,8 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
     required this.initialCounts,
     this.sectionPath = '',
     this.focusOrder,
+    this.resumeZikrId,
+    this.progressKeeping = ProgressKeeping.none,
   });
 
   ZikrContentViewerLoadedState copyWith({
@@ -47,6 +54,8 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
       initialCounts: initialCounts,
       sectionPath: sectionPath,
       focusOrder: focusOrder,
+      resumeZikrId: resumeZikrId,
+      progressKeeping: progressKeeping,
     );
   }
 
@@ -93,6 +102,17 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
     return null;
   }
 
+  /// Whether any zikr of the section has been counted, so there is something
+  /// to start again.
+  bool get hasProgress => azkar.any(
+        (zikr) => isCounted(zikr) && zikr.count < initialCounts[zikr.id]!,
+      );
+
+  /// Only a section kept for good offers to start again; the azkar of the
+  /// day are said once and start fresh the next day.
+  bool get canRestart =>
+      progressKeeping == ProgressKeeping.always && hasProgress;
+
   int get finishedCount => choices.where(_choiceDone).length;
 
   int get countedTotal => choices.length;
@@ -103,6 +123,13 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   }
 
   @override
-  List<Object> get props =>
-      [azkar, zikrTitle, activeZikrIndex, initialCounts, sectionPath];
+  List<Object?> get props => [
+        azkar,
+        zikrTitle,
+        activeZikrIndex,
+        initialCounts,
+        sectionPath,
+        resumeZikrId,
+        progressKeeping,
+      ];
 }
