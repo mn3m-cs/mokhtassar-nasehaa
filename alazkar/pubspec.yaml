@@ -88,3 +88,6 @@ flutter:
     - family: NotoNaskhArabic
       fonts:
         - asset: assets/fonts/NotoNaskhArabic-Regular.ttf
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf

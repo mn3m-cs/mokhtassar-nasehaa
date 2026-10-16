@@ -19,6 +19,36 @@ void main() {
     expect(storage.getZikrFont, ZikrFont.amiri);
   });
 
+  test('IBM Plex is offered last, after the three earlier choices', () {
+    expect(ZikrFont.values, [
+      ZikrFont.notoNaskh,
+      ZikrFont.kitab,
+      ZikrFont.amiri,
+      ZikrFont.ibmPlex,
+    ]);
+  });
+
+  test('a choice saved before IBM Plex was added still loads', () async {
+    for (final saved in {
+      "notoNaskh": ZikrFont.notoNaskh,
+      "kitab": ZikrFont.kitab,
+      "amiri": ZikrFont.amiri,
+    }.entries) {
+      final box = MemoryStorage();
+      await box.write("ZikrFont", saved.key);
+
+      expect(ThemeStorage(box).getZikrFont, saved.value, reason: saved.key);
+    }
+  });
+
+  test('choosing IBM Plex is remembered', () async {
+    final box = MemoryStorage();
+
+    await ThemeStorage(box).setZikrFont(ZikrFont.ibmPlex);
+
+    expect(ThemeStorage(box).getZikrFont, ZikrFont.ibmPlex);
+  });
+
   test('an unknown stored font falls back to Noto Naskh', () async {
     final box = MemoryStorage();
     await box.write("ZikrFont", "removedFont");
