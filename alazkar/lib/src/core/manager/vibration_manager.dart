@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 class VibrationManager {
   static const MethodChannel channel = MethodChannel("vibration_channel");
 
-  /// Two short pulses that do not depend on the phone's touch-vibration
+  /// One pulse of 250 ms that does not depend on the phone's touch-vibration
   /// setting, so a reader counting by the volume keys feels the end.
   static Future<void> countDone() async {
     if (defaultTargetPlatform != TargetPlatform.android) {
