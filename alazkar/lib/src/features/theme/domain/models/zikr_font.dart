@@ -3,7 +3,8 @@
 enum ZikrFont {
   notoNaskh("NotoNaskhArabic", "نوتو نسخ"),
   kitab("Kitab", "كتاب"),
-  amiri("Amiri", "أميري");
+  amiri("Amiri", "أميري"),
+  ibmPlex("IBMPlexSansArabic", "آي بي إم بلكس");
 
   final String family;
   final String label;
