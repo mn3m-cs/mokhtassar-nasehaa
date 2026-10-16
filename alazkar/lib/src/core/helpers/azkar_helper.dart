@@ -12,7 +12,7 @@ class AzkarDBHelper {
   /* ************* Variables ************* */
 
   static const String dbName = "Al-Azkar.db";
-  static const int dbVersion = 143;
+  static const int dbVersion = 144;
 
   /* ************* Singleton Constructor ************* */
 
