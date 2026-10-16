@@ -27,8 +27,10 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   /// Order of the zikr to bring into view on opening, from a search result.
   final int? focusOrder;
 
-  /// The zikr the reader left earlier today, to bring back into view.
+  /// The zikr the reader left on an earlier visit, to bring back into view.
   final int? resumeZikrId;
+
+  final ProgressKeeping progressKeeping;
 
   const ZikrContentViewerLoadedState({
     required this.zikrTitle,
@@ -38,6 +40,7 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
     this.sectionPath = '',
     this.focusOrder,
     this.resumeZikrId,
+    this.progressKeeping = ProgressKeeping.none,
   });
 
   ZikrContentViewerLoadedState copyWith({
@@ -52,6 +55,7 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
       sectionPath: sectionPath,
       focusOrder: focusOrder,
       resumeZikrId: resumeZikrId,
+      progressKeeping: progressKeeping,
     );
   }
 
@@ -104,6 +108,11 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
         (zikr) => isCounted(zikr) && zikr.count < initialCounts[zikr.id]!,
       );
 
+  /// Only a section kept for good offers to start again; the azkar of the
+  /// day are said once and start fresh the next day.
+  bool get canRestart =>
+      progressKeeping == ProgressKeeping.always && hasProgress;
+
   int get finishedCount => choices.where(_choiceDone).length;
 
   int get countedTotal => choices.length;
@@ -121,5 +130,6 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
         initialCounts,
         sectionPath,
         resumeZikrId,
+        progressKeeping,
       ];
 }

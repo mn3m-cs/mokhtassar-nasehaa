@@ -2,7 +2,7 @@
 
 **Ticket:** #127
 **Branch:** `feat/reading-progress`, cut from `main`
-**Status:** Approved for implementation
+**Status:** Approved for implementation; D1, D4 and D5 revised 2026-10-16 (owner: three kinds of section)
 
 ## Goal
 
@@ -12,10 +12,25 @@ view. A new day starts fresh. The reader can start a section again from zero.
 
 ## Decisions
 
-- **D1. A day is the phone's calendar date.** Progress saved on one date is
-  ignored, and removed, on any later date. The rule lives in one function
-  (`isSameReadingDay`) so a different boundary can replace it later without
-  touching anything else.
+- **D0. Three kinds of section** (owner, 2026-10-16), decided by
+  `progressKeepingOf` in `data/models/progress_keeping.dart`:
+  - *The azkar of the day and night* («أذكار الصباح», «أذكار المساء»,
+    «أذكار النوم»; titles 1, 2, 18): counts and place kept until midnight, no
+    starting again, since they are said once a day.
+  - *The absolute azkar and supplications, and the pages about the book*
+    (every section at any depth under categories 140, 158 and 99): counts and
+    place kept with no expiry, and the reader can start again.
+  - *Every other section* is said at each occasion (after every prayer, at
+    eating, on travel): nothing is kept, and each opening starts at the top,
+    as before this change. Keeping the day's counts there would show the
+    azkar after Fajr as already done after Dhuhr.
+
+  `progress_keeping_test.dart` checks the fixed ids against the bundled
+  database, so a content change that renumbers them fails the suite.
+- **D1. A day is the phone's calendar date** (owner confirmed midnight,
+  2026-10-16). Progress saved on one date is ignored, and removed, on any
+  later date. The rule lives in one function (`isSameReadingDay`) so a
+  different boundary can replace it later without touching anything else.
 - **D2. The position is a zikr, not a pixel offset.** The font size can change
   between visits, so the saved position is the id of the zikr in view
   (`activeZikr`). Reopening brings that zikr into view, the same way a search
@@ -28,13 +43,14 @@ view. A new day starts fresh. The reader can start a section again from zero.
   «أتممت n من m» and the vibration on finishing a repeated zikr behave as
   before.
 - **D4. Start again.** An icon button in the reader's app bar,
-  `Icons.restart_alt` with the tooltip «البدء من جديد», shown only while some
-  zikr in the section has been counted. It opens a dialog: title
+  `Icons.restart_alt` with the tooltip «البدء من جديد», shown only in a section
+  kept with no expiry (D0) while some zikr in it has been counted. It opens a
+  dialog: title
   «إعادة العدّ من البداية؟», actions «إلغاء» and «إعادة». «إعادة» restores the
   book's counts, clears the saved progress for that section, and scrolls to the
   top.
-- **D5. Every section is saved**, including sections with nothing to count:
-  their reading position is still worth keeping.
+- **D5. A kept section is saved even with nothing to count**, such as the
+  pages about the book: their reading position is still worth keeping.
 - **D6. No new dependency.** Storage goes through the existing `KVStorage`.
 
 ## Rules for the implementer

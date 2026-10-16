@@ -14,11 +14,46 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/memory_storage.dart';
 
-const _title = ZikrTitle(id: 1, order: 1, name: 'أذكار الصباح', freq: 'd');
+/// One section of each kind, under the categories the book puts them in.
+const _morning = ZikrTitle(
+  id: 1,
+  order: 1,
+  name: 'أذكار الصباح',
+  freq: 'd',
+  parentId: 100,
+);
+const _wird =
+    ZikrTitle(id: 69, order: 2, name: 'ورد التهليل', freq: 'd', parentId: 143);
+const _afterPrayer = ZikrTitle(
+  id: 16,
+  order: 2,
+  name: 'ما يقول بعد الصلاة',
+  freq: 'd',
+  parentId: 96,
+);
+
+ZikrTitle _category(int id, {int? parentId}) => ZikrTitle(
+      id: id,
+      order: id,
+      name: '',
+      freq: 'd',
+      parentId: parentId,
+      nodeType: ZikrTitleNodeType.category,
+    );
+
+final _allTitles = [
+  _category(100),
+  _category(140),
+  _category(143, parentId: 140),
+  _category(96),
+  _morning,
+  _wird,
+  _afterPrayer,
+];
 
 Zikr _zikr(int id, int count) => Zikr(
       id: id,
-      titleId: _title.id,
+      titleId: 1,
       order: id,
       body: 'نص $id',
       source: '',
@@ -38,10 +73,11 @@ class _FakeAzkarDB implements AzkarDBHelper {
   Future<List<Zikr>> getContentByTitleId(int id) async => _azkar;
 
   @override
-  Future<ZikrTitle> getTitlesById(int id) async => _title;
+  Future<ZikrTitle> getTitlesById(int id) async =>
+      _allTitles.firstWhere((title) => title.id == id);
 
   @override
-  Future<List<ZikrTitle>> getAllTitles() async => [_title];
+  Future<List<ZikrTitle>> getAllTitles() async => _allTitles;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -83,7 +119,10 @@ void main() {
   });
 
   /// Opens the section in a new bloc, as the screen does on every visit.
-  Future<ZikrContentViewerLoadedState> open({int? zikrOrder}) async {
+  Future<ZikrContentViewerLoadedState> open({
+    ZikrTitle title = _morning,
+    int? zikrOrder,
+  }) async {
     final db = _FakeAzkarDB();
     final bloc = ZikrContentViewerBloc(
       HomeBloc(
@@ -98,7 +137,7 @@ void main() {
       ReadingProgressStorage(box, now: () => now),
     );
     blocs.add(bloc);
-    bloc.add(ZikrContentViewerStartEvent(_title.id, zikrOrder: zikrOrder));
+    bloc.add(ZikrContentViewerStartEvent(title.id, zikrOrder: zikrOrder));
     return await bloc.stream.firstWhere(
       (state) => state is ZikrContentViewerLoadedState,
     ) as ZikrContentViewerLoadedState;
@@ -174,7 +213,7 @@ void main() {
   test('a saved zikr no longer listed is ignored, a count is never raised',
       () async {
     await ReadingProgressStorage(box, now: () => now).write(
-      _title.id,
+      _morning.id,
       const ReadingProgress(counts: {2: 9, 3: 0, 99: 1}, zikrId: 99),
     );
 
@@ -198,8 +237,51 @@ void main() {
     expect(reopened.hasProgress, isFalse);
   });
 
-  test('starting again restores the book and forgets the progress', () async {
+  test('the azkar of the day cannot be started again', () async {
     await open();
+    await count(1);
+
+    expect(loaded().hasProgress, isTrue);
+    expect(loaded().canRestart, isFalse);
+
+    current().add(ZikrContentViewerRestartEvent());
+    await pumpEventQueue();
+
+    expect(counts(loaded()), {1: 0, 2: 3, 3: 1, 4: 0});
+  });
+
+  test('an absolute zikr keeps its progress on later days', () async {
+    await open(title: _wird);
+    await count(1);
+    await count(2);
+    await current().close();
+
+    now = DateTime(2026, 11, 20, 9);
+    final reopened = await open(title: _wird);
+
+    expect(counts(reopened), {1: 0, 2: 2, 3: 1, 4: 0});
+    expect(reopened.resumeZikrId, 2);
+    expect(reopened.canRestart, isTrue);
+  });
+
+  test('a section said at each occasion starts fresh on every opening',
+      () async {
+    await open(title: _afterPrayer);
+    await count(1);
+    current().add(const ZikrContentViewerFocusEvent(2));
+    await pumpEventQueue();
+    await current().close();
+
+    final reopened = await open(title: _afterPrayer);
+
+    expect(counts(reopened), {1: 1, 2: 3, 3: 1, 4: 0});
+    expect(reopened.resumeZikrId, isNull);
+    expect(reopened.canRestart, isFalse);
+    expect(box.hasData('reading_progress_${_afterPrayer.id}'), isFalse);
+  });
+
+  test('starting again restores the book and forgets the progress', () async {
+    await open(title: _wird);
     await count(1);
     await count(2);
 
@@ -212,10 +294,10 @@ void main() {
     expect(loaded().hasProgress, isFalse);
     await current().close();
 
-    final reopened = await open();
+    final reopened = await open(title: _wird);
 
     expect(counts(reopened), {1: 1, 2: 3, 3: 1, 4: 0});
     expect(reopened.resumeZikrId, isNull);
-    expect(box.hasData('reading_progress_${_title.id}'), isFalse);
+    expect(box.hasData('reading_progress_${_wird.id}'), isFalse);
   });
 }

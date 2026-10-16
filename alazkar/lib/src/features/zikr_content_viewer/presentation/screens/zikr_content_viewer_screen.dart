@@ -294,7 +294,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                 ],
               ),
               actions: [
-                if (state.hasProgress)
+                if (state.canRestart)
                   IconButton(
                     key: const ValueKey('reader-restart'),
                     tooltip: "البدء من جديد",

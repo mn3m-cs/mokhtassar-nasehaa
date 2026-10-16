@@ -12,6 +12,7 @@ import 'package:alazkar/src/core/utils/show_toast.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
 import 'package:alazkar/src/features/search/data/models/title_paths.dart';
 import 'package:alazkar/src/features/settings/data/repository/settings_storage.dart';
+import 'package:alazkar/src/features/zikr_content_viewer/data/models/progress_keeping.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/data/repository/reading_progress_storage.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_share_dialog.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/models/zikr_filter.dart';
@@ -77,8 +78,9 @@ class ZikrContentViewerBloc
             )
             .toList();
     final zikrTitle = await azkarDBHelper.getTitlesById(event.zikrTitleId);
-    final sectionPath =
-        buildParentPath(zikrTitle, await azkarDBHelper.getAllTitles());
+    final allTitles = await azkarDBHelper.getAllTitles();
+    final sectionPath = buildParentPath(zikrTitle, allTitles);
+    final progressKeeping = progressKeepingOf(zikrTitle, allTitles);
 
     /// filter out zikr
     final List<Filter> filters = zikrFilterStorage.getAllFilters();
@@ -87,7 +89,13 @@ class ZikrContentViewerBloc
 
     // Saved counts for azkar the filters now hide are dropped, and a count
     // is never restored above the book's.
-    final progress = readingProgressStorage.read(event.zikrTitleId);
+    final progress = switch (progressKeeping) {
+      ProgressKeeping.none => null,
+      ProgressKeeping.forToday =>
+        readingProgressStorage.read(event.zikrTitleId),
+      ProgressKeeping.always =>
+        readingProgressStorage.read(event.zikrTitleId, expires: false),
+    };
     final savedCounts = progress?.counts ?? const <int, int>{};
     final azkar = azkarToSet.map((zikr) {
       final saved = savedCounts[zikr.id];
@@ -118,14 +126,16 @@ class ZikrContentViewerBloc
         sectionPath: sectionPath,
         focusOrder: event.zikrOrder,
         resumeZikrId: resumeZikrId,
+        progressKeeping: progressKeeping,
       ),
     );
   }
 
   /// Keeps the counts and the zikr in view, so the section reopens as it was
-  /// left for the rest of the day.
-  Future<void> _saveProgress(ZikrContentViewerLoadedState state) {
-    return readingProgressStorage.write(
+  /// left, for as long as its kind keeps them.
+  Future<void> _saveProgress(ZikrContentViewerLoadedState state) async {
+    if (state.progressKeeping == ProgressKeeping.none) return;
+    await readingProgressStorage.write(
       state.zikrTitle.id,
       ReadingProgress(
         counts: {
@@ -188,7 +198,7 @@ class ZikrContentViewerBloc
     Emitter<ZikrContentViewerState> emit,
   ) async {
     final state = this.state;
-    if (state is! ZikrContentViewerLoadedState) return;
+    if (state is! ZikrContentViewerLoadedState || !state.canRestart) return;
     emit(
       ZikrContentViewerLoadedState(
         zikrTitle: state.zikrTitle,
@@ -203,6 +213,7 @@ class ZikrContentViewerBloc
         initialCounts: state.initialCounts,
         sectionPath: state.sectionPath,
         focusOrder: state.focusOrder,
+        progressKeeping: state.progressKeeping,
       ),
     );
     await readingProgressStorage.clear(state.zikrTitle.id);
