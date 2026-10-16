@@ -10,7 +10,7 @@ class UthmaniRepository {
 
   static const String name = "quran.ar.uthmani.v2";
   static const String dbName = "$name.db";
-  static const int dbVersion = 2;
+  static const int dbVersion = 3;
 
   static UthmaniRepository? _databaseHelper;
   static Database? _database;

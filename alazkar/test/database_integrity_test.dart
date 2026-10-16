@@ -532,7 +532,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 143);
+    expect(await database.getVersion(), 144);
     expect(titleCount.single, {'count': 141});
     expect(foreignKeyViolations, isEmpty);
     expect(
