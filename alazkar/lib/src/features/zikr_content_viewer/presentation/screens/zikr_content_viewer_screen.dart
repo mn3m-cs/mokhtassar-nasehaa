@@ -57,6 +57,8 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
 
     if (PlatformExtension.isPhone) {
       _shakeDetector = ShakeDetector.autoStart(
+        minimumShakeCount: 2,
+        shakeThresholdGravity: 3.0,
         onPhoneShake: (event) {
           _showReportDialog();
         },
