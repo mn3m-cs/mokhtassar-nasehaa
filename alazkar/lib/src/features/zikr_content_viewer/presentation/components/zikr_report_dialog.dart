@@ -78,75 +78,104 @@ $userReportText
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textColor = theme.textTheme.bodyLarge?.color;
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+      elevation: 8,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 320),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Row(
-                  children: [
-                    Icon(
+                Center(
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colorScheme.primary.withValues(alpha: 0.12),
+                    ),
+                    child: Icon(
                       Icons.report_problem_outlined,
-                      color: Colors.amber,
-                      size: 28,
+                      color: colorScheme.primary,
+                      size: 36,
                     ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "تبليغ عن خطأ",
-                        style: TextStyle(
-                          fontFamily: "Cairo",
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textDirection: TextDirection.rtl,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 15),
-                const Text(
-                  "يرجى كتابة تفاصيل الخطأ في هذا الذكر وسنقوم بتعديله في أسرع وقت إن شاء الله.",
+                const SizedBox(height: 20),
+                Text(
+                  "الإبلاغ عن خطأ",
+                  style: TextStyle(
+                    fontFamily: "Cairo",
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.rtl,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "هل وجدت خطأً في هذا الذكر؟ اكتب لنا موضعه، وسنراجعه على الكتاب ونصحّحه إن شاء الله.",
                   style: TextStyle(
                     fontFamily: "Cairo",
                     fontSize: 14,
-                    height: 1.5,
+                    color: theme.textTheme.bodyMedium?.color
+                        ?.withValues(alpha: 0.8),
+                    height: 1.6,
+                  ),
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.rtl,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "الذكر:",
+                  style: TextStyle(
+                    fontFamily: "Cairo",
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
                   ),
                   textDirection: TextDirection.rtl,
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(8),
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color:
-                          Theme.of(context).dividerColor.withValues(alpha: .5),
+                      color: theme.dividerColor.withValues(alpha: .5),
                     ),
                   ),
                   constraints: const BoxConstraints(maxHeight: 120),
                   child: SingleChildScrollView(
                     child: Text(
                       widget.zikr.body,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: "Kitab",
                         fontSize: 16,
                         height: 1.6,
+                        color: textColor,
                       ),
                       textDirection: TextDirection.rtl,
                     ),
                   ),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _reportController,
                   maxLines: 3,
@@ -162,14 +191,14 @@ $userReportText
                       fontSize: 13,
                     ),
                     alignLabelWithHint: true,
-                    hintText: "اكتب الخطأ الذي تراه",
+                    hintText: "مثال: كلمة مكتوبة بغير ما في الكتاب",
                     hintStyle: TextStyle(
                       fontFamily: "Cairo",
                       fontSize: 12,
-                      color: Colors.grey.shade500,
+                      color: theme.hintColor,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -183,45 +212,40 @@ $userReportText
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        "إلغاء",
-                        style: TextStyle(
-                          fontFamily: "Cairo",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _sendReport,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: _sendReport,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor:
-                            Theme.of(context).colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                      ),
-                      child: const Text(
-                        "إرسال",
-                        style: TextStyle(
-                          fontFamily: "Cairo",
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 2,
+                  ),
+                  child: const Text(
+                    "إرسال",
+                    style: TextStyle(
+                      fontFamily: "Cairo",
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colorScheme.onSurfaceVariant,
+                  ),
+                  child: const Text(
+                    "إلغاء",
+                    style: TextStyle(
+                      fontFamily: "Cairo",
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),

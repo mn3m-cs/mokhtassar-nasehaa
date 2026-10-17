@@ -56,16 +56,26 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
           zikrOrder: widget.zikrOrder));
 
     if (PlatformExtension.isPhone) {
-      _shakeDetector = ShakeDetector.autoStart(
-        onPhoneShake: (event) {
-          _showReportDialog();
-        },
-      );
+      _startShakeDetector();
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showShakeTutorialIfNeeded();
       });
     }
+  }
+
+  /// The package keeps its shake count after it fires, so one more shake
+  /// would fire again; a fresh detector makes every report take two shakes.
+  void _startShakeDetector() {
+    _shakeDetector?.stopListening();
+    _shakeDetector = ShakeDetector.autoStart(
+      minimumShakeCount: 2,
+      shakeThresholdGravity: 3.0,
+      onPhoneShake: (event) {
+        _startShakeDetector();
+        _showReportDialog();
+      },
+    );
   }
 
   @override
@@ -122,6 +132,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
         setState(() {
           _dialogOpen = false;
         });
+        _startShakeDetector();
       }
     });
   }

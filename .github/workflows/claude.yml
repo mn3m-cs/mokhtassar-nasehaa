@@ -1,0 +1,105 @@
+name: Claude Code
+
+# A mention of @claude by someone with write access, or a manual dispatch, builds the ticket
+# unattended and leaves a pull request for the owner. It never merges.
+# .github/claude/unattended.md holds what Claude is told to do.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: What Claude should do, including the issue number it works on.
+        required: true
+
+permissions: {}
+
+jobs:
+  claude:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    concurrency:
+      group: claude-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Read the pinned Flutter version
+        id: flutter-version
+        run: echo "version=$(python3 -c 'import json; print(json.load(open("alazkar/.fvmrc"))["flutter"])')" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          # One token per Claude account. vars.CLAUDE_ACCOUNT (DP or MN3M) picks it; until the
+          # owner sets that variable, a single CLAUDE_CODE_OAUTH_TOKEN is used.
+          claude_code_oauth_token: ${{ secrets[format('CLAUDE_CODE_OAUTH_TOKEN_{0}', vars.CLAUDE_ACCOUNT)] || secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: ${{ inputs.prompt }}
+          # The repository is public, so anyone can comment on a ticket. Only the owner's
+          # words, and Claude's own, reach Claude.
+          include_comments_by_actor: "mn3m-cs,claude[bot]"
+          additional_permissions: |
+            actions: read
+          claude_args: >-
+            --append-system-prompt-file .github/claude/unattended.md
+            --allowed-tools
+            "Bash(flutter pub get:*)"
+            "Bash(flutter analyze:*)"
+            "Bash(flutter test:*)"
+            "Bash(dart format:*)"
+            "Bash(cd alazkar:*)"
+            "Bash(gh pr create:*)"
+            "Bash(gh pr view:*)"
+            "Bash(gh issue view:*)"
+            "Bash(gh issue edit:*)"
+            "Bash(gh issue comment:*)"
+            "Bash(gh api repos/mn3m-cs/mokhtassar-nasehaa/issues:*)"
+
+      # Hermes schedules Claude by how much of the account's limit is left. Only the rate-limit
+      # events leave the job: the execution file holds the whole conversation, tool output
+      # included, and must not be published -- least of all on a public repository.
+      - name: Extract the rate-limit reading
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+          CLAUDE_ACCOUNT: ${{ vars.CLAUDE_ACCOUNT }}
+        run: python3 .github/helper/claude_rate_limit.py "${EXECUTION_FILE}" > claude-rate-limit.json
+
+      - name: Keep the rate-limit reading
+        if: always() && hashFiles('claude-rate-limit.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-rate-limit
+          path: claude-rate-limit.json
+          retention-days: 14
