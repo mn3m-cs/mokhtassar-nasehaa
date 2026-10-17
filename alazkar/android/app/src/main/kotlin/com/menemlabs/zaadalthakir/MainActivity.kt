@@ -12,6 +12,7 @@ import com.menemlabs.zaadalthakir.reminders.ReminderStore
 import com.menemlabs.zaadalthakir.reminders.DeviceLocation
 import android.content.Context
 import android.os.Build
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -84,12 +85,21 @@ class MainActivity: FlutterActivity() {
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
         if (!vibrator.hasVibrator()) return
-        val pattern = longArrayOf(0, 90, 110, 90)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // From Android 13 a short vibration with no usage counts as touch
+            // feedback, which the reader may have turned off. Media is the
+            // setting a vibration with no usage otherwise follows.
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(COUNT_DONE_PULSE_MS, VibrationEffect.DEFAULT_AMPLITUDE),
+                VibrationAttributes.createForUsage(VibrationAttributes.USAGE_MEDIA),
+            )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(COUNT_DONE_PULSE_MS, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
         } else {
             @Suppress("DEPRECATION")
-            vibrator.vibrate(pattern, -1)
+            vibrator.vibrate(COUNT_DONE_PULSE_MS)
         }
     }
 
@@ -174,6 +184,7 @@ class MainActivity: FlutterActivity() {
     companion object {
         private const val REQUEST_NOTIFICATIONS = 4101
         private const val REQUEST_LOCATION = 4102
+        private const val COUNT_DONE_PULSE_MS = 250L
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
