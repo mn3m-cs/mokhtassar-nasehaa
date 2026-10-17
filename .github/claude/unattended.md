@@ -19,9 +19,14 @@ flutter test
 dart format <the files you changed>
 ```
 
-Paste the output into the pull request. There is no emulator, so a ticket whose "Cases to show"
-needs pictures of the app cannot be finished here: comment that on the ticket, swap
-`ready-for-dev` for `needs-decision`, and stop, rather than open a pull request without them.
+Paste the output into the pull request. There is no emulator, so a case in "Cases to show" that
+needs a «صورة محاكٍ» (and a case with no mark counts as one) cannot be finished here: comment that
+on the ticket, swap `ready-for-dev` for `needs-decision`, and stop, rather than open a pull request
+without it.
+
+A case marked «صورة اختبار» does not stop you. Draw it with the tests, as `AGENTS.md` ("Proving it")
+describes, using `test/support/screen_picture.dart`, commit the pictures in the branch, and mark
+them «صورة اختبار» in the pull request. Stop only for the cases that need the emulator.
 
 ## Saving as you go
 
