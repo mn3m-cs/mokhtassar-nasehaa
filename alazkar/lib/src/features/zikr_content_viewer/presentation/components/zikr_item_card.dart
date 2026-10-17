@@ -37,26 +37,21 @@ class ZikrItemCard extends StatelessWidget {
       // A line the book sets apart in small bold type, such as the closing
       // date of the introduction: a block at the end side, its lines centred
       // on each other, at the size of the virtue line whatever the reader's
-      // text size.
+      // text size. It is a line of the book, not an item, so it has no menu:
+      // there is nothing to share or look up on a closing date.
       return Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(24, 12, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _ActionsMenu(zikr: zikr, color: mutedColor),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 12),
-              child: Text(
-                zikr.body,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontFamily: themeState.zikrFont.family,
-                  fontWeight: FontWeight.bold,
-                  height: 1.7,
-                ),
-              ),
+        padding: const EdgeInsetsDirectional.fromSTEB(24, 12, 24, 12),
+        child: Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Text(
+            zikr.body,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontFamily: themeState.zikrFont.family,
+              fontWeight: FontWeight.bold,
+              height: 1.7,
             ),
-          ],
+          ),
         ),
       );
     }
