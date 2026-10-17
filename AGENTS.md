@@ -22,6 +22,26 @@ A ticket is workable only when all of these are true:
 
 If no ticket qualifies, say so and stop. Work on one ticket at a time.
 
+## Claiming a ticket
+
+Several builders work at the same time: the owner, a local agent, a Claude workflow run, and
+Hermes's lanes. A ticket is claimed before anyone starts on it, so two of them never build the same
+thing.
+
+- Do not start a ticket that carries `in-progress`, whoever put it there.
+- Do not start a ticket that carries `hermes` unless you are Hermes or the owner asked you to. The
+  owner sends work to Hermes with that label, and Hermes takes only tickets that carry both
+  `ready-for-dev` and `hermes`.
+- Before you start, add `in-progress` and the label that names you: `by:owner`,
+  `by:claude-local`, `by:claude-cloud`, `by:hermes-claude-dp`, `by:hermes-claude-mn3m`,
+  `by:hermes-codex` or `by:hermes-jules`. Then read the labels again. If another `by:` label is
+  there as well, the claim added first in the issue's event history owns the ticket
+  (`gh api repos/<owner>/<repo>/issues/<n>/events`), and the later one withdraws by removing its
+  own labels.
+- When the pull request opens, remove `ready-for-dev` and `in-progress` and add `in-review`. Keep
+  the `by:` label, so the owner knows who built it.
+- Never remove someone else's claim. A claim that has gone quiet is the owner's to clear.
+
 ## Building it
 
 The ticket body is the specification. Its `## Decisions` section holds the owner's rulings, and `## Options considered` explains what was rejected and why. Do not reopen a rejected option.
