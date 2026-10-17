@@ -33,6 +33,28 @@ class ZikrItemCard extends StatelessWidget {
     final done = isCounted && zikr.count == 0;
     final mutedColor = colorScheme.onSurface.withValues(alpha: .65);
     final themeState = context.watch<ThemeCubit>().state;
+    if (!isCounted && zikr.style == 'small') {
+      // A line the book sets apart in small bold type, such as the closing
+      // date of the introduction: a block at the end side, its lines centred
+      // on each other, at the size of the virtue line whatever the reader's
+      // text size. It is a line of the book, not an item, so it has no menu:
+      // there is nothing to share or look up on a closing date.
+      return Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(24, 12, 24, 12),
+        child: Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Text(
+            zikr.body,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontFamily: themeState.zikrFont.family,
+              fontWeight: FontWeight.bold,
+              height: 1.7,
+            ),
+          ),
+        ),
+      );
+    }
     if (!isCounted) {
       // A passage to read sits on the page like the book's prose, not in a
       // card: no background, set as a paragraph. Its lines start at the

@@ -188,8 +188,8 @@ def replace_contents(
         body = item["body"].strip()
         cur.execute(
             """INSERT INTO contents
-               (id, titleId, `order`, body, count, source, hokm, fadl, search, sourceIndex)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (id, titleId, `order`, body, count, source, hokm, fadl, search, sourceIndex, style)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 content_id,
                 title_id,
@@ -201,6 +201,7 @@ def replace_contents(
                 (item.get("fadl") or "").strip(),
                 build_search(body),
                 "",
+                (item.get("style") or "").strip(),
             ),
         )
 

@@ -14,6 +14,10 @@ class Zikr extends Equatable {
   final int count;
   final String search;
   final String sourceIndex;
+
+  /// How the reader sets this text: '' as ordinary text, 'small' as a line
+  /// the book prints apart in small bold type, like a closing date.
+  final String style;
   const Zikr({
     required this.id,
     required this.titleId,
@@ -25,6 +29,7 @@ class Zikr extends Equatable {
     required this.count,
     required this.search,
     required this.sourceIndex,
+    this.style = '',
   });
 
   Map<String, dynamic> toMap() {
@@ -39,6 +44,7 @@ class Zikr extends Equatable {
       'count': count,
       'search': search,
       'sourceIndex': sourceIndex,
+      'style': style,
     };
   }
 
@@ -54,6 +60,7 @@ class Zikr extends Equatable {
       hokm: map['hokm'] as String,
       count: map['count'] as int,
       sourceIndex: (map['sourceIndex'] as String?) ?? "",
+      style: (map['style'] as String?) ?? "",
     );
   }
 
@@ -73,6 +80,7 @@ class Zikr extends Equatable {
     int? count,
     String? search,
     String? sourceIndex,
+    String? style,
   }) {
     return Zikr(
       id: id ?? this.id,
@@ -85,6 +93,7 @@ class Zikr extends Equatable {
       count: count ?? this.count,
       search: search ?? this.search,
       sourceIndex: sourceIndex ?? this.sourceIndex,
+      style: style ?? this.style,
     );
   }
 
@@ -99,6 +108,7 @@ class Zikr extends Equatable {
         hokm,
         count,
         search,
-        sourceIndex
+        sourceIndex,
+        style,
       ];
 }

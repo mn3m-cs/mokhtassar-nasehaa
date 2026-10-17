@@ -532,7 +532,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 144);
+    expect(await database.getVersion(), 145);
     expect(titleCount.single, {'count': 141});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1172,6 +1172,42 @@ void main() {
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
     expect(recordsWithFootnotes.single, {'count': 110});
+  });
+
+  test('the closing date of the introduction is a small line of its own (#140)',
+      () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    final introduction = await database.rawQuery('''
+      SELECT id, "order", count, style, body, source FROM contents
+      WHERE titleId = 102 ORDER BY "order"
+    ''');
+    final styled = await database.rawQuery('''
+      SELECT id FROM contents WHERE style <> ''
+    ''');
+
+    expect(introduction.map((row) => row['id']), [1008, 1204]);
+    final text = introduction[0];
+    final date = introduction[1];
+    expect(text['style'], '');
+    expect(text['body']! as String, isNot(contains('الإسكندرية')));
+    expect(text['body']! as String, endsWith('وعلى آله وصحبه أجمعين.'));
+    expect(date['order'], 2);
+    expect(date['count'], 0);
+    expect(date['style'], 'small');
+    expect(
+      date['body'],
+      'الإسكندرية في الجمعة\n'
+      '6 من ذي القعدة 1407هـ\n'
+      'الموافق 3 من يوليو 1987م',
+    );
+    expect(date['source'], 'المقدمة. (ص9)');
+    expect(styled.map((row) => row['id']), [1204]);
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
