@@ -60,6 +60,8 @@ A small call that any sensible builder would make the same way, such as a variab
 - Run the app's checks: `fvm flutter analyze` and `fvm flutter test`, from `alazkar/`. Format only with `fvm dart format <files>`. The bare `dart` on the PATH is a different SDK, and it restyles unrelated files.
 - Never run two Flutter commands in one checkout at the same time.
 - For a visible change, the ticket has a `## Cases to show in the PR` list. Capture a before and an after picture for every case, at the real size, commit them in the PR branch, and name each case beside its picture in the PR description. The owner reviews case by case, so a missing picture means an unreviewable PR.
+- The ticket says, beside each case, what kind of picture proves it: «صورة محاكٍ» or «صورة اختبار». A case with no mark is «صورة محاكٍ», taken on the emulator as above. A case marked «صورة اختبار» is proved by a picture the tests draw instead, and the owner chooses this only for small visible changes.
+- Draw a test picture with `test/support/screen_picture.dart`: call `loadAppFonts()` once in `setUpAll`, then `drawScreenPicture(tester, screen: ..., path: ...)` with the same `MaterialApp` theme the app uses (`fontFamily: 'Cairo'`). It loads the app's real fonts and the icon font, so the picture shows Arabic letters and icons and not boxes. `test/settings_screen_picture_test.dart` is the worked example. Take the before picture from `main` and the after picture from the branch, commit both, and mark each one «صورة اختبار» in the PR description.
 
 ## Finishing
 
