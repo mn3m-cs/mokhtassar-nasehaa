@@ -43,7 +43,7 @@ A small call that any sensible builder would make the same way, such as a variab
 
 ## Finishing
 
-Open a PR from a branch cut from the current `main` that says `Closes #<n>`. Swap the ticket's label from `ready-for-dev` to `in-review`. **Never merge**: merging is the owner's step after review. Never rewrite pushed history; to update a branch, merge `main` into it.
+Open a PR from a branch cut from the current `main` that says `Closes #<n>`. A ticket that came back from review already has its PR: continue on that PR's branch, merging `main` into it first, and do not open a second PR. The ticket's body then carries a dated amendment, and the amendment's Decisions, cases and acceptance items are what you build to. Swap the ticket's label from `ready-for-dev` to `in-review`. **Never merge**: merging is the owner's step after review. Never rewrite pushed history; to update a branch, merge `main` into it.
 
 ## Content rules
 
