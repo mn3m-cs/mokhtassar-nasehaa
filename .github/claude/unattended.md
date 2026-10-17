@@ -30,4 +30,5 @@ needs pictures of the app cannot be finished here: comment that on the ticket, s
 - On a pull request, push to its branch and answer the review there. Never open a second one.
 - Swap the labels as `AGENTS.md` says: remove `ready-for-dev` and `in-progress`, add `in-review`,
   keep the `by:` label.
+- Never credit Claude or AI anywhere: no "Generated with Claude Code" line, no `Co-Authored-By` trailer, and no mention of an assistant in commit messages, pull request bodies or comments. The owner removes them by hand otherwise.
 - Never merge, never push to `main`, never rewrite pushed history.
