@@ -23,6 +23,17 @@ Paste the output into the pull request. There is no emulator, so a ticket whose 
 needs pictures of the app cannot be finished here: comment that on the ticket, swap
 `ready-for-dev` for `needs-decision`, and stop, rather than open a pull request without them.
 
+## Saving as you go
+
+A run can end in the middle of a ticket when the account's limit runs out, and only what you
+pushed survives it.
+
+- Push your branch after each completed step, with a commit that still passes the checks above.
+- Keep one comment on the ticket that starts with «التقدّم»: what is done and what is left. Update
+  it each time you push.
+- When you start and find a `claude/issue-<n>-*` branch and a «التقدّم» comment from an earlier
+  run, continue from them: check that branch out, read the comment, and do not start over.
+
 ## Finishing
 
 - On an issue, open a pull request with `gh pr create --base main`. Its body opens with
