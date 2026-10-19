@@ -21,7 +21,8 @@ import 'support/screen_picture.dart';
 
 /// Test pictures for the pinned favourites ticket (#166). Run with
 /// `--dart-define=PICTURE_DIR=<dir>` to choose where the PNGs go.
-const _dir = String.fromEnvironment('PICTURE_DIR', defaultValue: 'build/test_pictures');
+const _dir =
+    String.fromEnvironment('PICTURE_DIR', defaultValue: 'build/test_pictures');
 
 const _titles = [
   ZikrTitle(id: 1, order: 1, name: 'أذكار الصباح', freq: 'd'),
@@ -100,7 +101,9 @@ void main() {
     addTearDown(tester.view.reset);
 
     final filterStorage = ZikrFilterStorage(MemoryStorage());
-    if (sl.isRegistered<ZikrFilterStorage>()) sl.unregister<ZikrFilterStorage>();
+    if (sl.isRegistered<ZikrFilterStorage>()) {
+      sl.unregister<ZikrFilterStorage>();
+    }
     sl.registerSingleton(filterStorage);
     final bloc = HomeBloc(
       ZikrSourceFilterCubit(filterStorage),

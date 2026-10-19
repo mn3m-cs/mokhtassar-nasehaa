@@ -196,23 +196,23 @@ void main() {
     }
 
     test('unbookmarking a pinned section keeps it', () async {
-      bloc.add(HomeUnBookmarkTitleEvent(1));
+      bloc.add(const HomeUnBookmarkTitleEvent(1));
       expect(await ids(), contains(1));
     });
 
     test('travelling goes and comes back', () async {
-      bloc.add(HomeUnBookmarkTitleEvent(49));
+      bloc.add(const HomeUnBookmarkTitleEvent(49));
       expect(await ids(), isNot(contains(49)));
 
-      bloc.add(HomeBookmarkTitleEvent(49));
+      bloc.add(const HomeBookmarkTitleEvent(49));
       expect(await ids(), contains(49));
     });
 
     test('an optional favourite is added and removed as before', () async {
-      bloc.add(HomeBookmarkTitleEvent(69));
+      bloc.add(const HomeBookmarkTitleEvent(69));
       expect(await ids(), contains(69));
 
-      bloc.add(HomeUnBookmarkTitleEvent(69));
+      bloc.add(const HomeUnBookmarkTitleEvent(69));
       expect(await ids(), isNot(contains(69)));
     });
   });
