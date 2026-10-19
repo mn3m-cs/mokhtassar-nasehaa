@@ -15,4 +15,26 @@ void main() {
     expect(find.text('بيانات المدن'), findsOneWidget);
     expect(find.textContaining('geonames.org'), findsOneWidget);
   });
+
+  testWidgets('the source tile names the 10th edition and opens its page',
+      (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(home: AboutScreen(openUrl: (url) async => opened.add(url))),
+    );
+
+    expect(
+      find.text(
+        'الكتاب: مختصر النصيحة في الأذكار والأدعية الصحيحة\n'
+        'تأليف: محمد أحمد إسماعيل المقدم\n'
+        'الطبعة العاشرة المعدلة، ١٤٤٦هـ - ٢٠٢٥م\n'
+        'almukaddem.com',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('المصدر'));
+
+    expect(opened, ['https://almukaddem.com/ar/3240']);
+  });
 }
