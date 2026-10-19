@@ -34,6 +34,26 @@ pushed survives it.
 - When you start and find a `claude/issue-<n>-*` branch and a «التقدّم» comment from an earlier
   run, continue from them: check that branch out, read the comment, and do not start over.
 
+## Book audit tickets
+
+A ticket titled «مطابقة الكتاب» compares the app with the pages of the book, the 10th revised
+edition (#116). The workflow downloaded it from the author's site and drew each page as
+`book-pages/pages/p-NNN.png`, where NNN is the book's page number.
+
+- Read each page as an image with the Read tool. There is no text layer to trust, so never work
+  from extracted text.
+- The book is copyrighted and this repository is public. Never commit, attach or paste a page
+  image or any part of one: not in the branch, the pull request, or a comment. Quoting the
+  book's words in the comparison table is fine, because they are the app's content.
+- If `book-pages/pages/` is missing, the download failed or the site changed the file. Comment
+  that on the ticket, swap `ready-for-dev` for `needs-decision`, and stop.
+- Change the database only through `sqlite3 alazkar/assets/db/Al-Azkar.db` and the scripts in
+  `data_pipeline/`, following sections 3 to 6 of `CONTENT_AUDIT_AGENT_PLAN.md`, and run its
+  checks (`jq empty`, `PRAGMA integrity_check`, `PRAGMA foreign_key_check`, `PRAGMA user_version`).
+  Its "do not commit" line is for a local helper; here you commit and push as above.
+- The evidence is the comparison table the ticket asks for, not pictures of the app, so the
+  missing emulator does not stop these tickets unless their "Cases to show" asks for app pictures.
+
 ## Finishing
 
 - On an issue, open a pull request with `gh pr create --base main`. Its body opens with
