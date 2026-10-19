@@ -13,6 +13,7 @@ class SettingsCubit extends Cubit<SettingsState> {
             praiseWithVolumeKeys: settingsStorage.praiseWithVolumeKeys,
             continuousReading: settingsStorage.continuousReading,
             vibrateOnCountDone: settingsStorage.vibrateOnCountDone,
+            keepScreenOn: settingsStorage.keepScreenOn,
           ),
         );
 
@@ -32,6 +33,12 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future toggleVibrateOnCountDone({required bool use}) async {
     await settingsStorage.changeVibrateOnCountDoneStatus(value: use);
     emit(state.copyWith(vibrateOnCountDone: use));
+  }
+
+  ///MARK: keepScreenOn
+  Future toggleKeepScreenOn({required bool use}) async {
+    await settingsStorage.changeKeepScreenOnStatus(value: use);
+    emit(state.copyWith(keepScreenOn: use));
   }
 
   ///MARK: continuousReading

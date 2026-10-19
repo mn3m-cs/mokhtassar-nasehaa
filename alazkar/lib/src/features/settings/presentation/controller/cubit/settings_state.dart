@@ -6,11 +6,13 @@ class SettingsState extends Equatable {
   final bool praiseWithVolumeKeys;
   final bool continuousReading;
   final bool vibrateOnCountDone;
+  final bool keepScreenOn;
   const SettingsState({
     required this.showTextInBrackets,
     required this.praiseWithVolumeKeys,
     this.continuousReading = false,
     this.vibrateOnCountDone = true,
+    this.keepScreenOn = true,
   });
 
   @override
@@ -19,6 +21,7 @@ class SettingsState extends Equatable {
         praiseWithVolumeKeys,
         continuousReading,
         vibrateOnCountDone,
+        keepScreenOn,
       ];
 
   SettingsState copyWith({
@@ -26,12 +29,14 @@ class SettingsState extends Equatable {
     bool? praiseWithVolumeKeys,
     bool? continuousReading,
     bool? vibrateOnCountDone,
+    bool? keepScreenOn,
   }) {
     return SettingsState(
       showTextInBrackets: showTextInBrackets ?? this.showTextInBrackets,
       praiseWithVolumeKeys: praiseWithVolumeKeys ?? this.praiseWithVolumeKeys,
       continuousReading: continuousReading ?? this.continuousReading,
       vibrateOnCountDone: vibrateOnCountDone ?? this.vibrateOnCountDone,
+      keepScreenOn: keepScreenOn ?? this.keepScreenOn,
     );
   }
 }

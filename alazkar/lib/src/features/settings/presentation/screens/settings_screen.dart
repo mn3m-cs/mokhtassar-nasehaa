@@ -2,6 +2,7 @@ import 'package:alazkar/src/features/about/presentation/screens/about_screen.dar
 import 'package:alazkar/src/features/reminders/presentation/screens/reminders_screen.dart';
 // import 'package:alazkar/src/features/settings/presentation/components/continuous_reading_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/font_size_tile.dart';
+import 'package:alazkar/src/features/settings/presentation/components/keep_screen_on_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/night_mode_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/praise_with_volume_switch.dart';
 import 'package:alazkar/src/features/settings/presentation/components/settings_group_title.dart';
@@ -48,6 +49,7 @@ class SettingsScreen extends StatelessWidget {
           // const ShowTextInBracketsSwitch(),
           const PraiseWithVolumeSwitch(),
           const VibrateOnCountDoneSwitch(),
+          const KeepScreenOnSwitch(),
           if (defaultTargetPlatform == TargetPlatform.android)
             ListTile(
               leading: const Icon(Icons.notifications),
