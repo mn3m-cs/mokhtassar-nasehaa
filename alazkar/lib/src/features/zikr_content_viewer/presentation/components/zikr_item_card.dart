@@ -6,7 +6,7 @@ import 'package:alazkar/src/features/zikr_content_viewer/presentation/controller
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-enum _ZikrAction { source, share, copy }
+enum _ZikrAction { source, share, copy, report }
 
 /// One zikr as a card in the section's page: the text, its virtue below it,
 /// and for a counted zikr a counter button; the rest sits behind a menu.
@@ -19,11 +19,16 @@ class ZikrItemCard extends StatelessWidget {
   /// True for the zikr the volume keys will count next; it gets a frame.
   final bool isKeyTarget;
 
+  /// Opens the report dialog for this card's zikr, which need not be the one
+  /// in view. The menu offers the report only when it is given.
+  final ValueChanged<Zikr>? onReport;
+
   const ZikrItemCard({
     super.key,
     required this.zikr,
     this.isCounted = true,
     this.isKeyTarget = false,
+    this.onReport,
   });
 
   @override
@@ -67,7 +72,8 @@ class ZikrItemCard extends StatelessWidget {
           children: [
             Align(
               alignment: AlignmentDirectional.centerEnd,
-              child: _ActionsMenu(zikr: zikr, color: mutedColor),
+              child: _ActionsMenu(
+                  zikr: zikr, color: mutedColor, onReport: onReport),
             ),
             Padding(
               padding: const EdgeInsetsDirectional.only(end: 12),
@@ -129,7 +135,8 @@ class ZikrItemCard extends StatelessWidget {
                 children: [
                   Align(
                     alignment: AlignmentDirectional.centerEnd,
-                    child: _ActionsMenu(zikr: zikr, color: mutedColor),
+                    child: _ActionsMenu(
+                        zikr: zikr, color: mutedColor, onReport: onReport),
                   ),
                   Padding(
                     padding: const EdgeInsetsDirectional.only(end: 10),
@@ -174,8 +181,13 @@ class ZikrItemCard extends StatelessWidget {
 class _ActionsMenu extends StatelessWidget {
   final Zikr zikr;
   final Color color;
+  final ValueChanged<Zikr>? onReport;
 
-  const _ActionsMenu({required this.zikr, required this.color});
+  const _ActionsMenu({
+    required this.zikr,
+    required this.color,
+    this.onReport,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +203,8 @@ class _ActionsMenu extends StatelessWidget {
             bloc.add(ZikrContentViewerShareEvent(zikr));
           case _ZikrAction.copy:
             bloc.add(ZikrContentViewerCopyEvent(zikr));
+          case _ZikrAction.report:
+            onReport?.call(zikr);
         }
       },
       itemBuilder: (context) => [
@@ -216,6 +230,14 @@ class _ActionsMenu extends StatelessWidget {
             title: Text("نسخ"),
           ),
         ),
+        if (onReport != null)
+          const PopupMenuItem(
+            value: _ZikrAction.report,
+            child: ListTile(
+              leading: Icon(Icons.flag_outlined),
+              title: Text("الإبلاغ عن خطأ"),
+            ),
+          ),
       ],
     );
   }

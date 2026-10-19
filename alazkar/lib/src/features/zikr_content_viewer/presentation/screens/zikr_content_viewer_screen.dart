@@ -1,5 +1,6 @@
 import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/core/extension/extension_platform.dart';
+import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/core/widgets/loading.dart';
@@ -107,13 +108,16 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     }
   }
 
-  void _showReportDialog() {
+  /// The one way into the report dialog, for a shake, the app bar and a
+  /// card's menu alike, so only one dialog is ever open. A shake and the app
+  /// bar report the zikr in view; a card's menu reports its own [target].
+  void _showReportDialog([Zikr? target]) {
     if (!mounted || _dialogOpen) return;
 
     final state = _bloc.state;
     if (state is! ZikrContentViewerLoadedState) return;
 
-    final zikr = state.activeZikr;
+    final zikr = target ?? state.activeZikr;
     final zikrTitle = state.zikrTitle;
     if (zikr == null) return;
 
@@ -312,6 +316,12 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                     icon: const Icon(Icons.restart_alt),
                     onPressed: _confirmRestart,
                   ),
+                IconButton(
+                  key: const ValueKey('reader-report'),
+                  tooltip: "الإبلاغ عن خطأ",
+                  icon: const Icon(Icons.flag_outlined),
+                  onPressed: _showReportDialog,
+                ),
                 BookmarkTitleButton(titleId: state.zikrTitle.id),
               ],
             ),
@@ -336,6 +346,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                           zikr: zikr,
                           isCounted: state.isCounted(zikr),
                           isKeyTarget: keysCount && keyTarget?.id == zikr.id,
+                          onReport: _showReportDialog,
                         ),
                       _SectionEnd(
                         previous: _titleAt(state.zikrTitle, -1),
