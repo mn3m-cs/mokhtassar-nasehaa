@@ -69,4 +69,4 @@ Open a PR from a branch cut from the current `main` that says `Closes #<n>`. A t
 
 ## Content rules
 
-The app must match the book «مختصر النصيحة في الأذكار والأدعية الصحيحة» exactly. Every word a reader sees as content comes from the book verbatim. Nothing is paraphrased, summarised or added in an agent's own words. When the app and the book differ, the book wins. Content not in the book is deleted, not labelled. Detailed content procedure is in `CONTENT_AUDIT_AGENT_PLAN.md`.
+The app must match the book «مختصر النصيحة في الأذكار والأدعية الصحيحة» exactly. Every word a reader sees as content comes from the book verbatim. Nothing is paraphrased, summarised or added in an agent's own words. When the app and the book differ, the book wins. Content not in the book is deleted, not labelled. Detailed content procedure is in `CONTENT_AUDIT_AGENT_PLAN.md`; its section «مطابقة صفحة صفحة» (§9) is the page-by-page method. `docs/book-map.md` records which book chapters were compared with their pages. Never call the app «مطابق للكتاب» except for rows whose status is «قورن».
