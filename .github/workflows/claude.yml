@@ -115,6 +115,7 @@ jobs:
             "WebFetch(domain:sunnah.com)"
             "WebFetch(domain:shamela.ws)"
             "WebFetch(domain:islamweb.net)"
+            "WebFetch(domain:www.islamweb.net)"
             "WebFetch(domain:almukaddem.com)"
 
       # Hermes schedules Claude by how much of the account's limit is left. Only the rate-limit
