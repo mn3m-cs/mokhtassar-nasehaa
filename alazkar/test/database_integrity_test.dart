@@ -124,9 +124,9 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM(search = 'اللهم اغفر لي وارحمني وعافني واهدني وارزقني') AS correct_between_dua,
-        SUM(search LIKE '%فتبارك الله أحسن الخالقين') AS complete_tilawa_dua,
-        SUM(search LIKE 'اللهم احطط عني بها وزرا واكتب لي بها أجرا%') AS ordered_tilawa_dua
+        SUM(search = 'اللهم اغفر لي وارحمني واجبرني وارفعني واهدني وعافني وارزقني') AS correct_between_dua,
+        SUM(search LIKE '%فتبارك%') AS unprinted_tilawa_ending,
+        SUM(search LIKE 'اللهم اكتب لي بها عندك أجرا وضع عني بها وزرا%') AS ordered_tilawa_dua
       FROM contents
       WHERE titleId = 13
     ''');
@@ -143,9 +143,10 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM(search LIKE 'اللهم قاتل الكفرة%') AS combat_dua,
-        SUM(search LIKE 'اللهم إياك نعبد%لمن عاديت ملحق') AS closing_dua,
-        SUM(search LIKE 'يشرع القنوت في الصلوات الخمس للنازلة%') AS calamity_guidance
+        SUM(search LIKE 'اللهم عذب الكفرة الذين يصدون%ويقاتلون أولياءك%إله الحق') AS combat_dua,
+        SUM(search LIKE 'اللهم إنا نستعينك%اللهم إياك نعبد%عذابك الجد بالكفار ملحق' AND search NOT LIKE '%قاتل%') AS closing_dua,
+        SUM(search LIKE 'اللهم اغفر للمؤمنين والمؤمنات%واجعلنا منهم') AS third_paragraph,
+        SUM(search LIKE 'ويشرع القنوت في الصلوات الخمس للنازلة%' AND count = 0) AS calamity_guidance
       FROM contents
       WHERE titleId = 17
     ''');
@@ -154,9 +155,11 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 5 AND search LIKE 'التحيات لله الزاكيات لله%') AS fifth_tashahhud,
-        SUM("order" = 6 AND search LIKE 'اللهم صل على محمد وعلى آل محمد%') AS first_salawat,
-        SUM("order" = 12 AND search LIKE 'اللهم صل على محمد وعلى آل محمد وبارك%') AS seventh_salawat
+        SUM("order" = 7 AND search LIKE 'التحيات لله الزاكيات لله%') AS fifth_tashahhud,
+        SUM("order" = 9 AND search LIKE 'اللهم صل على محمد وعلى آل محمد%') AS first_salawat,
+        SUM("order" = 15 AND search LIKE 'اللهم صل على محمد وعلى آل محمد وبارك%') AS seventh_salawat,
+        SUM("order" = 4 AND count = 0 AND body = 'وفي روايةٍ: «عبدُه ورسولُه».') AS second_tashahhud_variant,
+        SUM(count = 0) AS passages
       FROM contents
       WHERE titleId = 14
     ''');
@@ -165,8 +168,9 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 11 AND search LIKE 'أحسن الكلام كلام الله وأحسن الهدي هدي محمد%') AS prophetic_guidance,
-        SUM("order" = 12 AND search LIKE 'اللهم اغفر لي ما قدمت%') AS closing_dua
+        SUM("order" = 13 AND search LIKE 'أحسن الكلام كلام الله وأحسن الهدي هدي محمد%') AS prophetic_guidance,
+        SUM("order" = 15 AND search LIKE 'اللهم اغفر لي ما قدمت%') AS closing_dua,
+        SUM(count = 0) AS passages
       FROM contents
       WHERE titleId = 15
     ''');
@@ -414,12 +418,33 @@ void main() {
         (SELECT parentId FROM titles WHERE id = 16) AS after_prayer_parent,
         (SELECT nodeType FROM titles WHERE id = 96) AS prayer_type,
         (SELECT nodeType FROM titles WHERE id = 97) AS inside_prayer_type,
-        (SELECT count FROM contents WHERE id = 1006) AS introduction_count,
-        (SELECT hokm FROM contents WHERE id = 1006) AS introduction_judgment,
-        (SELECT source FROM contents WHERE id = 1006) AS introduction_source,
-        (SELECT body FROM contents WHERE id = 1006) AS introduction_body,
-        (SELECT search LIKE '%فيستحب الجمع بينها كلها%'
-         FROM contents WHERE id = 1006) AS introduction_searchable
+        (SELECT COUNT(*) FROM titles WHERE id = 98) AS introduction_titles,
+        (SELECT COUNT(*) FROM contents WHERE id = 1006) AS introduction_rows,
+        (SELECT source LIKE '%حاشية: هذا ما ورد من الأذكار في دعاء التوجُّه، فيستحب الجمع بينها كلُّها%'
+         FROM contents WHERE id = 907) AS introduction_as_footnote
+    ''');
+    final prayerPages91To115 = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS rows,
+        SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
+        SUM(source LIKE '%(ص4%' OR source LIKE '%(ص5%' OR source LIKE '%(ص6%'
+            OR source LIKE '%(ص7%' OR source LIKE '%(ص8%') AS earlier_edition_pages,
+        SUM(source LIKE '%(مسلم)%' OR source LIKE '%(البخاري%'
+            OR source LIKE '%(أبو داود%' OR source LIKE '%(الترمذي%') AS unprinted_takhrij,
+        SUM(search LIKE '%والمهدي من هديت%' OR search LIKE '%أنا بك وإليك%') AS unprinted_opening_words,
+        SUM(titleId = 10 AND search LIKE 'الله أكبر الله أكبر الله أكبر ذو%') AS third_takbir,
+        SUM(titleId = 10 AND search = 'الله أكبر الله أكبر ذو الملكوت والجبروت والكبرياء والعظمة') AS two_takbirs_row,
+        SUM(titleId = 10 AND count = 10) AS ten_times_cards,
+        SUM(titleId = 10 AND count = 3) AS three_times_cards,
+        SUM(titleId = 10 AND count = 0) AS opening_passages,
+        SUM(titleId = 11 AND count = 0) AS ruku_passages,
+        SUM(titleId = 12 AND count = 0) AS sujud_passages,
+        SUM(titleId = 13 AND count = 0) AS tilawa_passages,
+        SUM(titleId = 17 AND count = 0) AS qunut_passages,
+        SUM(titleId = 14 AND count = 0) AS tashahhud_passages,
+        SUM(titleId = 15 AND count = 0) AS after_tashahhud_passages
+      FROM contents
+      WHERE titleId IN (10, 11, 12, 13, 14, 15, 17)
     ''');
     final pilgrimageGuide = await database.rawQuery('''
       WITH RECURSIVE ancestry(id, depth) AS (
@@ -532,8 +557,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 145);
-    expect(titleCount.single, {'count': 141});
+    expect(await database.getVersion(), 146);
+    expect(titleCount.single, {'count': 140});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -545,12 +570,28 @@ void main() {
       'after_prayer_parent': 96,
       'prayer_type': 'category',
       'inside_prayer_type': 'category',
-      'introduction_count': 0,
-      'introduction_judgment': '',
-      'introduction_source': 'تمهيد أذكار الصلاة. (ص49)',
-      'introduction_body':
-          'هذا ما ورد من الأذكار في دعاء التوجه، فيستحب الجمع بينها كلها لمن صلى منفردًا، وللإمام إذا أذن له المأمومون، فأما إذا لم يأذنوا له فلا يطول عليهم، بل يقتصر على بعض ذلك.',
-      'introduction_searchable': 1,
+      'introduction_titles': 0,
+      'introduction_rows': 0,
+      'introduction_as_footnote': 1,
+    });
+    // pp91-115 (#174): what the book prints, no more and no less.
+    expect(prayerPages91To115.single, {
+      'rows': 95,
+      'judgments_or_virtues': 0,
+      'earlier_edition_pages': 0,
+      'unprinted_takhrij': 0,
+      'unprinted_opening_words': 0,
+      'third_takbir': 0,
+      'two_takbirs_row': 1,
+      'ten_times_cards': 7,
+      'three_times_cards': 2,
+      'opening_passages': 1,
+      'ruku_passages': 2,
+      'sujud_passages': 1,
+      'tilawa_passages': 1,
+      'qunut_passages': 3,
+      'tashahhud_passages': 3,
+      'after_tashahhud_passages': 3,
     });
     expect(pilgrimageGuide.single, {
       'depth': 3,
@@ -684,16 +725,17 @@ void main() {
     expect(adhanListenerSection.single, {'count': 13, 'first': 1, 'last': 13});
     expect(
       duaAlistiftahSection.single,
-      {'count': 13, 'first': 1, 'last': 13},
-      reason: 'dua_alistiftah (titleId=10) must have 13 records in order 1..13 '
-          'after rebuild from PDF pp. 49-53 (issue #17): '
-          '5 regular + 5 tahajjud + 3 taawwudh',
+      {'count': 22, 'first': 1, 'last': 22},
+      reason: 'dua_alistiftah (titleId=10) as pp91-96 print it (#174): '
+          '5 opening + 2 tahajjud + 7 ten-times cards + 3 closing tahajjud '
+          'cards + the instruction and 3 taawwudh forms',
     );
     expect(
       rukuAndRisingSection.single,
-      {'count': 16, 'first': 1, 'last': 16},
-      reason: 'azkar_alkuru (titleId=11) must have 16 records in order 1..16 '
-          'after rebuild from PDF pp. 54-56 (issue #19)',
+      {'count': 17, 'first': 1, 'last': 17},
+      reason: 'azkar_alkuru (titleId=11) as pp97-100 print it (#174): '
+          '8 ruku dhikr, the two instructions, «سمع الله لمن حمده» and the '
+          'six forms of the rising',
     );
 
     // Verify presence of specific formulas as requested in #19
@@ -704,22 +746,23 @@ void main() {
         reason: 'Missing 8th independent ruku formula');
 
     final hamdAlternatives = await database.rawQuery(
-      "SELECT body FROM contents WHERE titleId=11 AND body IN ('رَبَّنا لك الحمدُ.', 'ربنا ولك الحمدُ.')",
+      "SELECT search FROM contents WHERE titleId=11 AND search IN "
+      "('ربنا لك الحمد أو ربنا ولك الحمد', 'أو اللهم ربنا ولك الحمد')",
     );
     expect(hamdAlternatives.length, 2,
-        reason: 'Missing explicit Hamd alternatives');
+        reason: 'p99 prints the first two forms of the rising with «أو:»');
     expect(sujudSection.single, {
-      'count': 13,
+      'count': 14,
       'first': 1,
-      'last': 13,
+      'last': 14,
       'complete_light_dua': 1,
     });
     expect(betweenProstrationsSection.single, {
-      'count': 4,
+      'count': 5,
       'first': 1,
-      'last': 4,
+      'last': 5,
       'correct_between_dua': 1,
-      'complete_tilawa_dua': 1,
+      'unprinted_tilawa_ending': 0,
       'ordered_tilawa_dua': 1,
     });
     expect(prayerSectionOrder, [
@@ -730,27 +773,31 @@ void main() {
       {'id': 16, 'order': 3, 'name': 'ما يقول بعد الصلاة'},
     ]);
     expect(qunutSection.single, {
-      'count': 4,
+      'count': 7,
       'first': 1,
-      'last': 4,
+      'last': 7,
       'combat_dua': 1,
       'closing_dua': 1,
+      'third_paragraph': 1,
       'calamity_guidance': 1,
     });
     expect(tashahhudSection.single, {
-      'count': 12,
+      'count': 15,
       'first': 1,
-      'last': 12,
+      'last': 15,
       'fifth_tashahhud': 1,
       'first_salawat': 1,
       'seventh_salawat': 1,
+      'second_tashahhud_variant': 1,
+      'passages': 3,
     });
     expect(postTashahhudSection.single, {
-      'count': 12,
+      'count': 15,
       'first': 1,
-      'last': 12,
+      'last': 15,
       'prophetic_guidance': 1,
       'closing_dua': 1,
+      'passages': 3,
     });
     expect(
         afterPrayerSection.single,
@@ -1171,7 +1218,8 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 110});
+    expect(recordsWithFootnotes.single, {'count': 114},
+        reason: 'pp91-115 print footnotes under 20 records (#174)');
   });
 
   test('the closing date of the introduction is a small line of its own (#140)',
