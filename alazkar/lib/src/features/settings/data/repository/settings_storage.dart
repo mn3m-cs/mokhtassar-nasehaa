@@ -32,6 +32,12 @@ class SettingsStorage {
   Future<void> changeVibrateOnCountDoneStatus({required bool value}) =>
       _box.write(vibrateOnCountDoneKey, value);
 
+  ///MARK: keepScreenOn
+  static const keepScreenOnKey = 'keepScreenOn';
+  bool get keepScreenOn => _box.read(keepScreenOnKey) ?? true;
+  Future<void> changeKeepScreenOnStatus({required bool value}) =>
+      _box.write(keepScreenOnKey, value);
+
   ///MARK: continuousReading
   static const continuousReadingKey = 'continuousReading';
   bool get continuousReading => _box.read(continuousReadingKey) ?? false;

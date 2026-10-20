@@ -17,6 +17,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.KeyEvent
+import android.view.WindowManager
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -40,6 +41,19 @@ class MainActivity: FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 if (call.method == "count_done") {
                     vibrateCountDone()
+                    result.success(null)
+                } else {
+                    result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "screen_channel")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "keep_screen_on") {
+                    if (call.arguments as Boolean) {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    }
                     result.success(null)
                 } else {
                     result.notImplemented()

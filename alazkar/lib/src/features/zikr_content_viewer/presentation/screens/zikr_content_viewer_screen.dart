@@ -3,6 +3,7 @@ import 'package:alazkar/src/core/extension/extension_platform.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/core/storage/kv_storage.dart';
+import 'package:alazkar/src/core/widgets/keep_screen_on.dart';
 import 'package:alazkar/src/core/widgets/loading.dart';
 import 'package:alazkar/src/features/home/presentation/components/bookmark_title_button.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
@@ -259,107 +260,111 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _bloc,
-      child: BlocConsumer<ZikrContentViewerBloc, ZikrContentViewerState>(
-        bloc: _bloc,
-        listener: (_, __) {},
-        listenWhen: (previous, current) {
-          _onStateChange(previous, current);
-          return false;
-        },
-        builder: (context, state) {
-          if (state is! ZikrContentViewerLoadedState) {
-            return const Loading();
-          }
-          final theme = Theme.of(context);
-          final mutedColor = theme.colorScheme.onSurface.withValues(alpha: .65);
-          final keysCount =
-              context.watch<SettingsCubit>().state.praiseWithVolumeKeys;
-          final keyTarget = state.keyTarget;
-          final pathParts = state.sectionPath.isEmpty
-              ? const <String>[]
-              : state.sectionPath.split(' › ');
-          final subtitle = state.countedTotal > 0
-              ? "أتممت ${state.finishedCount} من ${state.countedTotal}"
-              : pathParts.isEmpty
-                  ? ""
-                  : pathParts.last;
-          return Scaffold(
-            appBar: AppBar(
-              centerTitle: true,
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    state.zikrTitle.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: "Kitab",
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (subtitle.isNotEmpty)
+    return KeepScreenOn(
+      enabled: context.select<SettingsCubit, bool>((c) => c.state.keepScreenOn),
+      child: BlocProvider.value(
+        value: _bloc,
+        child: BlocConsumer<ZikrContentViewerBloc, ZikrContentViewerState>(
+          bloc: _bloc,
+          listener: (_, __) {},
+          listenWhen: (previous, current) {
+            _onStateChange(previous, current);
+            return false;
+          },
+          builder: (context, state) {
+            if (state is! ZikrContentViewerLoadedState) {
+              return const Loading();
+            }
+            final theme = Theme.of(context);
+            final mutedColor =
+                theme.colorScheme.onSurface.withValues(alpha: .65);
+            final keysCount =
+                context.watch<SettingsCubit>().state.praiseWithVolumeKeys;
+            final keyTarget = state.keyTarget;
+            final pathParts = state.sectionPath.isEmpty
+                ? const <String>[]
+                : state.sectionPath.split(' › ');
+            final subtitle = state.countedTotal > 0
+                ? "أتممت ${state.finishedCount} من ${state.countedTotal}"
+                : pathParts.isEmpty
+                    ? ""
+                    : pathParts.last;
+            return Scaffold(
+              appBar: AppBar(
+                centerTitle: true,
+                title: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: mutedColor),
+                      state.zikrTitle.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: "Kitab",
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    if (subtitle.isNotEmpty)
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: mutedColor),
+                      ),
+                  ],
+                ),
+                actions: [
+                  if (state.canRestart)
+                    IconButton(
+                      key: const ValueKey('reader-restart'),
+                      tooltip: "البدء من جديد",
+                      icon: const Icon(Icons.restart_alt),
+                      onPressed: _confirmRestart,
+                    ),
+                  IconButton(
+                    key: const ValueKey('reader-report'),
+                    tooltip: "الإبلاغ عن خطأ",
+                    icon: const Icon(Icons.flag_outlined),
+                    onPressed: _showReportDialog,
+                  ),
+                  BookmarkTitleButton(titleId: state.zikrTitle.id),
                 ],
               ),
-              actions: [
-                if (state.canRestart)
-                  IconButton(
-                    key: const ValueKey('reader-restart'),
-                    tooltip: "البدء من جديد",
-                    icon: const Icon(Icons.restart_alt),
-                    onPressed: _confirmRestart,
-                  ),
-                IconButton(
-                  key: const ValueKey('reader-report'),
-                  tooltip: "الإبلاغ عن خطأ",
-                  icon: const Icon(Icons.flag_outlined),
-                  onPressed: _showReportDialog,
-                ),
-                BookmarkTitleButton(titleId: state.zikrTitle.id),
-              ],
-            ),
-            body: NotificationListener<ScrollEndNotification>(
-              onNotification: (_) {
-                _reportFocus();
-                return false;
-              },
-              child: SingleChildScrollView(
-                key: _viewportKey,
-                controller: _scrollController,
-                padding: const EdgeInsets.only(top: 6, bottom: 24),
-                // The section is painted once and moved as the reader
-                // scrolls, instead of being repainted on every frame.
-                child: RepaintBoundary(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final zikr in state.azkar)
-                        ZikrItemCard(
-                          key: _keyFor(zikr.id),
-                          zikr: zikr,
-                          isCounted: state.isCounted(zikr),
-                          isKeyTarget: keysCount && keyTarget?.id == zikr.id,
-                          onReport: _showReportDialog,
+              body: NotificationListener<ScrollEndNotification>(
+                onNotification: (_) {
+                  _reportFocus();
+                  return false;
+                },
+                child: SingleChildScrollView(
+                  key: _viewportKey,
+                  controller: _scrollController,
+                  padding: const EdgeInsets.only(top: 6, bottom: 24),
+                  // The section is painted once and moved as the reader
+                  // scrolls, instead of being repainted on every frame.
+                  child: RepaintBoundary(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final zikr in state.azkar)
+                          ZikrItemCard(
+                            key: _keyFor(zikr.id),
+                            zikr: zikr,
+                            isCounted: state.isCounted(zikr),
+                            isKeyTarget: keysCount && keyTarget?.id == zikr.id,
+                            onReport: _showReportDialog,
+                          ),
+                        _SectionEnd(
+                          previous: _titleAt(state.zikrTitle, -1),
+                          next: _titleAt(state.zikrTitle, 1),
+                          mutedColor: mutedColor,
                         ),
-                      _SectionEnd(
-                        previous: _titleAt(state.zikrTitle, -1),
-                        next: _titleAt(state.zikrTitle, 1),
-                        mutedColor: mutedColor,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
