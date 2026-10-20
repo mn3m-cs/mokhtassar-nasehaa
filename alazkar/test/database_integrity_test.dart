@@ -296,20 +296,40 @@ void main() {
              MIN(contents."order") AS first, MAX(contents."order") AS last
       FROM titles
       JOIN contents ON contents.titleId = titles.id
-      WHERE titles.id BETWEEN 48 AND 60
+      WHERE titles.id BETWEEN 48 AND 60 OR titles.id = 164
       GROUP BY titles.id
       ORDER BY titles.id
     ''');
     final fastingTravelAndPilgrimageRegression = await database.rawQuery('''
       SELECT
-        SUM(titleId = 48 AND search = 'اللهم لك صمت وعلى رزقك أفطرت') AS second_iftar_dua,
-        SUM(titleId = 50 AND search LIKE 'لبيك اللهم بحجة وعمرة%') AS qiran_intention,
-        SUM(titleId = 50 AND search = 'لبيك ذا الفواضل') AS talbiya_variant,
-        SUM(titleId = 52 AND search LIKE 'الله أكبر الله أكبر الله أكبر لا إله إلا الله وحده%هزم الأحزاب وحده') AS complete_safa_dhikr,
-        SUM(titleId = 57 AND search LIKE 'اللهم صل على محمد%') AS unsupported_grave_dua,
+        SUM(titleId = 48 AND search LIKE '%لك صمت%') AS app_only_iftar_dua,
+        SUM(titleId = 48 AND search = 'ذهب الظمأ وابتلت العروق وثبت الأجر إن شاء الله تعالى') AS iftar_dua_as_printed,
+        SUM(titleId = 48 AND count = 0 AND body IN (
+          'ما يقول إذا رأى الهلال', 'ما يقول إذا أفطر على الماء',
+          'ما يقول إذا صادف ليلة القدر')) AS fasting_headings,
+        SUM(titleId = 50 AND search = 'لبيك اللهم بعمرة') AS umra_intention,
+        SUM(titleId = 50 AND search LIKE 'أو لبيك اللهم بحجة وعمرة%') AS qiran_intention,
+        SUM(titleId = 50 AND search = 'أو لبيك ذا المعارج لبيك ذا الفواضل') AS talbiya_variant,
+        SUM(titleId = 50 AND search = 'اللهم بعمرة') AS umra_without_talbiya,
+        SUM(titleId = 164 AND search LIKE 'الله أكبر الله أكبر لا إله إلا الله وحده%هزم الأحزاب وحده' AND count = 3) AS safa_dhikr_two_takbirs,
+        SUM(titleId = 164 AND search LIKE 'الله أكبر الله أكبر الله أكبر%') AS safa_dhikr_three_takbirs,
+        SUM(titleId = 164 AND body = 'QuranText[(2:158:158)]') AS safa_verse,
+        SUM(titleId IN (48, 50, 51, 52, 53, 54, 55, 56, 59, 136, 164)
+            AND (hokm != '' OR fadl != '')) AS rulings_the_book_does_not_print,
+        SUM(titleId = 52 AND search LIKE 'وليس للطواف ذكر خاص%') AS tawaf_prose,
+        SUM(titleId = 54 AND search LIKE 'ويظل واقفا في عرفات%') AS arafah_prose,
+        SUM(titleId = 55 AND body = 'ما يقول عند ذبح الأضحية') AS sacrifice_heading,
+        SUM(titleId = 56 AND search = 'السلام عليك يا أبا بكر') AS visit_abu_bakr,
+        SUM(titleId = 59 AND count = 1) AS baqi_forms,
         SUM(titleId = 60 AND body IN ('QuranText[(17:81:81)]', 'QuranText[(34:49:49)]')) AS misplaced_munkar_verses
       FROM contents
-      WHERE titleId BETWEEN 48 AND 60
+      WHERE titleId BETWEEN 48 AND 60 OR titleId IN (136, 164)
+    ''');
+    final removedPilgrimageSections = await database.rawQuery('''
+      SELECT
+        (SELECT COUNT(*) FROM titles WHERE id IN (57, 58, 134, 135, 137, 138)) AS titles,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId IN (57, 58, 134, 135, 137, 138)) AS contents
     ''');
     final foodMarriageAndMajlisSections = await database.rawQuery('''
       SELECT titles.id, COUNT(contents.id) AS count,
@@ -455,18 +475,17 @@ void main() {
         JOIN ancestry ON child.parentId = ancestry.id
       )
       SELECT
-        (SELECT MAX(depth) FROM ancestry WHERE id BETWEEN 50 AND 59 OR id BETWEEN 128 AND 139) AS depth,
+        (SELECT MAX(depth) FROM ancestry WHERE id BETWEEN 50 AND 59 OR id BETWEEN 128 AND 139 OR id = 164) AS depth,
         (SELECT COUNT(*) FROM titles
          WHERE id BETWEEN 128 AND 133 AND nodeType = 'category') AS categories,
         (SELECT COUNT(*) FROM contents
-         WHERE titleId BETWEEN 134 AND 139 AND count = 0) AS prose_rows,
+         WHERE titleId = 139 AND count = 0) AS prose_rows,
         (SELECT parentId FROM titles WHERE id = 49) AS traveler_parent,
         (SELECT parentId FROM titles WHERE id = 50) AS ihram_parent,
         (SELECT parentId FROM titles WHERE id = 52) AS tawaf_parent,
+        (SELECT parentId FROM titles WHERE id = 164) AS safa_parent,
         (SELECT parentId FROM titles WHERE id = 54) AS arafah_parent,
-        (SELECT parentId FROM titles WHERE id = 57) AS prophet_grave_parent,
-        (SELECT search LIKE '%للطواف ذكر خاص%'
-         FROM contents WHERE id = 1050) AS tawaf_guidance
+        (SELECT parentId FROM titles WHERE id = 56) AS prophet_mosque_parent
     ''');
 
     final guidanceNotes = await database.rawQuery('''
@@ -557,8 +576,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 146);
-    expect(titleCount.single, {'count': 140});
+    expect(await database.getVersion(), 147);
+    expect(titleCount.single, {'count': 135});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -596,13 +615,13 @@ void main() {
     expect(pilgrimageGuide.single, {
       'depth': 3,
       'categories': 6,
-      'prose_rows': 8,
+      'prose_rows': 1,
       'traveler_parent': 133,
       'ihram_parent': 129,
       'tawaf_parent': 130,
+      'safa_parent': 130,
       'arafah_parent': 131,
-      'prophet_grave_parent': 132,
-      'tawaf_guidance': 1,
+      'prophet_mosque_parent': 132,
     });
     expect(guidanceNotes.single, {
       'categories': 3,
@@ -919,7 +938,7 @@ void main() {
     });
     expect(
       fastingTravelAndPilgrimageSections.map((row) => row['count']),
-      [6, 24, 11, 3, 11, 4, 2, 3, 4, 3, 4, 4, 15],
+      [13, 24, 23, 8, 16, 4, 16, 7, 17, 4, 15, 15],
     );
     expect(
       fastingTravelAndPilgrimageSections
@@ -927,13 +946,29 @@ void main() {
       isTrue,
     );
     expect(fastingTravelAndPilgrimageRegression.single, {
-      'second_iftar_dua': 1,
+      'app_only_iftar_dua': 0,
+      'iftar_dua_as_printed': 1,
+      'fasting_headings': 3,
+      'umra_intention': 1,
       'qiran_intention': 1,
       'talbiya_variant': 1,
-      'complete_safa_dhikr': 1,
-      'unsupported_grave_dua': 0,
+      'umra_without_talbiya': 0,
+      'safa_dhikr_two_takbirs': 1,
+      'safa_dhikr_three_takbirs': 0,
+      'safa_verse': 1,
+      'rulings_the_book_does_not_print': 0,
+      'tawaf_prose': 1,
+      'arafah_prose': 1,
+      'sacrifice_heading': 1,
+      'visit_abu_bakr': 1,
+      'baqi_forms': 4,
       'misplaced_munkar_verses': 0,
     });
+    expect(
+      removedPilgrimageSections.single,
+      {'titles': 0, 'contents': 0},
+      reason: 'the app guides and the sections the book has no heading for',
+    );
     expect(
       foodMarriageAndMajlisSections.map((row) => row['count']),
       [14, 9, 12, 5, 9, 4],
@@ -1123,9 +1158,10 @@ void main() {
     ''');
     expect(
       virtueRecords.map((row) => row['id']),
-      [274, 277, 334, 906],
+      [274, 277, 906],
       reason: 'a virtue line shows only what the book prints in its main '
-          'text under the zikr (p104, p105, p123, p47); excerpts of the '
+          'text under the zikr (p104, p105, p47); the hadith that opens the '
+          'Arafa dhikr (p198) is a passage above it, not a virtue; excerpts of the '
           'takhrij hadiths stay whole in the source',
     );
 
@@ -1218,8 +1254,9 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 114},
-        reason: 'pp91-115 print footnotes under 20 records (#174)');
+    expect(recordsWithFootnotes.single, {'count': 139},
+        reason: 'pp91-115 print footnotes under 20 records (#174), pp175-207 '
+            'under 28 more (#179)');
   });
 
   test('the closing date of the introduction is a small line of its own (#140)',
