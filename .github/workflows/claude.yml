@@ -58,28 +58,26 @@ jobs:
           channel: stable
           cache: true
 
-      # Book audit tickets (#116) compare the app with the pages of the book. The book is
-      # copyrighted and this repository is public, so it is fetched from the author's site on
-      # every run, checked against the edition the owner chose, drawn into page images, and never
-      # committed or uploaded. A failure here leaves no pages, which stops audit tickets only.
-      - name: Fetch the book and draw its pages
+      # Book audit tickets (#116) compare the app with the pages of the book. The owner put the
+      # book in the repository on 2026-10-20: the author's site sits behind Cloudflare and refuses
+      # GitHub's runners (403). It is checked against the edition the owner chose and drawn into
+      # page images, which are never committed. A failure here leaves no pages, which stops audit
+      # tickets only.
+      - name: Draw the book's pages
         continue-on-error: true
         env:
-          BOOK_URL: https://almukaddem.com/download/4755
+          BOOK_PDF: book/mukhtasar-naseeha-10th-edition.pdf
           BOOK_MD5: 986982e6b8e4817e3b4fbd05af5453b3
         run: |
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq poppler-utils sqlite3 jq > /dev/null
-          mkdir -p book-pages/pages
-          curl -sSfL --retry 3 --max-time 600 -o book-pages/book.pdf "${BOOK_URL}"
-          if ! echo "${BOOK_MD5}  book-pages/book.pdf" | md5sum --check --quiet; then
-            rm -rf book-pages
-            echo "::error::The book file on the author's site changed. It is not the edition the owner chose (#116), so no pages were drawn."
+          if ! echo "${BOOK_MD5}  ${BOOK_PDF}" | md5sum --check --quiet; then
+            echo "::error::${BOOK_PDF} is not the edition the owner chose (#116), so no pages were drawn."
             exit 1
           fi
-          pdftoppm -r 110 -png book-pages/book.pdf book-pages/pages/p
-          rm book-pages/book.pdf
+          mkdir -p book-pages/pages
+          pdftoppm -r 110 -png "${BOOK_PDF}" book-pages/pages/p
           echo "Drew $(ls book-pages/pages | wc -l) pages."
 
       - name: Run Claude Code

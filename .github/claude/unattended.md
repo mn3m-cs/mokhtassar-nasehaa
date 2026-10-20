@@ -42,16 +42,17 @@ pushed survives it.
 ## Book audit tickets
 
 A ticket titled «مطابقة الكتاب» compares the app with the pages of the book, the 10th revised
-edition (#116). The workflow downloaded it from the author's site and drew each page as
-`book-pages/pages/p-NNN.png`, where NNN is the book's page number.
+edition (#116), kept in `book/mukhtasar-naseeha-10th-edition.pdf`. The workflow drew each page
+as `book-pages/pages/p-NNN.png`, where NNN is the book's page number.
 
 - Read each page as an image with the Read tool. There is no text layer to trust, so never work
   from extracted text.
-- The book is copyrighted and this repository is public. Never commit, attach or paste a page
-  image or any part of one: not in the branch, the pull request, or a comment. Quoting the
-  book's words in the comparison table is fine, because they are the app's content.
-- If `book-pages/pages/` is missing, the download failed or the site changed the file. Comment
-  that on the ticket, swap `ready-for-dev` for `needs-decision`, and stop.
+- The book is copyrighted. The owner chose to keep the PDF in this repository; never commit,
+  attach or paste a page image or any part of one: not in the branch, the pull request, or a
+  comment. Quoting the book's words in the comparison table is fine, because they are the app's
+  content.
+- If `book-pages/pages/` is missing or empty, the drawing step failed or the file in `book/`
+  changed. Comment that on the ticket, swap `ready-for-dev` for `needs-decision`, and stop.
 - Change the database only through `sqlite3 alazkar/assets/db/Al-Azkar.db` and the scripts in
   `data_pipeline/`, following sections 3 to 6 of `CONTENT_AUDIT_AGENT_PLAN.md`, and run its
   checks (`jq empty`, `PRAGMA integrity_check`, `PRAGMA foreign_key_check`, `PRAGMA user_version`).
