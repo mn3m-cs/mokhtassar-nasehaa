@@ -110,6 +110,12 @@ jobs:
             "Bash(sqlite3 alazkar/assets/db/Al-Azkar.db:*)"
             "Bash(python3 data_pipeline/:*)"
             "Bash(jq empty data_pipeline/sections/:*)"
+            "WebSearch"
+            "WebFetch(domain:dorar.net)"
+            "WebFetch(domain:sunnah.com)"
+            "WebFetch(domain:shamela.ws)"
+            "WebFetch(domain:islamweb.net)"
+            "WebFetch(domain:almukaddem.com)"
 
       # Hermes schedules Claude by how much of the account's limit is left. Only the rate-limit
       # events leave the job: the execution file holds the whole conversation, tool output
