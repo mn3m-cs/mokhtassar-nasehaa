@@ -41,6 +41,26 @@ def result_summary(documents):
     return summary
 
 
+def event_number():
+    """The issue or pull request number of the event that started the run, or None."""
+    path = os.environ.get("GITHUB_EVENT_PATH")
+    if not path:
+        return None
+    try:
+        with open(path, encoding="utf-8") as handle:
+            event = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(event, dict):
+        return None
+    for key in ("issue", "pull_request"):
+        item = event.get(key)
+        if isinstance(item, dict) and isinstance(item.get("number"), int):
+            return item["number"]
+    number = event.get("number")
+    return number if isinstance(number, int) else None
+
+
 def main(path):
     with open(path, encoding="utf-8") as handle:
         text = handle.read()
@@ -53,6 +73,7 @@ def main(path):
         {
             "account": os.environ.get("CLAUDE_ACCOUNT") or None,
             "run_id": os.environ.get("GITHUB_RUN_ID"),
+            "issue": event_number(),
             "events": events,
             "result": result_summary(documents),
         },

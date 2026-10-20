@@ -6,6 +6,7 @@ import 'package:alazkar/src/features/home/presentation/screens/home_page_screen.
 import 'package:alazkar/src/features/reminders/presentation/components/reminder_launch_listener.dart';
 import 'package:alazkar/src/features/search/presentation/controller/cubit/search_cubit.dart';
 import 'package:alazkar/src/features/settings/presentation/controller/cubit/settings_cubit.dart';
+import 'package:alazkar/src/features/theme/presentation/app_theme.dart';
 import 'package:alazkar/src/features/theme/presentation/controller/cubit/theme_cubit.dart';
 import 'package:alazkar/src/features/ui/presentation/components/desktop_window_wrapper.dart';
 import 'package:alazkar/src/features/zikr_source_filter/presentation/controller/cubit/zikr_source_filter_cubit.dart';
@@ -39,15 +40,7 @@ class MyApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             scrollBehavior: AppScrollBehavior(),
             title: 'زاد الذاكر',
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: state.color,
-                brightness: state.brightness,
-              ),
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-              fontFamily: "Cairo",
-              useMaterial3: state.useMaterial3,
-            ),
+            theme: buildAppTheme(state),
             localizationsDelegates: const [
               GlobalCupertinoLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
