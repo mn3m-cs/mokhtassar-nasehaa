@@ -12,8 +12,15 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
+  /// The book's page on the author's site, opened by the «المصدر» tile.
+  static const String kBookPageUrl = "https://almukaddem.com/ar/3240";
+
+  /// Opens a link; tests pass their own to see which link is tapped.
+  final Future<void> Function(String url) openUrl;
+
   const AboutScreen({
     super.key,
+    this.openUrl = openURL,
   });
 
   @override
@@ -49,15 +56,17 @@ class AboutScreen extends StatelessWidget {
             title: Text("نسألكم الدعاء لنا ولوالدينا"),
           ),
           const Divider(),
-          const ListTile(
-            leading: Icon(Icons.source_outlined),
-            title: Text("المصدر"),
+          ListTile(
+            leading: const Icon(Icons.source_outlined),
+            title: const Text("المصدر"),
             isThreeLine: true,
-            subtitle: Text(
+            subtitle: const Text(
               "الكتاب: مختصر النصيحة في الأذكار والأدعية الصحيحة\n"
-              "إعداد: محمد أحمد إسماعيل المقدم\n"
-              "النشر: دار الأمل ودار التميز، 1443هـ - 2022م",
+              "تأليف: محمد أحمد إسماعيل المقدم\n"
+              "الطبعة العاشرة المعدلة، ١٤٤٦هـ - ٢٠٢٥م\n"
+              "almukaddem.com",
             ),
+            onTap: () => openUrl(kBookPageUrl),
           ),
           const Divider(),
           const ListTile(
@@ -74,7 +83,7 @@ class AboutScreen extends StatelessWidget {
             leading: const Icon(Icons.open_in_browser),
             title: const Text("رابط المشروع المفتوح المصدر"),
             onTap: () {
-              openURL("https://github.com/mn3m-cs/mokhtassar-nasehaa");
+              openUrl("https://github.com/mn3m-cs/mokhtassar-nasehaa");
             },
           ),
         ],
