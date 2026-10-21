@@ -382,7 +382,7 @@ void main() {
              SUM(count = 0) AS zero_count,
              MIN("order") AS first, MAX("order") AS last
       FROM contents
-      WHERE titleId BETWEEN 149 AND 157
+      WHERE titleId BETWEEN 149 AND 157 OR titleId = 164
       GROUP BY titleId
       ORDER BY titleId
     ''');
@@ -394,8 +394,7 @@ void main() {
     ''');
     final absoluteDhikrSamples = await database.rawQuery('''
       SELECT
-        SUM(titleId = 149 AND body LIKE '%ولا يستطيعها البطلة%') AS quran,
-        SUM(titleId = 150 AND body LIKE '%خواتيم سورة البقرة%') AS surahs,
+        SUM(titleId = 149 AND search LIKE '%ولا يستطيعها البطلة%') AS quran,
         SUM(titleId = 151 AND body LIKE '%تكفى همك%') AS salawat,
         SUM(titleId = 152 AND body LIKE '%عدل أربع رقاب%') AS tahlil,
         SUM(titleId = 153 AND body LIKE '%سيد الاستغفار%') AS istighfar,
@@ -557,7 +556,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 146);
+    expect(await database.getVersion(), 147);
     expect(titleCount.single, {'count': 140});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -991,8 +990,7 @@ void main() {
     expect(
       absoluteDhikrContent,
       [
-        {'titleId': 149, 'count': 12, 'zero_count': 12, 'first': 1, 'last': 12},
-        {'titleId': 150, 'count': 18, 'zero_count': 18, 'first': 1, 'last': 18},
+        {'titleId': 149, 'count': 16, 'zero_count': 16, 'first': 1, 'last': 16},
         {'titleId': 151, 'count': 21, 'zero_count': 21, 'first': 1, 'last': 21},
         {'titleId': 152, 'count': 9, 'zero_count': 9, 'first': 1, 'last': 9},
         {'titleId': 153, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
@@ -1000,6 +998,7 @@ void main() {
         {'titleId': 155, 'count': 8, 'zero_count': 8, 'first': 1, 'last': 8},
         {'titleId': 156, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
         {'titleId': 157, 'count': 2, 'zero_count': 2, 'first': 1, 'last': 2},
+        {'titleId': 164, 'count': 26, 'zero_count': 26, 'first': 1, 'last': 26},
       ],
     );
     expect(absoluteDhikrParents, [
@@ -1009,7 +1008,6 @@ void main() {
     ]);
     expect(absoluteDhikrSamples.single, {
       'quran': 1,
-      'surahs': 1,
       'salawat': 1,
       'tahlil': 1,
       'istighfar': 1,
@@ -1019,6 +1017,96 @@ void main() {
       'notice': 1,
     });
     expect(unsupportedJudgments, isEmpty);
+  });
+
+  test('absolute dhikr pages 247-280 follow the book (#182)', () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    final sections = await database.rawQuery('''
+      SELECT titleId, COUNT(*) AS count, SUM(count <> 0) AS counted,
+             SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
+             SUM(source LIKE '%(ص1__)%' OR source LIKE '%(ص1__–%') AS old_edition_pages
+      FROM contents
+      WHERE titleId IN (147, 148, 149, 164)
+      GROUP BY titleId
+      ORDER BY titleId
+    ''');
+    final removedTitle = await database.rawQuery(
+      'SELECT COUNT(*) AS rows FROM titles WHERE id = 150',
+    );
+    final tahzib = await database.rawQuery('''
+      SELECT name, parentId, nodeType,
+             (SELECT body FROM contents WHERE titleId = 164 AND "order" = 1) AS heading
+      FROM titles WHERE id = 164
+    ''');
+    final inventedOrOldWording = await database.rawQuery('''
+      SELECT COUNT(*) AS rows
+      FROM contents
+      WHERE titleId IN (147, 148, 149, 164)
+        AND (search LIKE '%الأذكار المطلقة هي أذكار ثبت فضلها%'
+          OR search LIKE '%إنكم لا ترجعون إلى الله بشيء أفضل%'
+          OR search LIKE '%فضائل عظيمة لتلاوة القرآن مطلقا%')
+    ''');
+    final footnotes = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 149 AND source LIKE '%حاشية: البطلة: السحرة%') AS footnote_in_source,
+        SUM(body LIKE '%حاشية%') AS footnote_in_body,
+        SUM(titleId = 147 AND source LIKE '%طاقة وَرْد في فقه الوِرْد%') AS book_footnote,
+        SUM(titleId = 148 AND body LIKE '%وَرَتِّلِ%' AND body LIKE '%[المزمل: ٤]%') AS partial_verse,
+        SUM(titleId = 147 AND search LIKE '%مراقبة الأوقات وعمارتها بالأوراد%') AS closing_line
+      FROM contents
+    ''');
+
+    expect(sections, [
+      {
+        'titleId': 147,
+        'count': 48,
+        'counted': 0,
+        'judgments_or_virtues': 0,
+        'old_edition_pages': 0,
+      },
+      {
+        'titleId': 148,
+        'count': 7,
+        'counted': 0,
+        'judgments_or_virtues': 0,
+        'old_edition_pages': 0,
+      },
+      {
+        'titleId': 149,
+        'count': 16,
+        'counted': 0,
+        'judgments_or_virtues': 0,
+        'old_edition_pages': 0,
+      },
+      {
+        'titleId': 164,
+        'count': 26,
+        'counted': 0,
+        'judgments_or_virtues': 0,
+        'old_edition_pages': 0,
+      },
+    ]);
+    expect(removedTitle.single, {'rows': 0});
+    expect(tahzib.single, {
+      'name': 'تحزيب القرآن المجيد',
+      'parentId': 141,
+      'nodeType': 'content',
+      'heading': 'تحزيب القرآن المجيد',
+    });
+    expect(inventedOrOldWording.single, {'rows': 0});
+    expect(footnotes.single, {
+      'footnote_in_source': 1,
+      'footnote_in_body': 0,
+      'book_footnote': 1,
+      'partial_verse': 1,
+      'closing_line': 1,
+    });
   });
 
   test('bundled azkar database follows the book (quality gate #52)', () async {
@@ -1218,8 +1306,9 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 114},
-        reason: 'pp91-115 print footnotes under 20 records (#174)');
+    expect(recordsWithFootnotes.single, {'count': 123},
+        reason: 'pp91-115 print footnotes under 20 records (#174), '
+            'pp247-280 under 13 (#182)');
   });
 
   test('the closing date of the introduction is a small line of its own (#140)',
