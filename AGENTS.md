@@ -55,6 +55,8 @@ The ticket body is the specification. Its `## Decisions` section holds the owner
 
 A small call that any sensible builder would make the same way, such as a variable name, a helper's place, or a test's shape, is yours. List these calls in the PR description, marked as your calls, so the owner can check them.
 
+**Facts you cannot see.** What you cannot verify in a system outside this repository must not ship as a silent failure. Either stop and ask in the ticket (`needs-decision`), or make the code say "unknown" where its output is read. Never skip a check without a trace. Write any guess that remains in the PR description, with the line of code that holds it, so the reviewer checks it against the real source before anything else. This came from mn3m-cs/hermes-skills#279: a ticket named a field from memory, the builder guessed where it lived, its test built a fake of the guessed shape, and the code skipped the check silently when the field was absent (mn3m-cs/hermes-skills#280).
+
 ## Proving it
 
 - Run the app's checks: `fvm flutter analyze` and `fvm flutter test`, from `alazkar/`. Format only with `fvm dart format <files>`. The bare `dart` on the PATH is a different SDK, and it restyles unrelated files.
