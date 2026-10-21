@@ -13,7 +13,12 @@ files(fidx, path) AS (VALUES
   (1, 'data_pipeline/sections/absolute_adhkar_introduction.json'),
   (2, 'data_pipeline/sections/quran_introduction.json'),
   (3, 'data_pipeline/sections/quran_recitation_virtues.json'),
-  (4, 'data_pipeline/sections/quran_tahzib.json')
+  (4, 'data_pipeline/sections/quran_tahzib.json'),
+  (5, 'data_pipeline/sections/tahlil_virtues.json'),
+  (6, 'data_pipeline/sections/wird_altahlil.json'),
+  (7, 'data_pipeline/sections/salawat_introduction.json'),
+  (8, 'data_pipeline/sections/salawat_virtues.json'),
+  (9, 'data_pipeline/sections/wird_salat_ala_annabi.json')
 ),
 docs(fidx, doc) AS (
   SELECT fidx, CAST(readfile(path) AS TEXT) FROM files WHERE readfile(path) IS NOT NULL
