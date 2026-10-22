@@ -657,8 +657,10 @@ void main() {
          WHERE id BETWEEN 1007 AND 1013 AND count = 0) AS zero_count_prose,
         (SELECT COUNT(*) FROM contents
          WHERE id BETWEEN 1007 AND 1013) AS prose_count,
-        (SELECT search LIKE '%فهذا مختصر%الأذكار والأدعية الصحيحة%'
-         FROM contents WHERE id = 1008) AS introduction_searchable,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId = 102
+           AND search LIKE '%فهذا مختصر%الأذكار والأدعية الصحيحة%')
+          AS introduction_searchable,
         (SELECT search LIKE '%كل يوم يعيشه المؤمن غنيمة%'
          FROM contents WHERE id = 1013) AS etiquette_searchable,
         (SELECT COUNT(*) FROM titles WHERE id IN (105, 107)) AS removed_sections
@@ -708,7 +710,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 158);
+    expect(await database.getVersion(), 159);
     expect(titleCount.single, {'count': 132});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1628,9 +1630,9 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 199},
+    expect(recordsWithFootnotes.single, {'count': 205},
         reason:
-            'pp29-68 (#171), pp69-75 (#172), pp76-90 (#173), pp91-115 (#174), pp116-129 (#175), '
+            'pp5-26 (#170), pp29-68 (#171), pp69-75 (#172), pp76-90 (#173), pp91-115 (#174), pp116-129 (#175), '
             'pp130-139 (#176), pp140-149 (#177), pp150-174 (#178), pp175-207 (#179), '
             'pp177-226 (#180), pp227-244 (#181), pp247-293 (#182) and '
             'pp372-380 (#183) print their footnotes');
@@ -1973,7 +1975,7 @@ void main() {
             'the empty house and the fear of riya on p242');
   });
 
-  test('the closing date of the introduction is a small line of its own (#140)',
+  test('the closing dates of both introductions are small lines (#140, #170)',
       () async {
     sqfliteFfiInit();
     final database = await databaseFactoryFfi.openDatabase(
@@ -1982,31 +1984,168 @@ void main() {
     );
     addTearDown(database.close);
 
-    final introduction = await database.rawQuery('''
-      SELECT id, "order", count, style, body, source FROM contents
-      WHERE titleId = 102 ORDER BY "order"
-    ''');
     final styled = await database.rawQuery('''
-      SELECT id FROM contents WHERE style <> ''
+      SELECT id, titleId, "order", count, body, source FROM contents
+      WHERE style <> '' ORDER BY titleId DESC
+    ''');
+    final lastOrder = await database.rawQuery('''
+      SELECT titleId, MAX("order") AS last FROM contents
+      WHERE titleId IN (102, 171) GROUP BY titleId ORDER BY titleId DESC
     ''');
 
-    expect(introduction.map((row) => row['id']), [1008, 1204]);
-    final text = introduction[0];
-    final date = introduction[1];
-    expect(text['style'], '');
-    expect(text['body']! as String, isNot(contains('الإسكندرية')));
-    expect(text['body']! as String, endsWith('وعلى آله وصحبه أجمعين.'));
-    expect(date['order'], 2);
-    expect(date['count'], 0);
-    expect(date['style'], 'small');
+    expect(styled.map((row) => row['id']), [1659, 1204]);
+    expect(styled.map((row) => row['count']), [0, 0]);
     expect(
-      date['body'],
-      'الإسكندرية في الجمعة\n'
-      '6 من ذي القعدة 1407هـ\n'
+      lastOrder.map((row) => row['last']),
+      styled.map((row) => row['order']),
+      reason: 'each date closes its introduction',
+    );
+    expect(
+      styled[0]['body'],
+      'محمد أحمد إسماعيل المقدم\n'
+      'الإسكندرية\n'
+      'في الأحد 21 من ذي الحجة 1444هـ\n'
+      'الموافق 9 من يوليو 2023م',
+    );
+    expect(styled[0]['source'], 'مقدمة هذه الطبعة. (ص6)');
+    expect(
+      styled[1]['body'],
+      'محمد أحمد إسماعيل المقدم\n'
+      'الإسكندرية\n'
+      'في الجمعة 6 من ذي القعدة 1407هـ\n'
       'الموافق 3 من يوليو 1987م',
     );
-    expect(date['source'], 'المقدمة. (ص9)');
-    expect(styled.map((row) => row['id']), [1204]);
+    expect(styled[1]['source'], 'مقدمة الطبعات السابقة. (ص11)');
+  });
+
+  test('about the book follows pages 5-26 of the book (#170)', () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    Future<List<Map<String, Object?>>> rows(int titleId) => database.rawQuery(
+          'SELECT id, body, count, source, hokm, fadl FROM contents '
+          'WHERE titleId = ? ORDER BY "order"',
+          [titleId],
+        );
+    int footnotes(List<Map<String, Object?>> section) => section
+        .map((row) => 'حاشية:'.allMatches(row['source']! as String).length)
+        .fold(0, (sum, n) => sum + n);
+    String text(List<Map<String, Object?>> section) =>
+        section.map((row) => row['body']! as String).join('\n');
+
+    final children = await database.rawQuery('''
+      SELECT id, "order", name FROM titles WHERE parentId = 99 ORDER BY "order"
+    ''');
+    final conclusion = await database.rawQuery('''
+      SELECT id FROM contents WHERE body LIKE '%وهذا آخر ما تيسر جمعه%'
+    ''');
+    final thisEdition = await rows(171);
+    final previous = await rows(102);
+    final chapter = await rows(104);
+    final all = [...thisEdition, ...previous, ...chapter];
+
+    expect(
+      children,
+      [
+        {'id': 171, 'order': 1, 'name': 'مقدمة هذه الطبعة'},
+        {'id': 102, 'order': 2, 'name': 'مقدمة الطبعات السابقة'},
+        {
+          'id': 104,
+          'order': 3,
+          'name': 'الأمر بالإكثار من ذكر الله تعالى وفضيلته',
+        },
+      ],
+      reason: '«تمهيد الكتاب» (101) and «خاتمة المؤلف» (103) are not printed',
+    );
+    expect(conclusion, isEmpty);
+    expect([thisEdition.length, previous.length, chapter.length], [6, 14, 30]);
+    expect(
+      [footnotes(thisEdition), footnotes(previous), footnotes(chapter)],
+      [3, 1, 3],
+    );
+    for (final row in all) {
+      expect(row['count'], 0, reason: 'prose, row ${row['id']}');
+      expect([row['hokm'], row['fadl']], ['', ''], reason: '${row['id']}');
+      final page = RegExp(r'\(ص([0-9]+)(?:–([0-9]+))?\)')
+          .firstMatch(row['source']! as String);
+      expect(page, isNotNull, reason: 'row ${row['id']} names its page');
+      final last = int.parse(page!.group(2) ?? page.group(1)!);
+      expect(last, inInclusiveRange(5, 26), reason: 'row ${row['id']}');
+    }
+
+    expect(thisEdition.first['body'], 'بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ');
+    expect(
+      thisEdition[2]['body'],
+      contains('﴿ وَلَذِكۡرُ ٱللَّهِ أَكۡبَرُۗ ﴾ [العنكبوت: ٤٥]'),
+    );
+    expect(
+      thisEdition[2]['source'],
+      contains('حاشية: من مقدمة الإمام الشوكاني'),
+    );
+
+    final previousText = text(previous);
+    expect(previousText, contains('في الأوقات والأحوال المختلفة'));
+    expect(previousText, isNot(contains('النبوية الثابتة')));
+    expect(
+      previousText,
+      contains('على الحريصين على تيسير العمل بالأذكار الثابتة الواردة'),
+    );
+    expect(previousText, isNot(contains('الراغبين في مزيد من التيسير')));
+    expect(previous.first['id'], 1008);
+    expect(previous[7]['body'], 'تنبيه:');
+    expect(previous[8]['body'], startsWith('اعلم -رحمني الله'));
+    expect(previous[8]['body'], contains('يمكن الجمعُ بينها'));
+    expect(
+      previous[8]['source'],
+      contains('حاشية: أمَّا في الألفاظ التي لا يمكن الجمع بينها'),
+    );
+    expect(
+      previous[8]['source'],
+      contains('قي مثل هذا'),
+      reason: 'the book prints «قي», kept as printed',
+    );
+    expect(previous[12]['body'], contains('وظاهرًا وباطنًا'));
+    expect(previous[12]['body'], contains('وخليلِه محمدٍ'));
+
+    const headings = [
+      'فضائل ذكر الله عز وجل',
+      'لا بُدَّ من تَلَفُّظِ اللِّسانِ بالذِّكر:',
+      'الأدعية الراتبة توقيفيَّة لا يُزاد فيها، ولا يُنقَص منها',
+      'من نصوص العلماء في الحثِّ على المأثور وعدم الابتداع في الأذكار والأدعية',
+    ];
+    expect(
+      headings.map((h) => chapter.indexWhere((row) => row['body'] == h)),
+      [3, 11, 15, 25],
+    );
+    expect(chapter[15]['source'], contains('ومع ذلك فهناك ضوابطُ'));
+    const sayings = [
+      'قال الإمام أبو بكر محمد بن الوليد الطُّرْشوشي',
+      'وقال القاضي عياض',
+      'وقال شيخ الإسلام أحمد بن تيميَّةَ',
+      'وقال ذَهَبِيُّ العصرِ',
+    ];
+    expect(
+      sayings.map(
+        (s) => chapter.indexWhere(
+          (row) => (row['body']! as String).startsWith(s),
+        ),
+      ),
+      [26, 27, 28, 29],
+    );
+    expect(chapter[27]['id'], 1012);
+    expect(chapter[27]['body'], contains('(دعاء آدم، دعاء نوح'));
+    expect(chapter[28]['id'], 1007);
+    expect(chapter[29]['body'], contains('وما أخسرَ صفقةَ'));
+    expect(chapter[2]['body'], contains('إنَّ الله لم يفرض على عباده'));
+    expect(
+      chapter[0]['body'],
+      contains('﴿ وَٱذۡكُرُواْ ٱللَّهَ كَثِيرٗا لَّعَلَّكُمۡ تُفۡلِحُونَ ﴾'),
+    );
+    expect(text(chapter), isNot(contains('QuranText')));
   });
 
   test('morning and evening adhkar follow pages 29-68 of the book (#171)',

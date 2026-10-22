@@ -123,8 +123,8 @@ void main() {
   });
 
   test('the map fails when an id is removed from it', () {
-    final changed = markdown.replaceFirst('| 101, 102 |', '| 102 |');
-    expect(problemsOf(changed), ['قسم محتوى 101 في 0 صفوف، والمطلوب صف واحد']);
+    final changed = markdown.replaceFirst('| 171 |', '| — |');
+    expect(problemsOf(changed), ['قسم محتوى 171 في 0 صفوف، والمطلوب صف واحد']);
   });
 
   test('the map fails when an id is listed twice', () {
