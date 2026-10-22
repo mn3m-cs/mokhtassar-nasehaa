@@ -146,18 +146,14 @@ void main() {
   });
 
   test('a «قورن» row must name a pull request, not only a ticket', () {
-    const row = '| 69 | أذكار الاستيقاظ | 4 | لم يُقارَن | #172 |';
+    const row = '| 69 | أذكار الاستيقاظ | 4 | قورن | #172، طلب #217 |';
     expect(markdown, contains(row));
+    expect(problemsOf(markdown), isEmpty);
     final ticketOnly = markdown.replaceFirst(
       row,
       '| 69 | أذكار الاستيقاظ | 4 | قورن | #172 |',
     );
     expect(problemsOf(ticketOnly), ['صف «قورن» بلا رقم طلب دمج (ص69)']);
-    final withPull = markdown.replaceFirst(
-      row,
-      '| 69 | أذكار الاستيقاظ | 4 | قورن | #172، طلب #195 |',
-    );
-    expect(problemsOf(withPull), isEmpty);
   });
 
   test('the map fails on a gap or an overlap in the pages', () {
