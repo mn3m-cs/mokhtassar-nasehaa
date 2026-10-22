@@ -240,7 +240,7 @@ void main() {
         MAX("order") AS last,
         SUM(body IN ('الحمدُ للهِ', 'أعوذُ باللهِ من شرِّها',
                      'أعوذُ باللهِ من الشيطانِ الرجيمِ')) AS app_wording,
-        SUM("order" = 4 AND count = 1 AND search = 'فليستعذ بالله من شره') AS seek_refuge,
+        SUM("order" = 4 AND count = 0 AND search = 'فليستعذ بالله من شره') AS seek_refuge,
         SUM("order" = 5 AND count = 3) AS left_breathing,
         SUM("order" = 6 AND count = 3
             AND search = 'ويتعوذ بالله من الشيطان الرجيم') AS satan_refuge,

@@ -73,7 +73,7 @@ INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, sea
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (1644, 30, 1, 'إذا رأى في منامه ما يحب:', 0, 'من آداب الرؤيا. (ص135)', '', '', 'إذا رأى في منامه ما يحب', '', '');
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (969, 30, 2, 'يحمدُ اللهَ عليه، ولا يُحَدِّثْ به إلَّا مَنْ يُحِبُّ.', 0, 'من آداب الرؤيا. (ص135)', '', '', 'يحمد الله عليه ولا يحدث به إلا من يحب', '', '');
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (1645, 30, 3, 'وإذا رأى ما يكره:', 0, 'من آداب الرؤيا. (ص135)', '', '', 'وإذا رأى ما يكره', '', '');
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (970, 30, 4, 'فَلْيَسْتَعِذْ باللهِ من شَرِّه.', 1, 'من آداب الرؤيا. (ص135)', '', '', 'فليستعذ بالله من شره', '', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (970, 30, 4, 'فَلْيَسْتَعِذْ باللهِ من شَرِّه.', 0, 'من آداب الرؤيا. (ص135)', '', '', 'فليستعذ بالله من شره', '', '');
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (971, 30, 5, 'وَيَنفُثُ عن يَسارِه.', 3, 'من آداب الرؤيا. (ص136)
 
 حاشية: النفث: نفخٌ لطيفٌ لا ريق معه، وفي رواية: «فليبصق»، وفي رواية: «فليتفل».', '', '', 'وينفث عن يساره', '', '');
