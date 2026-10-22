@@ -62,6 +62,6 @@ void main() {
     expect(keepingOf(61), ProgressKeeping.none, reason: 'eating');
     expect(keepingOf(1), ProgressKeeping.forToday);
     expect(keepingOf(18), ProgressKeeping.forToday);
-    expect(keepingOf(77), ProgressKeeping.always, reason: 'two levels down');
+    expect(keepingOf(156), ProgressKeeping.always, reason: 'two levels down');
   });
 }
