@@ -249,14 +249,14 @@ void main() {
       FROM contents
       WHERE titleId = 32
         AND search LIKE 'اللهم إني أستخيرك بعلمك%ثم رضني به'
-        AND source LIKE '%ص88–89%'
+        AND source LIKE '%ص140–141%'
     ''');
     final distressSection = await database.rawQuery('''
       SELECT
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 9 AND search LIKE '%ابن أمتك في قبضتك ناصيتي بيدك%') AS complete_distress_dua
+        SUM("order" = 10 AND search LIKE '%ابن أمتك في قبضتك ناصيتي بيدك%') AS complete_distress_dua
       FROM contents
       WHERE titleId = 33
     ''');
@@ -274,8 +274,8 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 3 AND count = 3) AS repeated_refuge,
-        SUM("order" = 4 AND count = 3) AS repeated_curse
+        SUM("order" = 4 AND count = 3) AS repeated_refuge,
+        SUM("order" = 5 AND count = 3) AS repeated_curse
       FROM contents
       WHERE titleId = 35
     ''');
@@ -463,6 +463,30 @@ void main() {
       FROM contents
       WHERE titleId IN (10, 11, 12, 13, 14, 15, 17)
     ''');
+    final incidentalPages140To149 = await database.rawQuery('''
+      SELECT
+        COUNT(*) AS rows,
+        SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
+        SUM(source LIKE '%(ص8%' OR source LIKE '%(ص9%') AS earlier_edition_pages,
+        SUM(count = 0) AS passages,
+        SUM(titleId = 32 AND count = 0 AND search LIKE 'إذا هم بالأمر فليركع%ينوي بهما الاستخارة%') AS istikhara_instruction,
+        SUM(titleId = 32 AND count = 1 AND source LIKE '%ينوي بهما%') AS istikhara_in_source,
+        SUM(titleId = 32 AND count = 0 AND search LIKE 'تنبيه مما لا أصل له%') AS istikhara_note,
+        SUM(titleId = 33 AND count = 0 AND search = 'وليكن أكثر دعائه أن يقول') AS most_of_his_dua,
+        SUM(titleId = 33 AND "order" = 6 AND body LIKE '﴿%ءَاتِنَا%﴾') AS verse_201,
+        SUM(titleId = 33 AND source LIKE '%جَهْد البلاء: بفتح الجيم؛ كُلُّ ما%') AS jahd_footnote_in_book_order,
+        SUM(titleId = 35 AND count = 0 AND search = 'ويقول') AS satan_says,
+        SUM(titleId = 35 AND search LIKE '%إلا طارقا يطرق بخير يا رحمن')
+          AS knocker_without_comma,
+        SUM(titleId = 35 AND body LIKE '%طارقٍ يطرقُ، إلا طارقًا يطرقُ بخيرٍ يا رحمن'
+            AND source LIKE '%تنوير الحوالك%') AS knocker_footnote,
+        SUM(titleId = 36 AND body LIKE '%(أو: قَدَرُ اللهِ)%') AS or_alternative,
+        SUM(titleId = 37 AND source LIKE '%غليظ الأرض%') AS hazn_footnote,
+        SUM(titleId = 38 AND count = 0 AND search LIKE 'يمضي فيها متوكلا%') AS tira_instruction,
+        SUM(titleId = 38 AND count = 1 AND source LIKE '%أنت سبحانك%') AS tira_footnote
+      FROM contents
+      WHERE titleId BETWEEN 32 AND 40
+    ''');
     final pilgrimageGuide = await database.rawQuery('''
       WITH RECURSIVE ancestry(id, depth) AS (
         SELECT id, 1 FROM titles WHERE parentId IS NULL
@@ -613,7 +637,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 148);
+    expect(await database.getVersion(), 149);
     expect(titleCount.single, {'count': 137});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -629,6 +653,26 @@ void main() {
       'introduction_titles': 0,
       'introduction_rows': 0,
       'introduction_as_footnote': 1,
+    });
+    // pp140-149 (#177): what the book prints, no more and no less.
+    expect(incidentalPages140To149.single, {
+      'rows': 35,
+      'judgments_or_virtues': 0,
+      'earlier_edition_pages': 0,
+      'passages': 5,
+      'istikhara_instruction': 1,
+      'istikhara_in_source': 0,
+      'istikhara_note': 1,
+      'most_of_his_dua': 1,
+      'verse_201': 1,
+      'jahd_footnote_in_book_order': 1,
+      'satan_says': 1,
+      'knocker_without_comma': 1,
+      'knocker_footnote': 1,
+      'or_alternative': 1,
+      'hazn_footnote': 1,
+      'tira_instruction': 1,
+      'tira_footnote': 1,
     });
     // pp91-115 (#174): what the book prints, no more and no less.
     expect(prayerPages91To115.single, {
@@ -929,11 +973,11 @@ void main() {
       'return_to_bed': 1,
       'al_imran_ending': 1,
     });
-    expect(istikharaSection.single, {'count': 1, 'first': 1, 'last': 1});
+    expect(istikharaSection.single, {'count': 1, 'first': 2, 'last': 2});
     expect(distressSection.single, {
-      'count': 9,
+      'count': 10,
       'first': 1,
-      'last': 9,
+      'last': 10,
       'complete_distress_dua': 1,
     });
     expect(fearSection.single, {
@@ -943,16 +987,20 @@ void main() {
       'qasas_dua': 1,
     });
     expect(satanSection.single, {
-      'count': 6,
+      'count': 7,
       'first': 1,
-      'last': 6,
+      'last': 7,
       'repeated_refuge': 1,
       'repeated_curse': 1,
     });
     expect(situationalSections, [
       {'id': 36, 'name': 'ما يقول إذا غلبه أمر', 'count': 1},
       {'id': 37, 'name': 'ما يقول إذا استصعب عليه أمر', 'count': 1},
-      {'id': 38, 'name': 'ما يقول إذا تطيَّر بشيء', 'count': 1},
+      {
+        'id': 38,
+        'name': 'ما يقول مَن رَدَّته الطِّيَرَةُ عن حاجته',
+        'count': 2
+      },
       {
         'id': 39,
         'name': 'ما يقول إذا أصابته نكبة قليلة أو كثيرة',
@@ -1250,7 +1298,7 @@ void main() {
 
     final quotedVerses = await database.rawQuery('''
       SELECT id FROM contents
-      WHERE id IN (227, 236, 253, 273, 304, 305, 306, 327, 328, 337, 355, 356,
+      WHERE id IN (222, 227, 236, 253, 273, 304, 305, 306, 327, 328, 337, 355, 356,
                    398, 399, 412, 413, 415, 416, 417, 419, 420, 421, 422, 423,
                    425, 426, 427, 428, 429, 430, 431, 432, 454, 468, 607, 608,
                    609, 610, 626, 627, 629, 630, 647, 648, 649, 686, 687, 688,
@@ -1260,7 +1308,7 @@ void main() {
     ''');
     final supplicationsInTheBooksWords = await database.rawQuery('''
       SELECT id FROM contents
-      WHERE id IN (222, 251, 260) AND body NOT LIKE '%QuranText%'
+      WHERE id IN (251, 260) AND body NOT LIKE '%QuranText%'
         AND body NOT LIKE '%﴿%'
     ''');
     final secondRabbana = await database.rawQuery('''
@@ -1272,11 +1320,12 @@ void main() {
     final ridingVerseOnce = await database.rawQuery('''
       SELECT id FROM contents WHERE id = 872 AND body LIKE '%QuranText%'
     ''');
-    expect(quotedVerses.length, 68,
+    expect(quotedVerses.length, 69,
         reason: 'the book quotes these verses in part; the app shows the same '
             'words, not the whole verse (#116)');
-    expect(supplicationsInTheBooksWords.length, 3,
-        reason: 'pp89, 97, 99 write these as supplications, not as verses');
+    expect(supplicationsInTheBooksWords.length, 2,
+        reason: 'pp97, 99 write these as supplications, not as verses; p142 '
+            'prints «ربنا آتنا» as the verse (#177)');
     expect(secondRabbana.single, {'id': 609},
         reason: 'p207 quotes al-Aʿraf 126 from the second «ربنا»');
     expect(fatihaVerses.single, {'id': 1037},
@@ -1308,9 +1357,9 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 127},
-        reason: 'pp29-68 (#171), pp91-115 (#174) and pp116-129 (#175) print '
-            'their footnotes');
+    expect(recordsWithFootnotes.single, {'count': 132},
+        reason: 'pp29-68 (#171), pp91-115 (#174), pp116-129 (#175) and '
+            'pp140-149 (#177) print their footnotes');
   });
 
   test('the closing date of the introduction is a small line of its own (#140)',
