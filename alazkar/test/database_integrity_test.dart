@@ -676,7 +676,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 153);
+    expect(await database.getVersion(), 154);
     expect(titleCount.single, {'count': 133});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1579,10 +1579,11 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 176},
-        reason: 'pp29-68 (#171), pp91-115 (#174), pp116-129 (#175), '
-            'pp140-149 (#177), pp175-207 (#179), pp177-226 (#180), '
-            'pp247-293 (#182) and pp372-380 (#183) print their footnotes');
+    expect(recordsWithFootnotes.single, {'count': 178},
+        reason: 'pp29-68 (#171), pp69-75 (#172), pp91-115 (#174), '
+            'pp116-129 (#175), pp140-149 (#177), pp175-207 (#179), '
+            'pp177-226 (#180), pp247-293 (#182) and pp372-380 (#183) print '
+            'their footnotes');
   });
 
   test('travel to celestial matters follow pp177-226 of the book (#180)',
@@ -1700,6 +1701,129 @@ void main() {
       'sneeze_alternatives': 4,
       'intercourse_heading': 1,
     });
+  });
+
+  test('waking, toilet, ablution, clothing and house follow pp69-75 (#172)',
+      () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    Future<Map<String, Object?>> row(int id) async => (await database.rawQuery(
+          'SELECT titleId, "order", body, count, source FROM contents '
+          'WHERE id = ?',
+          [id],
+        ))
+            .single;
+
+    final sections = await database.rawQuery('''
+      SELECT titleId AS id, COUNT(*) AS rows, SUM(count = 0) AS passages,
+             SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
+             SUM(source NOT LIKE '%. (ص6_)%' AND source NOT LIKE '%. (ص7_)%'
+                 AND source NOT LIKE '%. (ص69–70)%') AS unpaged
+      FROM contents
+      WHERE titleId IN (4, 94, 95, 5, 6, 7)
+      GROUP BY titleId ORDER BY titleId
+    ''');
+    final unprinted = await database.rawQuery('''
+      SELECT id FROM contents
+      WHERE titleId IN (4, 94, 95, 5, 6, 7)
+        AND (source LIKE '%رضي الله عنه%' OR source LIKE '%البخاري%'
+             OR source LIKE '%الترمذي%' OR source LIKE '%النور%'
+             OR source LIKE '%(صحيح)%' OR source LIKE '%(حسن)%'
+             OR source LIKE '%ص 34%' OR body LIKE 'بسم الله%')
+    ''');
+    final houseTitle = await database.rawQuery(
+      'SELECT name FROM titles WHERE id = 7',
+    );
+
+    expect(sections, [
+      {
+        'id': 4,
+        'rows': 3,
+        'passages': 0,
+        'judgments_or_virtues': 0,
+        'unpaged': 0,
+      },
+      {
+        'id': 5,
+        'rows': 3,
+        'passages': 0,
+        'judgments_or_virtues': 0,
+        'unpaged': 0,
+      },
+      {
+        'id': 6,
+        'rows': 8,
+        'passages': 1,
+        'judgments_or_virtues': 0,
+        'unpaged': 0,
+      },
+      {
+        'id': 7,
+        'rows': 6,
+        'passages': 2,
+        'judgments_or_virtues': 0,
+        'unpaged': 0,
+      },
+      {
+        'id': 94,
+        'rows': 2,
+        'passages': 0,
+        'judgments_or_virtues': 0,
+        'unpaged': 0,
+      },
+      {
+        'id': 95,
+        'rows': 1,
+        'passages': 0,
+        'judgments_or_virtues': 0,
+        'unpaged': 0,
+      },
+    ]);
+    expect(unprinted, isEmpty,
+        reason: 'pp69-75 print no narration, grading or an-Nur verse here, '
+            'and write «باسم الله» with its alif');
+    expect(houseTitle.single['name'], 'أذكار دخول البيت، والخروج منه');
+
+    expect((await row(59))['source'],
+        'ما يقول إذا استيقظ من نومه. [«المسند» (١٧٢٩٦)]. (ص69–70)');
+    expect(
+      (await row(59))['body'],
+      'أعوذُ بالله من الشيطانِ الرجيم\nQuranText[(113:1:5),(114:1:6)]',
+      reason: 'pp69-70 print al-Falaq and an-Nas whole',
+    );
+
+    final naming = await row(1528);
+    expect(naming['titleId'], 6);
+    expect(naming['order'], 2);
+    expect(naming['count'], 0);
+    expect(naming['body'], 'يُسَمِّيه باسمه، ثُمَّ يقول:');
+    expect(
+        naming['source']! as String, contains('\n\nحاشية: «يسميه باسمه: يعني:'),
+        reason: 'p72 sets the footnote on «يسميه باسمه», not on the '
+            'supplication');
+    expect((await row(64))['source'],
+        'ما يقول إذا لَبِسَ ثوبًا جديدًا أونعلًا أو شبهه. (ص72)');
+    expect((await row(68))['source']! as String,
+        contains('للمخاطَب بذلك، أي أنه تطول حياته حتى يبلى الثوب ويخلق.'));
+
+    final greeting = await row(73);
+    expect(greeting['count'], 0,
+        reason: 'p74: «ثم ليسلم على أهله» is an instruction');
+    expect(greeting['source'], 'ما يقول إذا دخل بيته. (ص74)');
+    final siwak = await row(1529);
+    expect(siwak['titleId'], 7);
+    expect(siwak['order'], 5);
+    expect(siwak['count'], 0);
+    expect(siwak['body'], 'وكان ﷺ إذا دَخَلَ بيته بدأ بالسِّواك.');
+    expect(
+      (await row(74))['source'],
+      'ما يدعو به في بيته. [مُسلم: ٢٧٠٥]. (ص75)\n\nحاشية: وفي رواية: كبيرًا.',
+    );
   });
 
   test('the closing date of the introduction is a small line of its own (#140)',
