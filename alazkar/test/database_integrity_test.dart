@@ -1054,7 +1054,7 @@ void main() {
       'seek_refuge': 1,
       'left_breathing': 1,
       'satan_refuge': 1,
-      'prose_rows': 7,
+      'prose_rows': 8,
       'graded': 0,
     });
     expect(nightAwakeningSection.single, {
