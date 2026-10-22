@@ -1161,7 +1161,7 @@ void main() {
       absoluteDhikrContent,
       [
         {'titleId': 149, 'count': 16, 'zero_count': 16, 'first': 1, 'last': 16},
-        {'titleId': 151, 'count': 13, 'zero_count': 13, 'first': 1, 'last': 13},
+        {'titleId': 151, 'count': 10, 'zero_count': 10, 'first': 1, 'last': 10},
         {'titleId': 152, 'count': 15, 'zero_count': 15, 'first': 1, 'last': 15},
         {'titleId': 153, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
         {'titleId': 154, 'count': 17, 'zero_count': 17, 'first': 1, 'last': 17},
@@ -1223,9 +1223,9 @@ void main() {
       '147:48',
       '148:7',
       '149:16',
-      '151:13',
+      '151:10',
       '152:15',
-      '161:4',
+      '161:7',
       '165:26',
     ]);
     expect(
@@ -1397,8 +1397,14 @@ void main() {
     expect(await childIds('parentId = 163'), [66, 67]);
     expect(await childIds('parentId = 142'), [161, 151, 70]);
     expect(
+        await childIds('parentId = 140'), [147, 141, 143, 142, 144, 145, 146],
+        reason: 'p281 prints tahlil (النوع الثاني) before p287 prints the '
+            'prayers on the Prophet (النوع الثالث)');
+    expect(
       salawatIntroduction.map((row) => row['id']),
-      [1487, 1089, 1488, 1489],
+      [1487, 1089, 1488, 1489, 1490, 1491, 1492],
+      reason: 'p288 prints three hadiths under «النوع الثالث» before the '
+          '«فضل الصلاة والسلام» heading of p289',
     );
     expect(
         salawatIntroductionText.single,
@@ -1408,12 +1414,14 @@ void main() {
           'izz': 0,
           'ibn_qayyim_long': 0,
           'ibn_qayyim': 1,
-          'prose': 4,
+          'prose': 7,
         },
         reason: "pp287-288 print the heading, al-Asma'i, Abu al-Aliya and "
             'Ibn al-Qayyim, and no sayings of Sahl or al-Izz (#182)');
     expect(paraphrasedSummaries, isEmpty);
-    expect(salawatVirtuesOpening.single, {'id': 1490});
+    expect(salawatVirtuesOpening.single, {'id': 1493},
+        reason: 'section 151 opens with the p289 heading; the three hadiths '
+            'before it are in 161');
 
     final footnotesAsVirtues = await database.rawQuery('''
       SELECT id FROM contents WHERE id > 1006 AND TRIM(fadl) <> ''
