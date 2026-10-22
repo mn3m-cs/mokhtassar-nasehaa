@@ -2741,7 +2741,7 @@ void main() {
       (id: 899, page: 85, misprint: 'عى ', correct: 'محمولٌ على'),
       (id: 1599, page: 152, misprint: 'أشرنا إليه ', correct: 'أشرنا إليها'),
       (id: 1599, page: 154, misprint: 'المرضي', correct: 'المرضى يتحسنون'),
-      (id: 1496, page: 290, misprint: 'ثلثا اليل', correct: 'ثلثا الليل'),
+      (id: 1496, page: 289, misprint: 'ثلثا اليل', correct: 'ثلثا الليل'),
       (id: 1116, page: 298, misprint: 'عنه قال', correct: 'عنها قال'),
       (id: 1751, page: 309, misprint: '[الكهف: ٤٩]', correct: '[الكهف: ٤٦]'),
       (id: 1123, page: 312, misprint: 'عمر رضي', correct: 'عمرو رضي'),
