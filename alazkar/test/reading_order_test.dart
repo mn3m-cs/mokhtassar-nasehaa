@@ -26,7 +26,9 @@ void main() {
 
     final ids = stateOf(titles).readingOrder().map((t) => t.id).toList();
 
-    expect(ids.take(5), [167, 102, 104, 1, 2]);
+    expect(ids.take(6), [171, 102, 104, 1, 2, 3]);
+    expect(ids.indexOf(68), ids.indexOf(67) + 1,
+        reason: "p242 prints the gathering's dhikr right after the sunna's");
     expect(ids.toSet().length, ids.length);
     expect(
       ids.length,
