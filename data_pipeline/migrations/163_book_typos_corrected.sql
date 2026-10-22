@@ -116,5 +116,8 @@ UPDATE contents SET body = 'وعن الطُّفَيْلِ بن أُبَيِّ ب
 -- p375
 UPDATE contents SET body = 'قال تعالى: ﴿ وَقَالَ رَبُّكُمُ ٱدۡعُونِيٓ أَسۡتَجِبۡ لَكُمۡ ﴾ [غافر: ٦٠]', search = 'قال تعالى ﴿ وقال ربكم ٱدۡعوني أسۡتجبۡ لكمۡ ﴾ غافر ٦٠' WHERE id = 1176;
 
+-- p135: the book prints «وإذا رأى ما يكره» without a colon (owner, 2026-10-22)
+UPDATE contents SET body = 'وإذا رأى ما يكره', search = 'وإذا رأى ما يكره' WHERE id = 1645;
+
 PRAGMA user_version = 163;
 COMMIT;

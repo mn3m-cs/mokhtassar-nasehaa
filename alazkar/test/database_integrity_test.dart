@@ -2772,6 +2772,12 @@ void main() {
       (id: 804, page: 437, misprint: 'باسمعي', correct: 'بسمعي'),
       (id: 2090, page: 438, misprint: 'و بسطتَ', correct: 'وبسطتَ'),
     ];
+    expect(
+      (await database.rawQuery('SELECT body FROM contents WHERE id = 1645'))
+          .single['body'],
+      'وإذا رأى ما يكره',
+      reason: 'p135 prints no colon after this line',
+    );
     for (final c in corrections) {
       final text = (await database.rawQuery(
         "SELECT body || '\n' || source AS text FROM contents WHERE id = ?",
