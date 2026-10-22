@@ -676,8 +676,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 153);
-    expect(titleCount.single, {'count': 133});
+    expect(await database.getVersion(), 154);
+    expect(titleCount.single, {'count': 136});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -784,7 +784,7 @@ void main() {
     ]);
     expect(
       prayerSupplementSections.map((row) => row['count']),
-      [8, 9, 2, 2, 3, 7, 5],
+      [9, 9, 2, 2, 3, 7, 5],
     );
     expect(
       prayerSupplementSections.every(
@@ -824,7 +824,7 @@ void main() {
       'mosque_parent': 108,
       'about_book_children': 4,
       'morning_evening_children': 4,
-      'mosque_children': 2,
+      'mosque_children': 5,
       'zero_count_prose': 6,
       'prose_count': 6,
       'introduction_searchable': 1,
@@ -892,8 +892,8 @@ void main() {
       },
       {'order': 5, 'name': 'ما يقول إذا خرج من الخلاء', 'count': 1},
     ]);
-    expect(mosqueSection.single, {'count': 13, 'first': 1, 'last': 13});
-    expect(adhanListenerSection.single, {'count': 13, 'first': 1, 'last': 13});
+    expect(mosqueSection.single, {'count': 2, 'first': 1, 'last': 2});
+    expect(adhanListenerSection.single, {'count': 26, 'first': 1, 'last': 26});
     expect(
       duaAlistiftahSection.single,
       {'count': 22, 'first': 1, 'last': 22},
@@ -1480,9 +1480,9 @@ void main() {
     ''');
     expect(
       virtueRecords.map((row) => row['id']),
-      [274, 277, 906],
+      [274, 277],
       reason: 'a virtue line shows only what the book prints in its main '
-          'text under the zikr (p104, p105, p47); the hadith that opens the '
+          'text under the zikr (p104, p105); the hadith that opens the '
           'Arafa dhikr (p198) is a passage above it, not a virtue; excerpts of the '
           'takhrij hadiths stay whole in the source',
     );
@@ -1579,8 +1579,9 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 176},
-        reason: 'pp29-68 (#171), pp91-115 (#174), pp116-129 (#175), '
+    expect(recordsWithFootnotes.single, {'count': 180},
+        reason:
+            'pp29-68 (#171), pp76-90 (#173), pp91-115 (#174), pp116-129 (#175), '
             'pp140-149 (#177), pp175-207 (#179), pp177-226 (#180), '
             'pp247-293 (#182) and pp372-380 (#183) print their footnotes');
   });
@@ -1842,6 +1843,148 @@ void main() {
       'الحادي',
     ]);
     expect(adab.every((row) => row['count'] == 0 && row['hokm'] == ''), isTrue);
+  });
+
+  test('the mosque and adhan chapters follow pp76-90 of the book (#173)',
+      () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    Future<List<Object?>> column(String sql) async =>
+        (await database.rawQuery(sql)).map((row) => row.values.single).toList();
+    Future<Map<String, Object?>> row(int id) async => (await database.rawQuery(
+          'SELECT titleId, body, count, source, hokm, fadl '
+          'FROM contents WHERE id = ?',
+          [id],
+        ))
+            .single;
+
+    expect(
+      await column('SELECT name FROM titles WHERE id = 108'),
+      ['أذكار المسجد'],
+    );
+    expect(
+      await column(
+          'SELECT name FROM titles WHERE parentId = 108 ORDER BY "order"'),
+      [
+        'ما يقول إذا توجَّه إلى المسجد',
+        'ما يقول عند دخول المسجد',
+        'ما يقول في المسجد',
+        'ما يقول إذا سمع من ينشد ضالة في المسجد',
+        'ما يقول عند الخروج من المسجد',
+      ],
+      reason: 'p77 prints «ما يقول في المسجد» between entering the mosque '
+          'and the lost property, not after leaving it',
+    );
+    const chapterRows = '''
+      titleId IN (SELECT id FROM titles WHERE parentId = 108)
+      OR titleId IN (9, 114)
+    ''';
+    expect(
+      await column('SELECT COUNT(*) FROM contents WHERE $chapterRows'),
+      [54],
+    );
+    expect(
+      await column('''
+        SELECT COUNT(*) FROM contents
+        WHERE ($chapterRows)
+          AND (hokm != '' OR fadl != ''
+               OR source NOT GLOB '*(ص[0-9]*)*'
+               OR source GLOB '*(ص[1-6][0-9])*'
+               OR source GLOB '*(ص7[0-5])*')
+      '''),
+      [0],
+      reason: 'no grade or virtue is printed under these dhikr, and every '
+          "page is the 10th edition's (pp76-90), not the 1443 pp39-48",
+    );
+
+    expect(await row(1528), {
+      'titleId': 8,
+      'body': 'يقول ما تقدَّم في: (ما يقول إذا خَرَجَ من بيته)، ويَزِيد:',
+      'count': 0,
+      'source': 'ما يقول إذا توجَّه إلى المسجد. (ص76)\n\nحاشية: تقدَّم (ص٧٤).',
+      'hokm': '',
+      'fadl': '',
+    });
+    expect((await row(77))['body'], startsWith('باسمِ الله،'));
+    expect((await row(894))['body'], startsWith('باسم الله،'));
+    expect(
+      await column(
+          'SELECT body FROM contents WHERE id IN (79, 81, 896, 897) ORDER BY id'),
+      everyElement(startsWith('أو: ')),
+    );
+    expect(
+      (await row(1010))['source'],
+      endsWith('حاشية: انظر: «الأذكار المطلقة» (ص٢٤٧)، وما بعدها، '
+          'و«الأدعية المطلقة» (ص٣٨١)، وما بعدها.'),
+    );
+    expect(
+      await column('SELECT "order" FROM contents WHERE id IN (1531, 892) '
+          'ORDER BY id'),
+      [7, 6],
+    );
+    expect(
+      await column('SELECT count FROM contents WHERE titleId = 9 '
+          'ORDER BY "order"'),
+      [
+        0,
+        2,
+        4,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      reason: 'the adhan is printed in steps; [مرَّتين] and [أربعًا] are '
+          'its counts, and the instructions between are passages',
+    );
+    expect(
+      (await row(1534))['source'],
+      startsWith('صفة الأذان. [أربعًا]. (ص79)\n\nحاشية: قال الإمام النووي'),
+    );
+    expect((await row(1534))['source'], endsWith('وكلتا الصفتين مشروعة.'));
+    expect(
+      (await row(1540))['source'],
+      contains('\nولا تناقض في حالة إتيان المؤذن'),
+      reason: 'p83 footnote 1 has two paragraphs in one note',
+    );
+    expect((await row(899))['body'].toString().split('\n'), hasLength(6));
+    expect(
+      (await row(906))['body'],
+      'ويُكْثِرُ الدُّعاءَ بين الأذانِ والإقامةِ؛ لقول رسول الله ﷺ: '
+      '«الدُّعاءُ بين الأذانِ والإقامةِ مُستجابٌ، فادْعُوا».',
+    );
+    expect((await row(1545))['body'], startsWith('وقال رجلٌ: يا رسولَ الله،'));
+    expect(
+      (await row(904))['source'],
+      'ما يقول إذا سمع المؤذن. (ص88)\n\nحاشية: انظر: (ص١٠٩).',
+    );
+
+    expect((await row(1546))['body'], 'أو أيًّا من الوصايا التالية:');
+    expect((await row(1018))['body'], contains('لِيَلِيَنِي منكم'));
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
