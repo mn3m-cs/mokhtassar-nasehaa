@@ -214,12 +214,22 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 11 AND search LIKE '%والقرآن%' AND search NOT LIKE '%والفرقان%') AS corrected_revelation,
-        SUM("order" = 13 AND search LIKE '%وثقل ميزاني%') AS unsupported_addition,
-        SUM("order" BETWEEN 15 AND 23) AS tasbih_rows,
-        SUM("order" = 15 AND count = 34) AS first_takbir,
-        SUM("order" = 22 AND count = 34) AS third_tasbih,
-        SUM("order" = 24 AND hokm = 'أثر' AND source LIKE 'موقوف على عائشة%') AS stopped_report
+        SUM("order" = 2 AND count = 3
+            AND body LIKE '(يجمع كَفَّيْهِ%﴿ قُلۡ هُوَ ٱللَّهُ أَحَدٌ ﴾، والمعوِّذتين%'
+            AND body NOT LIKE '%QuranText%') AS printed_mu_awwidhatayn,
+        SUM(count = 0) AS lead_ins,
+        SUM("order" = 11 AND search LIKE '%لا إله إلا أنت رب كل شيء%'
+            AND search NOT LIKE '%أشهد%') AS printed_tahlil,
+        SUM("order" = 12 AND search LIKE '%والفرقان%' AND search NOT LIKE '%والقرآن%') AS printed_furqan,
+        SUM("order" = 14 AND search LIKE 'باسم الله وضعت جنبي%وثقل ميزاني%') AS printed_mizan,
+        SUM("order" BETWEEN 17 AND 25) AS tasbih_rows,
+        SUM("order" IN (20, 23) AND body = 'أو: اللهُ أكبرُ') AS tasbih_alternatives,
+        SUM("order" = 17 AND count = 34) AS first_takbir,
+        SUM("order" = 24 AND count = 34) AS third_tasbih,
+        SUM("order" = 26 AND source LIKE '%[موقوفٌ على عائشة رضي الله عنها]%') AS stopped_report,
+        SUM("order" = 27 AND body LIKE 'يقرأ سورة:%QuranText[(109:1:6)]%حتى يختِمَها.') AS kafirun,
+        SUM(hokm != '') AS graded,
+        SUM(source LIKE '%(ص7_)%' OR source LIKE '%(ص8_)%') AS old_edition_pages
       FROM contents
       WHERE titleId = 18
     ''');
@@ -228,9 +238,14 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 1 AND search = 'الحمد لله') AS liked_vision,
-        SUM("order" = 3 AND count = 3) AS left_breathing,
-        SUM("order" = 4 AND count = 3) AS satan_refuge
+        SUM(body IN ('الحمدُ للهِ', 'أعوذُ باللهِ من شرِّها',
+                     'أعوذُ باللهِ من الشيطانِ الرجيمِ')) AS app_wording,
+        SUM("order" = 4 AND count = 0 AND search = 'فليستعذ بالله من شره') AS seek_refuge,
+        SUM("order" = 5 AND count = 3) AS left_breathing,
+        SUM("order" = 6 AND count = 3
+            AND search = 'ويتعوذ بالله من الشيطان الرجيم') AS satan_refuge,
+        SUM(count = 0) AS prose_rows,
+        SUM(hokm != '') AS graded
       FROM contents
       WHERE titleId = 30
     ''');
@@ -239,10 +254,30 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 3 AND search LIKE 'باسمك اللهم وضعت جنبي%') AS return_to_bed,
-        SUM("order" = 4 AND search = '3190200') AS al_imran_ending
+        SUM("order" = 1 AND count = 0
+            AND body LIKE 'قال رسول الله ﷺ: «من تَعارَّ%قُبِلت صلاتُه».'
+            AND source LIKE '%[الحج: ٢٤]».اهـ.') AS taarra_hadith,
+        SUM("order" = 3 AND search LIKE '%وما بينهما العزيز الغفار') AS tadawwur_dhikr,
+        SUM("order" = 4 AND body LIKE '%مَن آوَى إلى فِراشِهِ طاهِرًا%') AS pure_sleeper,
+        SUM("order" = 6 AND search LIKE 'باسمك اللهم وضعت جنبي%') AS return_to_bed,
+        SUM(hokm != '') AS graded
       FROM contents
       WHERE titleId = 31
+    ''');
+    // p139 prints its own heading (index p450); p130's «من آداب النوم» is a footnote.
+    final nightExitSection = await database.rawQuery('''
+      SELECT
+        titles.name,
+        titles.parentId,
+        titles."order",
+        COUNT(contents.id) AS count,
+        SUM(contents."order" = 1 AND contents.search LIKE '%3190200') AS al_imran_ending,
+        SUM(contents.count = 0 AND contents.body LIKE 'وقال ﷺ: «%') AS hadiths,
+        (SELECT COUNT(*) FROM titles WHERE id = 125) AS sleep_etiquette_titles,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 125) AS sleep_etiquette_rows
+      FROM titles
+      JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id = 170
     ''');
     final istikharaSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
@@ -532,8 +567,8 @@ void main() {
       SELECT
         (SELECT COUNT(*) FROM titles
          WHERE id BETWEEN 122 AND 124 AND nodeType = 'category') AS categories,
-        (SELECT COUNT(*) FROM contents
-         WHERE titleId BETWEEN 125 AND 127 AND count = 0) AS prose_rows,
+        (SELECT COUNT(*) FROM titles
+         WHERE id BETWEEN 125 AND 127) AS removed_guidance,
         (SELECT parentId FROM titles WHERE id = 18) AS sleep_parent,
         (SELECT parentId FROM titles WHERE id = 41) AS illness_parent,
         (SELECT parentId FROM titles WHERE id = 45) AS death_parent
@@ -673,7 +708,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 157);
+    expect(await database.getVersion(), 158);
     expect(titleCount.single, {'count': 132});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -742,7 +777,7 @@ void main() {
     });
     expect(guidanceNotes.single, {
       'categories': 3,
-      'prose_rows': 1,
+      'removed_guidance': 0,
       'sleep_parent': 122,
       'illness_parent': 123,
       'death_parent': 124,
@@ -992,31 +1027,55 @@ void main() {
         reason: "pp116-121: six tasbih forms as one choice, with the book's "
             "instructions and sub-headings, and no grade the book does not "
             "print (#175)");
+    // pp130-139 (#176): what the book prints, no more and no less.
     expect(sleepSection.single, {
-      'count': 26,
+      'count': 29,
       'first': 1,
-      'last': 26,
-      'corrected_revelation': 1,
-      'unsupported_addition': 0,
+      'last': 29,
+      'printed_mu_awwidhatayn': 1,
+      'lead_ins': 3,
+      'printed_tahlil': 1,
+      'printed_furqan': 1,
+      'printed_mizan': 1,
       'tasbih_rows': 9,
+      'tasbih_alternatives': 2,
       'first_takbir': 1,
       'third_tasbih': 1,
       'stopped_report': 1,
+      'kafirun': 1,
+      'graded': 0,
+      'old_edition_pages': 0,
     });
     expect(visionSection.single, {
-      'count': 7,
+      'count': 12,
       'first': 1,
-      'last': 7,
-      'liked_vision': 1,
+      'last': 12,
+      'app_wording': 0,
+      'seek_refuge': 1,
       'left_breathing': 1,
       'satan_refuge': 1,
+      'prose_rows': 8,
+      'graded': 0,
     });
     expect(nightAwakeningSection.single, {
-      'count': 4,
+      'count': 6,
       'first': 1,
-      'last': 4,
+      'last': 6,
+      'taarra_hadith': 1,
+      'tadawwur_dhikr': 1,
+      'pure_sleeper': 1,
       'return_to_bed': 1,
+      'graded': 0,
+    });
+    expect(nightExitSection.single, {
+      'name': 'ما يقول إذا استيقظ في الليل، وخرج من بيته',
+      'parentId': 122,
+      'order': 4,
+      'count': 3,
       'al_imran_ending': 1,
+      'hadiths': 2,
+      'sleep_etiquette_titles': 0,
+      'sleep_etiquette_rows': 0,
     });
     expect(istikharaSection.single, {'count': 1, 'first': 2, 'last': 2});
     expect(distressSection.single, {
@@ -1569,10 +1628,10 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 196},
+    expect(recordsWithFootnotes.single, {'count': 199},
         reason:
             'pp29-68 (#171), pp69-75 (#172), pp76-90 (#173), pp91-115 (#174), pp116-129 (#175), '
-            'pp140-149 (#177), pp150-174 (#178), pp175-207 (#179), '
+            'pp130-139 (#176), pp140-149 (#177), pp150-174 (#178), pp175-207 (#179), '
             'pp177-226 (#180), pp227-244 (#181), pp247-293 (#182) and '
             'pp372-380 (#183) print their footnotes');
   });
