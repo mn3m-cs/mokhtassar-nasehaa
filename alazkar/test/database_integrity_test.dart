@@ -2741,6 +2741,7 @@ void main() {
       (id: 899, page: 85, misprint: 'عى ', correct: 'محمولٌ على'),
       (id: 1599, page: 152, misprint: 'أشرنا إليه ', correct: 'أشرنا إليها'),
       (id: 1599, page: 154, misprint: 'المرضي', correct: 'المرضى يتحسنون'),
+      (id: 1496, page: 290, misprint: 'ثلثا اليل', correct: 'ثلثا الليل'),
       (id: 1116, page: 298, misprint: 'عنه قال', correct: 'عنها قال'),
       (id: 1751, page: 309, misprint: '[الكهف: ٤٩]', correct: '[الكهف: ٤٦]'),
       (id: 1123, page: 312, misprint: 'عمر رضي', correct: 'عمرو رضي'),
@@ -2757,6 +2758,7 @@ void main() {
       (id: 1149, page: 341, misprint: 'فيها يلائمه', correct: 'فيما يلائمه'),
       (id: 1951, page: 364, misprint: '»، .', correct: 'لأُعِيذَنَّه».'),
       (id: 1977, page: 370, misprint: 'قال: ﴿', correct: 'قال: «﴿'),
+      (id: 1176, page: 375, misprint: '﴾. [غافر', correct: '﴾ [غافر: ٦٠]'),
       (id: 830, page: 383, misprint: '[البقرة: ٢٨٦]', correct: '[البقرة: ٢٨٥]'),
       (id: 770, page: 406, misprint: 'شرفتنة', correct: 'شر فتنة الفقر'),
       (
