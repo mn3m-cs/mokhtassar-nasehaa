@@ -131,9 +131,9 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM(search = 'اللهم اغفر لي وارحمني واجبرني وارفعني واهدني وعافني وارزقني') AS correct_between_dua,
+        SUM(search = '٢- اللهم اغفر لي وارحمني واجبرني وارفعني واهدني وعافني وارزقني') AS correct_between_dua,
         SUM(search LIKE '%فتبارك%') AS unprinted_tilawa_ending,
-        SUM(search LIKE 'اللهم اكتب لي بها عندك أجرا وضع عني بها وزرا%') AS ordered_tilawa_dua
+        SUM(search LIKE '٢- اللهم اكتب لي بها عندك أجرا وضع عني بها وزرا%') AS ordered_tilawa_dua
       FROM contents
       WHERE titleId = 13
     ''');
@@ -162,9 +162,9 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 7 AND search LIKE 'التحيات لله الزاكيات لله%') AS fifth_tashahhud,
-        SUM("order" = 9 AND search LIKE 'اللهم صل على محمد وعلى آل محمد%') AS first_salawat,
-        SUM("order" = 15 AND search LIKE 'اللهم صل على محمد وعلى آل محمد وبارك%') AS seventh_salawat,
+        SUM("order" = 7 AND search LIKE '٥- التحيات لله الزاكيات لله%') AS fifth_tashahhud,
+        SUM("order" = 9 AND search LIKE '١- اللهم صل على محمد وعلى آل محمد%') AS first_salawat,
+        SUM("order" = 15 AND search LIKE '٧- اللهم صل على محمد وعلى آل محمد وبارك%') AS seventh_salawat,
         SUM("order" = 4 AND count = 0 AND body = 'وفي روايةٍ: «عبدُه ورسولُه».') AS second_tashahhud_variant,
         SUM(count = 0) AS passages
       FROM contents
@@ -175,8 +175,8 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 13 AND search LIKE 'أحسن الكلام كلام الله وأحسن الهدي هدي محمد%') AS prophetic_guidance,
-        SUM("order" = 15 AND search LIKE 'اللهم اغفر لي ما قدمت%') AS closing_dua,
+        SUM("order" = 13 AND search LIKE '١١- أحسن الكلام كلام الله وأحسن الهدي هدي محمد%') AS prophetic_guidance,
+        SUM("order" = 15 AND search LIKE '١٢- اللهم اغفر لي ما قدمت%') AS closing_dua,
         SUM(count = 0) AS passages
       FROM contents
       WHERE titleId = 15
@@ -186,8 +186,8 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 1 AND search = 'يكبر الله عز وجل' AND count = 1) AS opening_takbir,
-        SUM("order" = 15 AND search = 'سبحان الله والحمد لله والله أكبر' AND count = 33) AS combined_tasbih,
+        SUM("order" = 1 AND search = '١- يكبر الله عز وجل' AND count = 1) AS opening_takbir,
+        SUM("order" = 15 AND search = '١٣- سبحان الله والحمد لله والله أكبر ٣٣ مرة' AND count = 33) AS combined_tasbih,
         SUM("order" BETWEEN 16 AND 20 AND body LIKE 'أو: %') AS tasbih_alternatives,
         SUM("order" = 18 AND count = 100 AND body LIKE '%(٢٥)%') AS fourth_formula,
         SUM("order" = 21 AND count = 0) AS fingers_note,
@@ -195,13 +195,13 @@ void main() {
         SUM("order" = 27 AND count = 10 AND source LIKE '%صلاة المغرب%') AS sunset_dhikr,
         SUM("order" = 31 AND search LIKE 'سبحان الملك القدوس سبحان الملك القدوس سبحان الملك القدوس%') AS witr_dhikr,
         SUM(count = 0) AS passages,
-        SUM("order" = 4 AND search LIKE 'أستغفر الله أستغفر الله اللهم%') AS two_istighfar,
+        SUM("order" = 4 AND search LIKE '٣- أستغفر الله أستغفر الله اللهم%') AS two_istighfar,
         SUM("order" = 11 AND count = 1 AND hokm = ''
-            AND search = 'اللهم لا تخزني يوم القيامة'
+            AND search = '١٠- اللهم لا تخزني يوم القيامة'
             AND source LIKE '%المسند (١٨٠٥٦)%') AS printed_dua,
         SUM("order" = 9 AND body LIKE '%-أو: %-%') AS dashed_alternative,
-        SUM("order" = 6 AND body LIKE 'ويقرأ آية الكُرْسِيّ:%QuranText[(2:255:255)]') AS ayat_alkursi,
-        SUM("order" = 7 AND body LIKE 'ويقرأ السُّوَرَ المعوِّذاتِ:%') AS mu_awwidhat,
+        SUM("order" = 6 AND body LIKE '٥- ويقرأ آية الكُرْسِيّ:%QuranText[(2:255:255)]') AS ayat_alkursi,
+        SUM("order" = 7 AND body LIKE '٦- ويقرأ السُّوَرَ المعوِّذاتِ:%') AS mu_awwidhat,
         SUM("order" IN (25, 28) AND body LIKE 'ويقول ما تقدَّمَ في: (%'
             AND source LIKE '%حاشية: انظر (ص116).') AS earlier_pointer,
         SUM(hokm != '') AS graded,
@@ -215,19 +215,19 @@ void main() {
         MIN("order") AS first,
         MAX("order") AS last,
         SUM("order" = 2 AND count = 3
-            AND body LIKE '(يجمع كَفَّيْهِ%﴿ قُلۡ هُوَ ٱللَّهُ أَحَدٌ ﴾، والمعوِّذتين%'
+            AND body LIKE '٢- (يجمع كَفَّيْهِ%﴿ قُلۡ هُوَ ٱللَّهُ أَحَدٌ ﴾، والمعوِّذتين%'
             AND body NOT LIKE '%QuranText%') AS printed_mu_awwidhatayn,
         SUM(count = 0) AS lead_ins,
         SUM("order" = 11 AND search LIKE '%لا إله إلا أنت رب كل شيء%'
             AND search NOT LIKE '%أشهد%') AS printed_tahlil,
         SUM("order" = 12 AND search LIKE '%والفرقان%' AND search NOT LIKE '%والقرآن%') AS printed_furqan,
-        SUM("order" = 14 AND search LIKE 'باسم الله وضعت جنبي%وثقل ميزاني%') AS printed_mizan,
+        SUM("order" = 14 AND search LIKE '١٣- باسم الله وضعت جنبي%وثقل ميزاني%') AS printed_mizan,
         SUM("order" BETWEEN 17 AND 25) AS tasbih_rows,
-        SUM("order" IN (20, 23) AND body = 'أو: اللهُ أكبرُ') AS tasbih_alternatives,
+        SUM("order" IN (20, 23) AND body = 'أو: اللهُ أكبرُ [٣٣ مرة]') AS tasbih_alternatives,
         SUM("order" = 17 AND count = 34) AS first_takbir,
         SUM("order" = 24 AND count = 34) AS third_tasbih,
         SUM("order" = 26 AND source LIKE '%[موقوفٌ على عائشة رضي الله عنها]%') AS stopped_report,
-        SUM("order" = 27 AND body LIKE 'يقرأ سورة:%QuranText[(109:1:6)]%حتى يختِمَها.') AS kafirun,
+        SUM("order" = 27 AND body LIKE '١٧- يقرأ سورة:%QuranText[(109:1:6)]%حتى يختِمَها.') AS kafirun,
         SUM(hokm != '') AS graded,
         SUM(source LIKE '%(ص7_)%' OR source LIKE '%(ص8_)%') AS old_edition_pages
       FROM contents
@@ -240,10 +240,10 @@ void main() {
         MAX("order") AS last,
         SUM(body IN ('الحمدُ للهِ', 'أعوذُ باللهِ من شرِّها',
                      'أعوذُ باللهِ من الشيطانِ الرجيمِ')) AS app_wording,
-        SUM("order" = 4 AND count = 0 AND search = 'فليستعذ بالله من شره') AS seek_refuge,
+        SUM("order" = 4 AND count = 0 AND search = '١- فليستعذ بالله من شره') AS seek_refuge,
         SUM("order" = 5 AND count = 3) AS left_breathing,
         SUM("order" = 6 AND count = 3
-            AND search = 'ويتعوذ بالله من الشيطان الرجيم') AS satan_refuge,
+            AND search = '٣- ويتعوذ بالله من الشيطان الرجيم ثلاثا') AS satan_refuge,
         SUM(count = 0) AS prose_rows,
         SUM(hokm != '') AS graded
       FROM contents
@@ -300,7 +300,7 @@ void main() {
         COUNT(*) AS count,
         MIN("order") AS first,
         MAX("order") AS last,
-        SUM("order" = 1 AND search = 'رب نجني من القوم الظلمين') AS qasas_dua
+        SUM("order" = 1 AND search = '١- ﴿ رب نجني من ٱلۡقوۡم ٱلظلمين ﴾') AS qasas_dua
       FROM contents
       WHERE titleId = 34
     ''');
@@ -335,9 +335,9 @@ void main() {
       SELECT
         SUM(titleId = 42 AND search LIKE 'اللهم أحيني ما كانت الحياة خيرا لي%') AS no_death_wish,
         SUM(titleId = 42 AND search LIKE 'اللهم ارزقني شهادة في سبيلك%') AS medina_death_dua,
-        SUM(titleId = 43 AND search = 'اللهم اشف «فلانا»' AND count = 3) AS named_patient_dua,
-        SUM(titleId = 44 AND search LIKE 'يقرأ بفاتحة الكتاب%') AS fatiha_ruqya,
-        SUM(titleId = 46 AND search = 'اللهم اجعله لنا سلفا وفرطا وأجرا') AS child_funeral_dua,
+        SUM(titleId = 43 AND search = '٥- اللهم اشف «فلانا» ثلاث مرات' AND count = 3) AS named_patient_dua,
+        SUM(titleId = 44 AND search LIKE '٢- يقرأ بفاتحة الكتاب%') AS fatiha_ruqya,
+        SUM(titleId = 46 AND search = '١- اللهم اجعله لنا سلفا وفرطا وأجرا') AS child_funeral_dua,
         SUM(titleId = 47) AS misplaced_child_dua,
         SUM(titleId = 46 AND source LIKE 'ما يقول زائرُ القبور. %' AND search LIKE '%السلام%') AS grave_visit_forms
       FROM contents
@@ -397,7 +397,7 @@ void main() {
         SUM(titleId = 61 AND search = 'اللهم إني أسألك من فضلك ورحمتك فإنه لا يملكها إلا أنت') AS guest_dua,
         SUM(titleId = 62 AND search = 'يرحمنا الله وإياكم ويغفر لنا ولكم') AS ibn_umar_reply,
         SUM(titleId = 63 AND search LIKE 'اللهم إني أسألك من خيرها%') AS wife_dua,
-        SUM(titleId = 64 AND body = 'QuranText[(2:128:128)]') AS offspring_dua,
+        SUM(titleId = 64 AND body = '٤-' || char(10) || 'QuranText[(2:128:128)]') AS offspring_dua,
         SUM(titleId = 65 AND count = 0 AND search = 'يقرأ سورتي الفلق والناس') AS severe_weather_surahs,
         SUM(titleId = 68 AND count = 0 AND body LIKE '%﴿ وَٱلۡعَصۡرِ ١ إِنَّ ٱلۡإِنسَٰنَ لَفِي خُسۡرٍ ﴾ [سورة العصر]%') AS meeting_departure_asr
       FROM contents
@@ -504,7 +504,7 @@ void main() {
             OR source LIKE '%(أبو داود%' OR source LIKE '%(الترمذي%') AS unprinted_takhrij,
         SUM(search LIKE '%والمهدي من هديت%' OR search LIKE '%أنا بك وإليك%') AS unprinted_opening_words,
         SUM(titleId = 10 AND search LIKE 'الله أكبر الله أكبر الله أكبر ذو%') AS third_takbir,
-        SUM(titleId = 10 AND search = 'الله أكبر الله أكبر ذو الملكوت والجبروت والكبرياء والعظمة') AS two_takbirs_row,
+        SUM(titleId = 10 AND search = '٤- الله أكبر الله أكبر ذو الملكوت والجبروت والكبرياء والعظمة') AS two_takbirs_row,
         SUM(titleId = 10 AND count = 10) AS ten_times_cards,
         SUM(titleId = 10 AND count = 3) AS three_times_cards,
         SUM(titleId = 10 AND count = 0) AS opening_passages,
@@ -526,7 +526,7 @@ void main() {
         SUM(titleId = 32 AND count = 0 AND search LIKE 'إذا هم بالأمر فليركع%ينوي بهما الاستخارة%') AS istikhara_instruction,
         SUM(titleId = 32 AND count = 1 AND source LIKE '%ينوي بهما%') AS istikhara_in_source,
         SUM(titleId = 32 AND count = 0 AND search LIKE 'تنبيه مما لا أصل له%') AS istikhara_note,
-        SUM(titleId = 33 AND count = 0 AND search = 'وليكن أكثر دعائه أن يقول') AS most_of_his_dua,
+        SUM(titleId = 33 AND count = 0 AND search = '٥- وليكن أكثر دعائه أن يقول') AS most_of_his_dua,
         SUM(titleId = 33 AND "order" = 6 AND body LIKE '﴿%ءَاتِنَا%﴾') AS verse_201,
         SUM(titleId = 33 AND source LIKE '%جَهْد البلاء: بفتح الجيم؛ كُلُّ ما%') AS jahd_footnote_in_book_order,
         SUM(titleId = 35 AND count = 0 AND search = 'ويقول') AS satan_says,
@@ -618,10 +618,10 @@ void main() {
             AND source LIKE '%حاشية: انظر: دعاء الكرب%(ص١٤٢)%حاشية: ويجعل بطون كفيه%')
           AS rain_guidance_footnotes,
         SUM(titleId = 119 AND "order" = 3
-            AND body LIKE 'QuranText[(1:2:4)]' || char(10) || 'لَا إِلَهَ إِلَّا اللهُ، يَفْعَلُ مَا يُرِيدُ، اللَّهُمَّ أَنْتَ اللهُ%')
+            AND body LIKE '١-' || char(10) || 'QuranText[(1:2:4)]' || char(10) || 'لَا إِلَهَ إِلَّا اللهُ، يَفْعَلُ مَا يُرِيدُ، اللَّهُمَّ أَنْتَ اللهُ%')
           AS rain_first_supplication,
         SUM(titleId = 119 AND "order" = 4 AND count = 1
-            AND search = 'اللهم اسقنا اللهم اسقنا اللهم اسقنا') AS rain_second_supplication,
+            AND search = '٢- اللهم اسقنا اللهم اسقنا اللهم اسقنا') AS rain_second_supplication,
         SUM(titleId = 119 AND "order" = 5
             AND source LIKE '%حاشية: مَرِيئًا: محمود العاقبة.%حاشية: مَرِيعًا:%وكَثُر فيها العُشْبُ.')
           AS rain_footnotes,
@@ -710,7 +710,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 163);
+    expect(await database.getVersion(), 164);
     expect(titleCount.single, {'count': 156});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -882,7 +882,7 @@ void main() {
       'anger_footnote_as_printed': 1,
       'weakest_people_footnotes': 1,
       'fatiha_time': 1,
-      'last_time': 'عند حضور الميت، وعند تغميضه.',
+      'last_time': '١٨- عند حضور الميت، وعند تغميضه.',
     });
     // pp372-380 (#183), p381 (#167): the eleven wirds follow the times of
     // answer, under the heading the book prints over them.
@@ -951,7 +951,7 @@ void main() {
 
     final hamdAlternatives = await database.rawQuery(
       "SELECT search FROM contents WHERE titleId=11 AND search IN "
-      "('ربنا لك الحمد أو ربنا ولك الحمد', 'أو اللهم ربنا ولك الحمد')",
+      "('١- ربنا لك الحمد أو ربنا ولك الحمد', '٢- أو اللهم ربنا ولك الحمد')",
     );
     expect(hamdAlternatives.length, 2,
         reason: 'p99 prints the first two forms of the rising with «أو:»');
@@ -1374,13 +1374,13 @@ void main() {
           AND source LIKE '%حاشية: قُرابُ الأرضِ: ما يقارب مَلْأَها.')
           AS qurab_footnote,
         (SELECT COUNT(*) FROM contents WHERE titleId = 74
-          AND body = 'سبحان الله وبحمده، سبحان الله العظيم.'
+          AND body = '٩- سبحان الله وبحمده، سبحان الله العظيم.'
           AND source LIKE '%حاشية: عن أبي هريرةَ%' AND source LIKE '%تنبيه:%')
           AS two_light_words_footnote,
         (SELECT COUNT(*) FROM contents WHERE titleId = 71
-          AND body LIKE 'QuranText%') AS whole_verses,
+          AND body LIKE '%-' || char(10) || 'QuranText%') AS whole_verses,
         (SELECT COUNT(*) FROM contents WHERE titleId = 71
-          AND body LIKE '﴿ %﴾') AS quoted_parts,
+          AND body LIKE '%- ﴿ %﴾') AS quoted_parts,
         (SELECT COUNT(*) FROM contents WHERE titleId = 76 AND "order" = 1
           AND source LIKE '%حاشية: تقدَّمت (ص١٢٣).') AS takbir_heading_footnote
     ''');
@@ -1671,7 +1671,7 @@ void main() {
     ''');
     final tawbah129 = await database.rawQuery('''
       SELECT id FROM contents
-      WHERE id IN (18, 46, 414) AND body LIKE '﴿ حَسۡبِيَ%' AND body NOT LIKE '%QuranText%'
+      WHERE id IN (18, 46, 414) AND body LIKE '%﴿ حَسۡبِيَ%' AND body NOT LIKE '%QuranText%'
     ''');
     final appLabels = await database.rawQuery('''
       SELECT COUNT(*) AS count FROM contents WHERE hokm = 'قرآني'
@@ -1709,7 +1709,8 @@ void main() {
         AND body NOT LIKE '%﴿%'
     ''');
     final fatihaVerses = await database.rawQuery('''
-      SELECT id FROM contents WHERE id = 1037 AND body LIKE 'QuranText[(1:2:4)]%'
+      SELECT id FROM contents WHERE id = 1037
+        AND body LIKE '١-' || char(10) || 'QuranText[(1:2:4)]%'
     ''');
     final ridingVerseOnce = await database.rawQuery('''
       SELECT id FROM contents WHERE id = 872 AND body LIKE '%QuranText%'
@@ -1832,16 +1833,17 @@ void main() {
       );
       expect(
         (await row(272))['body'],
-        'ما أرى الأجلَ إلا اقتربَ، فاتقوا اللهَ واصبروا',
+        '٢- ما أرى الأجلَ إلا اقتربَ، فاتقوا اللهَ واصبروا',
         reason: 'p163 has no «قد»',
       );
       expect((await row(284))['body'], contains('سُنَّةِ -أو مِلَّةِ- رسولِ'));
       expect((await row(288))['body'], contains('وإيَّاكُم، وما تُوعَدونَ'));
-      for (final id in [288, 289, 290]) {
-        expect((await row(id))['body'], startsWith('أو: '));
+      for (final (id, number) in [(288, '٢'), (289, '٣'), (290, '٤')]) {
+        expect((await row(id))['body'], startsWith('$number- أو: '));
       }
       expect((await row(980))['body'], contains('-ويُسَمِّي الميتَ-'));
-      expect((await row(265))['body'], 'اللهمَّ اشفِ «فلانًا»');
+      expect(
+          (await row(265))['body'], '٥- اللهمَّ اشفِ «فلانًا» [ثلاث مرَّاتٍ]');
       expect((await row(983))['body'], contains('يا «فلان»'));
       expect((await row(263))['body'], endsWith('أو يَمْشِ لكَ إلى الصلاةِ'));
       expect(
@@ -2022,7 +2024,7 @@ void main() {
         (SELECT COUNT(*) FROM contents WHERE id = 447
            AND body = '﴿ سُبۡحَانَ رَبِّي ﴾') AS wonder_verse,
         (SELECT COUNT(*) FROM contents WHERE id = 457
-           AND search = 'رضينا بالله ربا وبالإسلام دينا وبمحمد رسولا نعوذ بالله من سوء الفتن')
+           AND search = '٤- رضينا بالله ربا وبالإسلام دينا وبمحمد رسولا نعوذ بالله من سوء الفتن')
           AS ridina_as_printed,
         (SELECT COUNT(*) FROM contents WHERE id = 454
            AND search LIKE '%اهدني لما اختلف فيه من الحق بإذنك%') AS fitna_dua_whole,
@@ -2031,7 +2033,7 @@ void main() {
         (SELECT COUNT(*) FROM contents WHERE id = 463
            AND search LIKE '%على كثير من خلقه تفضيلا') AS min_khalqihi,
         (SELECT COUNT(*) FROM contents WHERE titleId = 67
-           AND body LIKE 'أعوذُ باللهِ السميعِ العليمِ من الشيطانِ الرجيمِ%QuranText[(113:1:5),(114:1:6)]')
+           AND body LIKE '٢- أعوذُ باللهِ السميعِ العليمِ من الشيطانِ الرجيمِ%QuranText[(113:1:5),(114:1:6)]')
           AS evil_eye_muawwidhatayn,
         (SELECT count FROM contents WHERE id = 474) AS shirk_dua_count,
         (SELECT COUNT(*) FROM contents WHERE id = 477 AND count = 100
@@ -2338,9 +2340,12 @@ void main() {
     expect((await row(15))['source'], '',
         reason: 'p39: the first «اللهم عافني» has no footnote mark');
     expect((await row(16))['hokm'], 'حسن');
-    for (final id in [17, 45]) {
+    for (final (id, body) in [
+      (17, '١٦- سُوَر: (الإخلاص)، و(الفلق)، و(الناس) [ثلاثَ مرَّاتٍ]'),
+      (45, '١٢- سُوَر: (الإخلاص)، و(الفلق)، و(الناس) [ثلاث مرات]'),
+    ]) {
       final surahs = await row(id);
-      expect(surahs['body'], 'سُوَر: (الإخلاص)، و(الفلق)، و(الناس)',
+      expect(surahs['body'], body,
           reason: 'pp39, 47 name the three surahs and do not print them');
       expect(surahs['count'], 3);
     }
@@ -2465,13 +2470,13 @@ void main() {
     expect(
       await value(
           'SELECT search FROM contents WHERE titleId = 185 AND "order" = 2'),
-      '﴿ حسۡبنا ٱلله ونعۡم ٱلۡوكيل ﴾',
+      '١- ﴿ حسۡبنا ٱلله ونعۡم ٱلۡوكيل ﴾',
       reason: 'p357 quotes only the end of Al Imran 173',
     );
     expect(
       await value(
           'SELECT body FROM contents WHERE titleId = 188 AND "order" = 5'),
-      'QuranText[(14:41:41)]',
+      '٢-\nQuranText[(14:41:41)]',
       reason: 'p361 quotes Ibrahim 41 whole',
     );
     expect(
@@ -2550,13 +2555,15 @@ void main() {
       'hokm': '',
       'fadl': '',
     });
-    expect((await row(77))['body'], startsWith('باسمِ الله،'));
-    expect((await row(894))['body'], startsWith('باسم الله،'));
+    expect((await row(77))['body'], startsWith('٢- باسمِ الله،'));
+    expect((await row(894))['body'], startsWith('١- باسم الله،'));
     expect(
       await column(
-          'SELECT body FROM contents WHERE id IN (79, 81, 896, 897) ORDER BY id'),
+          'SELECT body FROM contents WHERE id IN (79, 896, 897) ORDER BY id'),
       everyElement(startsWith('أو: ')),
     );
+    expect((await row(81))['body'], startsWith('٢- أو: '),
+        reason: 'p78 numbers the second «أو:» and not the first');
     expect(
       (await row(1010))['source'],
       endsWith('حاشية: انظر: «الأذكار المطلقة» (ص٢٤٧)، وما بعدها، '
@@ -2603,7 +2610,7 @@ void main() {
     );
     expect(
       (await row(1534))['source'],
-      startsWith('صفة الأذان. [أربعًا]. (ص79)\n\nحاشية: قال الإمام النووي'),
+      startsWith('صفة الأذان. (ص79)\n\nحاشية: قال الإمام النووي'),
     );
     expect((await row(1534))['source'], endsWith('وكلتا الصفتين مشروعة.'));
     expect(
@@ -2658,7 +2665,7 @@ void main() {
     ''');
     final cases = await database.rawQuery('''
       SELECT
-        (SELECT search LIKE '﴿ رب أعوذ بك من% همزت ٱلشيطين ٩٧ وأعوذ بك رب أن %'
+        (SELECT search LIKE '١- ﴿ رب أعوذ بك من% همزت ٱلشيطين ٩٧ وأعوذ بك رب أن %'
          FROM contents WHERE titleId = 92 AND "order" = 1) AS first_dua,
         (SELECT source LIKE '%حاشية: بدأنا بالاستعاذة%'
          FROM contents WHERE titleId = 92 AND "order" = 2) AS isti_adha_footnote,
@@ -2668,7 +2675,8 @@ void main() {
          WHERE titleId = 92 AND "order" = 19) AS mawquf_source,
         (SELECT COUNT(*) FROM contents
          WHERE (titleId = 83 AND "order" = 6 OR titleId = 91 AND "order" = 14)
-           AND search LIKE 'اللهم إني أسألك بأني أشهد%') AS nos_49_and_223,
+           AND (search LIKE '٤٩- اللهم إني أسألك بأني أشهد%'
+             OR search LIKE '٢٢٣- اللهم إني أسألك بأني أشهد%')) AS nos_49_and_223,
         (SELECT body LIKE '%واجعلني من عبادِكَ المخلَصين.'
          FROM contents WHERE titleId = 93 AND "order" = 16) AS typo_corrected,
         (SELECT group_concat(count) FROM contents
@@ -2706,7 +2714,7 @@ void main() {
     expect(cases.single, {
       'first_dua': 1,
       'isti_adha_footnote': 1,
-      'fatiha': 'QuranText[(1:1:7)]',
+      'fatiha': '٣-\nQuranText[(1:1:7)]',
       'mawquf_source':
           'الورد الأول. [موقوفٌ عن ابن عمر رضي الله عنهما]. (ص386)',
       'nos_49_and_223': 2,
@@ -2898,7 +2906,7 @@ void main() {
         'ما يقول إذا استيقظ من نومه. [«المسند» (١٧٢٩٦)]. (ص69–70)');
     expect(
       (await row(59))['body'],
-      'أعوذُ بالله من الشيطانِ الرجيم\nQuranText[(113:1:5),(114:1:6)]',
+      '٣- أعوذُ بالله من الشيطانِ الرجيم\nQuranText[(113:1:5),(114:1:6)]',
       reason: 'pp69-70 print al-Falaq and an-Nas whole',
     );
 
@@ -2929,5 +2937,86 @@ void main() {
       (await row(74))['source'],
       'ما يدعو به في بيته. [مُسلم: ٢٧٠٥]. (ص75)\n\nحاشية: وفي رواية: كبيرًا.',
     );
+  });
+
+  test('items show the list number and count bracket the book prints (#227)',
+      () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    Future<Map<String, Object?>> row(int id) async => (await database.rawQuery(
+          'SELECT body, count, source FROM contents WHERE id = ?',
+          [id],
+        ))
+            .single;
+
+    // One row for each case in the ticket's table: body as printed, counter.
+    final cases = {
+      971: ('٢- وَيَنفُثُ عن يَسارِه. [ثلاثًا]', 3),
+      220: ('٣- لا إلهَ إلا أنتَ، سبحانَكَ، إني كنتُ من الظالمين', 1),
+      970: ('١- فَلْيَسْتَعِذْ باللهِ من شَرِّه.', 0),
+      255: ('باسمِ اللهِ [ثلاثًا]', 3),
+      1738: ('١- أستغفِرُ الله، وأتوبُ إليه. [كثيرًا]', 1),
+      914: ('٣- اللهُ أكبرُ [عشرًا]', 10),
+      1205: ('الحمدُ للهِ [عشرًا]', 10),
+      212: (
+        'أعوذُ بكلماتِ اللهِ التامَّةِ، من غضبِهِ وعِقابِهِ، ومن شرِّ عبادِهِ، '
+            'ومن هَمَزاتِ الشياطين، وأن يَحضُرونِ',
+        1
+      ),
+    };
+    for (final MapEntry(key: id, value: (body, count)) in cases.entries) {
+      final printed = await row(id);
+      expect(printed['body'], body, reason: 'row $id');
+      expect(printed['count'], count, reason: 'row $id keeps its counter');
+    }
+    expect(
+      (await row(1738))['source'],
+      'من صيغ الاستغفار في السنة الشريفة. (ص306)',
+      reason: 'p306: «[كثيرًا]» moved from the source to the end of the body',
+    );
+    expect(
+      (await row(212))['source'],
+      'من آداب الرؤيا. [«الصحيحة» (٢٦٤)]. (ص136)',
+      reason: 'p136: a bracket that is not a count stays in the source',
+    );
+    expect(
+      await database.rawQuery('''
+        SELECT id FROM contents
+        WHERE titleId = 10 AND count = 10 AND id <> 914
+          AND (body NOT LIKE '% [عشرًا]' OR body GLOB '[٠-٩]*')
+      '''),
+      isEmpty,
+      reason: 'p95: each card of item ٣ ends with its «[عشرًا]», and only '
+          'the first card carries the number',
+    );
+    expect((await row(54))['body'], '٢-\nQuranText[(112:1:4)]',
+        reason: 'p50: a number gets its own line before a QuranText line, '
+            'which the reader replaces with the verses');
+    for (final count in [
+      'ثلاث',
+      'عشر',
+      'سبع',
+      'أربع',
+      'مئة مرة',
+      'مرَّتين',
+      'مرتين',
+      'كثير'
+    ]) {
+      expect(
+        await database.rawQuery(
+          'SELECT id FROM contents '
+          "WHERE substr(source, 1, instr(source || char(10), char(10))) "
+          'GLOB ?',
+          ['*[[]$count*'],
+        ),
+        isEmpty,
+        reason: 'no count bracket «[$count…]» is left in a source line',
+      );
+    }
   });
 }
