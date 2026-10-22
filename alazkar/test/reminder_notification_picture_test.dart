@@ -91,13 +91,16 @@ void main() {
       for (final q in set.value) (set.key, q),
   ].reduce((a, b) => a.$2.text.length >= b.$2.text.length ? a : b);
 
-  final cases = <String, (int, PlannedReminder)>{
-    'morning': (1, first(ReminderSlot.morning)),
-    'last_week': (1, first(ReminderSlot.morning, skip: kReminderDays - 3)),
-    'evening': (2, first(ReminderSlot.evening)),
-    'sleep': (18, first(ReminderSlot.sleep)),
+  (ReminderQuote, PlannedReminder) planned(PlannedReminder r) =>
+      (quoteFor(r.titleId, r.at)!, r);
+
+  final cases = <String, (ReminderQuote, PlannedReminder)>{
+    'morning': planned(first(ReminderSlot.morning)),
+    'last_week': planned(first(ReminderSlot.morning, skip: kReminderDays - 3)),
+    'evening': planned(first(ReminderSlot.evening)),
+    'sleep': planned(first(ReminderSlot.sleep)),
     'longest': (
-      longest.$1,
+      longest.$2,
       PlannedReminder(
         at: DateTime(2026, 10, 13, 6),
         titleId: longest.$1,
@@ -107,7 +110,7 @@ void main() {
     ),
   };
 
-  for (final MapEntry(key: name, value: (_, reminder)) in cases.entries) {
+  for (final MapEntry(key: name, value: (quote, reminder)) in cases.entries) {
     for (final brightness in Brightness.values) {
       for (final opened in [false, true]) {
         if (!opened && name != 'morning') continue;
@@ -127,6 +130,12 @@ void main() {
             ),
           );
           expect(find.text(reminder.title), findsOneWidget);
+          expect(
+            opened
+                ? find.textContaining('${quote.text}\n${quote.source}')
+                : find.text(quote.text),
+            findsOneWidget,
+          );
         });
       }
     }

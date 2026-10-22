@@ -41,6 +41,46 @@ void main() {
     }
   });
 
+  test('each quote reads as the page it cites prints it, not cut short', () {
+    // Marks, punctuation and Quran brackets are added for reading, so the
+    // comparison is of the letters and the spaces between words.
+    String letters(String s) => s
+        .replaceAll(RegExp('[\u064B-\u0652\u0670ـ،؛:.,()﴿﴾«»]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    for (final set in kReminderQuotes.values) {
+      for (final quote in set) {
+        expect(quote.page, matches(r'^https://(www\.)?islamweb\.net/'));
+        expect(letters(quote.text), letters(quote.reference),
+            reason: quote.page);
+      }
+    }
+  });
+
+  test('no two reminders show the same quote on one day, over a year', () {
+    final planned = planReminders(
+      settings: {
+        for (final s in ReminderSlot.values)
+          s: const ReminderSetting(enabled: true, minuteOfDay: 6 * 60),
+      },
+      titles: titles,
+      now: DateTime(2026, 10, 13, 5),
+      days: 365,
+    );
+    final byDay = <DateTime, List<String>>{};
+    for (final r in planned) {
+      final quote = r.body.split('\n').firstWhere((l) => l != kRenewHint);
+      byDay
+          .putIfAbsent(DateTime(r.at.year, r.at.month, r.at.day), () => [])
+          .add(quote);
+    }
+    expect(byDay, hasLength(365));
+    for (final MapEntry(key: day, value: quotes) in byDay.entries) {
+      expect(quotes, hasLength(ReminderSlot.values.length), reason: '$day');
+      expect(quotes.toSet(), hasLength(quotes.length), reason: '$day');
+    }
+  });
+
   test('two reminders in a row never carry the same quote', () {
     for (final slot in ReminderSlot.values) {
       final planned = planOnly(slot);
