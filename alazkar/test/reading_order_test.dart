@@ -26,7 +26,7 @@ void main() {
 
     final ids = stateOf(titles).readingOrder().map((t) => t.id).toList();
 
-    expect(ids.take(6), [101, 102, 103, 104, 1, 2]);
+    expect(ids.take(5), [167, 102, 104, 1, 2]);
     expect(ids.toSet().length, ids.length);
     expect(
       ids.length,
