@@ -419,7 +419,7 @@ void main() {
              SUM(count = 0) AS zero_count,
              MIN("order") AS first, MAX("order") AS last
       FROM contents
-      WHERE titleId BETWEEN 149 AND 157
+      WHERE titleId BETWEEN 149 AND 157 OR titleId = 165
       GROUP BY titleId
       ORDER BY titleId
     ''');
@@ -431,10 +431,9 @@ void main() {
     ''');
     final absoluteDhikrSamples = await database.rawQuery('''
       SELECT
-        SUM(titleId = 149 AND body LIKE '%ولا يستطيعها البطلة%') AS quran,
-        SUM(titleId = 150 AND body LIKE '%خواتيم سورة البقرة%') AS surahs,
-        SUM(titleId = 151 AND body LIKE '%تكفى همك%') AS salawat,
-        SUM(titleId = 152 AND body LIKE '%عدل أربع رقاب%') AS tahlil,
+        SUM(titleId = 149 AND search LIKE '%ولا يستطيعها البطلة%') AS quran,
+        SUM(titleId = 151 AND search LIKE '%تكفى همك%') AS salawat,
+        SUM(titleId = 152 AND search LIKE '%أكثروا من شهادة أن لا إله إلا الله%') AS tahlil,
         SUM(titleId = 153 AND body LIKE '%سيد الاستغفار%') AS istighfar,
         SUM(titleId = 154 AND body LIKE '%الباقيات الصالحات%') AS baqiyat,
         SUM(titleId = 155 AND body LIKE '%لا حول في دفع شر%') AS meaning,
@@ -656,7 +655,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 151);
+    expect(await database.getVersion(), 152);
     expect(titleCount.single, {'count': 132});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1128,8 +1127,8 @@ void main() {
       [
         21,
         43,
-        5,
-        7,
+        6,
+        4,
         1,
         9,
         11,
@@ -1151,8 +1150,8 @@ void main() {
       isTrue,
     );
     expect(absoluteDhikrAndWirdRegression.single, {
-      'salawat_forms': 7,
-      'household_salawat': 1,
+      'salawat_forms': 4,
+      'household_salawat': 0,
       'first_wird_starts_at_one': 1,
       'eleventh_wird_ends_at_fifteen': 1,
     });
@@ -1161,15 +1160,15 @@ void main() {
     expect(
       absoluteDhikrContent,
       [
-        {'titleId': 149, 'count': 12, 'zero_count': 12, 'first': 1, 'last': 12},
-        {'titleId': 150, 'count': 18, 'zero_count': 18, 'first': 1, 'last': 18},
-        {'titleId': 151, 'count': 21, 'zero_count': 21, 'first': 1, 'last': 21},
-        {'titleId': 152, 'count': 9, 'zero_count': 9, 'first': 1, 'last': 9},
+        {'titleId': 149, 'count': 16, 'zero_count': 16, 'first': 1, 'last': 16},
+        {'titleId': 151, 'count': 10, 'zero_count': 10, 'first': 1, 'last': 10},
+        {'titleId': 152, 'count': 15, 'zero_count': 15, 'first': 1, 'last': 15},
         {'titleId': 153, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
         {'titleId': 154, 'count': 17, 'zero_count': 17, 'first': 1, 'last': 17},
         {'titleId': 155, 'count': 8, 'zero_count': 8, 'first': 1, 'last': 8},
         {'titleId': 156, 'count': 7, 'zero_count': 7, 'first': 1, 'last': 7},
         {'titleId': 157, 'count': 2, 'zero_count': 2, 'first': 1, 'last': 2},
+        {'titleId': 165, 'count': 26, 'zero_count': 26, 'first': 1, 'last': 26},
       ],
     );
     expect(absoluteDhikrParents, [
@@ -1179,7 +1178,6 @@ void main() {
     ]);
     expect(absoluteDhikrSamples.single, {
       'quran': 1,
-      'surahs': 1,
       'salawat': 1,
       'tahlil': 1,
       'istighfar': 1,
@@ -1189,6 +1187,148 @@ void main() {
       'notice': 1,
     });
     expect(unsupportedJudgments, isEmpty);
+  });
+
+  test("absolute dhikr pages 247-293 are the book's rows (#182)", () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    final sections = await database.rawQuery('''
+      SELECT titleId, COUNT(*) AS count, SUM(count <> 0) AS counted,
+             SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
+             SUM(source LIKE '%(ص1__)%' OR source LIKE '%(ص1__–%') AS old_edition_pages
+      FROM contents
+      WHERE titleId IN (147, 148, 149, 165, 152, 161, 151, 70)
+      GROUP BY titleId
+      ORDER BY titleId
+    ''');
+    final tahlilWird = await database.rawQuery('''
+      SELECT "order", count, source LIKE '%(ص28_)%' AS printed_page
+      FROM contents WHERE titleId = 69 ORDER BY "order"
+    ''');
+
+    expect(
+      tahlilWird.map((row) => row['count']),
+      [0, 1, 1, 1, 3, 10],
+      reason: 'the heading, then the five tahlil forms with the bracketed '
+          'counts of pp285-286',
+    );
+    expect(tahlilWird.every((row) => row['printed_page'] == 1), isTrue);
+    expect(sections.map((row) => '${row['titleId']}:${row['count']}'), [
+      '70:4',
+      '147:48',
+      '148:7',
+      '149:16',
+      '151:10',
+      '152:15',
+      '161:7',
+      '165:26',
+    ]);
+    expect(
+      sections.every((row) =>
+          row['counted'] == 0 &&
+          row['judgments_or_virtues'] == 0 &&
+          row['old_edition_pages'] == 0),
+      isTrue,
+    );
+    expect(sections.length, 8);
+  });
+
+  test(
+      "absolute dhikr introduction and Quran sections keep the book's "
+      'words, footnotes and the removed sections stay removed (#182)',
+      () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    final sections = await database.rawQuery('''
+      SELECT titleId, COUNT(*) AS count, SUM(count <> 0) AS counted,
+             SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
+             SUM(source LIKE '%(ص1__)%' OR source LIKE '%(ص1__–%') AS old_edition_pages
+      FROM contents
+      WHERE titleId IN (147, 148, 149, 165)
+      GROUP BY titleId
+      ORDER BY titleId
+    ''');
+    final removedTitle = await database.rawQuery(
+      'SELECT COUNT(*) AS rows FROM titles WHERE id = 150',
+    );
+    final tahzib = await database.rawQuery('''
+      SELECT name, parentId, nodeType,
+             (SELECT body FROM contents WHERE titleId = 165 AND "order" = 1) AS heading
+      FROM titles WHERE id = 165
+    ''');
+    final inventedOrOldWording = await database.rawQuery('''
+      SELECT COUNT(*) AS rows
+      FROM contents
+      WHERE titleId IN (147, 148, 149, 165)
+        AND (search LIKE '%الأذكار المطلقة هي أذكار ثبت فضلها%'
+          OR search LIKE '%إنكم لا ترجعون إلى الله بشيء أفضل%'
+          OR search LIKE '%فضائل عظيمة لتلاوة القرآن مطلقا%')
+    ''');
+    final footnotes = await database.rawQuery('''
+      SELECT
+        SUM(titleId = 149 AND source LIKE '%حاشية: البطلة: السحرة%') AS footnote_in_source,
+        SUM(body LIKE '%حاشية%') AS footnote_in_body,
+        SUM(titleId = 147 AND source LIKE '%طاقة وَرْد في فقه الوِرْد%') AS book_footnote,
+        SUM(titleId = 148 AND body LIKE '%وَرَتِّلِ%' AND body LIKE '%[المزمل: ٤]%') AS partial_verse,
+        SUM(titleId = 147 AND search LIKE '%مراقبة الأوقات وعمارتها بالأوراد%') AS closing_line
+      FROM contents
+    ''');
+
+    expect(sections, [
+      {
+        'titleId': 147,
+        'count': 48,
+        'counted': 0,
+        'judgments_or_virtues': 0,
+        'old_edition_pages': 0,
+      },
+      {
+        'titleId': 148,
+        'count': 7,
+        'counted': 0,
+        'judgments_or_virtues': 0,
+        'old_edition_pages': 0,
+      },
+      {
+        'titleId': 149,
+        'count': 16,
+        'counted': 0,
+        'judgments_or_virtues': 0,
+        'old_edition_pages': 0,
+      },
+      {
+        'titleId': 165,
+        'count': 26,
+        'counted': 0,
+        'judgments_or_virtues': 0,
+        'old_edition_pages': 0,
+      },
+    ]);
+    expect(removedTitle.single, {'rows': 0});
+    expect(tahzib.single, {
+      'name': 'تحزيب القرآن المجيد',
+      'parentId': 141,
+      'nodeType': 'content',
+      'heading': 'تحزيب القرآن المجيد',
+    });
+    expect(inventedOrOldWording.single, {'rows': 0});
+    expect(footnotes.single, {
+      'footnote_in_source': 1,
+      'footnote_in_body': 0,
+      'book_footnote': 1,
+      'partial_verse': 1,
+      'closing_line': 1,
+    });
   });
 
   test('bundled azkar database follows the book (quality gate #52)', () async {
@@ -1220,11 +1360,11 @@ void main() {
     ''');
     final salawatIntroductionText = await database.rawQuery('''
       SELECT
-        SUM(body LIKE 'ذكر الواحدي عن الأصمعي%') AS mahdi_report,
+        SUM(body LIKE 'عن الأصمعي%') AS mahdi_report,
         SUM(body LIKE 'وقال سهل بن عبد الله%') AS sahl,
         SUM(body LIKE 'وقال العز بن عبد السلام%') AS izz,
-        SUM(body LIKE 'وقال ابن قيم الجوزية%') AS ibn_qayyim,
-        SUM(body LIKE 'ثم قال رحمه الله%') AS ibn_qayyim_follow_up,
+        SUM(body LIKE 'وقال ابن قيم الجوزية%') AS ibn_qayyim_long,
+        SUM(body LIKE 'وقال ابن القيم%') AS ibn_qayyim,
         SUM(count = 0 AND hokm = '') AS prose
       FROM contents
       WHERE titleId = 161
@@ -1257,19 +1397,31 @@ void main() {
     expect(await childIds('parentId = 163'), [66, 67]);
     expect(await childIds('parentId = 142'), [161, 151, 70]);
     expect(
+        await childIds('parentId = 140'), [147, 141, 143, 142, 144, 145, 146],
+        reason: 'p281 prints tahlil (النوع الثاني) before p287 prints the '
+            'prayers on the Prophet (النوع الثالث)');
+    expect(
       salawatIntroduction.map((row) => row['id']),
-      [1089, 1187, 1188, 1189, 1190, 1191],
+      [1487, 1089, 1488, 1489, 1490, 1491, 1492],
+      reason: 'p288 prints three hadiths under «النوع الثالث» before the '
+          '«فضل الصلاة والسلام» heading of p289',
     );
-    expect(salawatIntroductionText.single, {
-      'mahdi_report': 1,
-      'sahl': 1,
-      'izz': 1,
-      'ibn_qayyim': 1,
-      'ibn_qayyim_follow_up': 1,
-      'prose': 6,
-    });
+    expect(
+        salawatIntroductionText.single,
+        {
+          'mahdi_report': 1,
+          'sahl': 0,
+          'izz': 0,
+          'ibn_qayyim_long': 0,
+          'ibn_qayyim': 1,
+          'prose': 7,
+        },
+        reason: "pp287-288 print the heading, al-Asma'i, Abu al-Aliya and "
+            'Ibn al-Qayyim, and no sayings of Sahl or al-Izz (#182)');
     expect(paraphrasedSummaries, isEmpty);
-    expect(salawatVirtuesOpening.single, {'id': 1192});
+    expect(salawatVirtuesOpening.single, {'id': 1493},
+        reason: 'section 151 opens with the p289 heading; the three hadiths '
+            'before it are in 161');
 
     final footnotesAsVirtues = await database.rawQuery('''
       SELECT id FROM contents WHERE id > 1006 AND TRIM(fadl) <> ''
@@ -1283,13 +1435,13 @@ void main() {
     final ubayyComment = await database.rawQuery('''
       SELECT id FROM contents
       WHERE titleId = 151
-        AND "order" = (SELECT "order" + 1 FROM contents WHERE id = 1094)
+        AND "order" = (SELECT "order" + 1 FROM contents WHERE id = 1496)
     ''');
 
     expect(footnotesAsVirtues, isEmpty,
         reason: 'book footnotes belong in the source as «حاشية» (#81)');
     expect(editorialNotes, isEmpty);
-    expect(ubayyComment.single, {'id': 1193});
+    expect(ubayyComment.single, {'id': 1497});
 
     final virtueRecords = await database.rawQuery('''
       SELECT id FROM contents WHERE TRIM(fadl) <> '' ORDER BY id
@@ -1395,10 +1547,10 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 162},
+    expect(recordsWithFootnotes.single, {'count': 175},
         reason: 'pp29-68 (#171), pp91-115 (#174), pp116-129 (#175), '
-            'pp140-149 (#177), pp175-207 (#179) and pp177-226 (#180) print '
-            'their footnotes');
+            'pp140-149 (#177), pp175-207 (#179), pp177-226 (#180) and '
+            'pp247-293 (#182) print their footnotes');
   });
 
   test('travel to celestial matters follow pp177-226 of the book (#180)',
