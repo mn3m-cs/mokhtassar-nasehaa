@@ -41,7 +41,7 @@ INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, sea
 
 -- 6: أذكار اللباس
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (63, 6, 1, 'الحمدُ لله الذي كساني هذا، ورَزَقَنِيه من غير حَولٍ مني ولا قوة', 1, 'ما يقول إذا لَبِسَ ثَوبَه. (ص72)', '', '', 'الحمد لله الذي كساني هذا ورزقنيه من غير حول مني ولا قوة', '', '');
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (1528, 6, 2, 'يُسَمِّيه باسمه، ثُمَّ يقول:', 0, 'ما يقول إذا لَبِسَ ثوبًا جديدًا أونعلًا أو شبهه. (ص72)
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (1639, 6, 2, 'يُسَمِّيه باسمه، ثُمَّ يقول:', 0, 'ما يقول إذا لَبِسَ ثوبًا جديدًا أونعلًا أو شبهه. (ص72)
 
 حاشية: «يسميه باسمه: يعني: فيقول مثلًا: اللهم أنت كسوتني هذه العمامة، أو هذا القميص، أو هذا الرداء، أو نحو ذلك، ثم يقول: أسألك خيرَه» إلخ.اهـ. من «نزل الأبرار» (ص٣٣٨).', '', '', 'يسميه باسمه ثم يقول', '', '');
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (64, 6, 3, 'اللهم لك الحمدُ، أنت كَسَوْتَنِيهِ، أسألُكَ خيرَه، وخيرَ ما صُنِعَ له، وأعوذُ بكَ مِنْ شَرِّه، وشَرِّ ما صُنِعَ له', 1, 'ما يقول إذا لَبِسَ ثوبًا جديدًا أونعلًا أو شبهه. (ص72)', '', '', 'اللهم لك الحمد أنت كسوتنيه أسألك خيره وخير ما صنع له وأعوذ بك من شره وشر ما صنع له', '', '');
@@ -59,10 +59,10 @@ INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, sea
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (71, 7, 2, 'اللهم إنِّي أعوذُ بكَ أنْ أَضِلَّ أو أُضَلَّ، أو أَزِلَّ أو أُزَلَّ، أو أظلِمَ أو أُظْلَمَ، أو أَجْهَلَ أو يُجْهَلَ عَلَيَّ', 1, 'ما يقول إذا خرجَ من بيته. (ص74)', '', '', 'اللهم إني أعوذ بك أن أضل أو أضل أو أزل أو أزل أو أظلم أو أظلم أو أجهل أو يجهل علي', '', '');
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (72, 7, 3, 'اللهم إني أسألُكَ خيرَ المَوْلَجِ، وخيرَ المَخْرَجِ، باسمِ اللهِ وَلَجْنا، وباسم اللهِ خَرَجْنا، وعلى اللهِ رَبِّنا توكَّلنا', 1, 'ما يقول إذا دخل بيته. (ص74)', '', '', 'اللهم إني أسألك خير المولج وخير المخرج باسم الله ولجنا وباسم الله خرجنا وعلى الله ربنا توكلنا', '', '');
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (73, 7, 4, 'ثُمَّ لْيُسَلِّمْ على أهله.', 0, 'ما يقول إذا دخل بيته. (ص74)', '', '', 'ثم ليسلم على أهله', '', '');
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (1529, 7, 5, 'وكان ﷺ إذا دَخَلَ بيته بدأ بالسِّواك.', 0, 'ما يقول إذا دخل بيته. (ص74)', '', '', 'وكان إذا دخل بيته بدأ بالسواك', '', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (1640, 7, 5, 'وكان ﷺ إذا دَخَلَ بيته بدأ بالسِّواك.', 0, 'ما يقول إذا دخل بيته. (ص74)', '', '', 'وكان إذا دخل بيته بدأ بالسواك', '', '');
 INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex, style) VALUES (74, 7, 6, 'اللهم إنِّي ظلمتُ نفسي ظُلْمًا كثيرًا، ولا يغفرُ الذنوبَ إلا أنت، فاغفِرْ لي مغفرةً من عندِكَ، وارحمني، إنَّك أنتَ الغفورُ الرحيم', 1, 'ما يدعو به في بيته. [مُسلم: ٢٧٠٥]. (ص75)
 
 حاشية: وفي رواية: كبيرًا.', '', '', 'اللهم إني ظلمت نفسي ظلما كثيرا ولا يغفر الذنوب إلا أنت فاغفر لي مغفرة من عندك وارحمني إنك أنت الغفور الرحيم', '', '');
 
-PRAGMA user_version = 154;
+PRAGMA user_version = 157;
 COMMIT;
