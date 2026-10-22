@@ -7,7 +7,7 @@ BEGIN;
 -- * the book prints no grade under these items, so hokm is emptied;
 -- * item 3 repeats «أستغفر الله» twice, not three times;
 -- * item 10, «اللهم لا تخزني يوم القيامة [المسند (١٨٠٥٦)]», is printed and
---   was missing (id 1205);
+--   was missing (id 1250);
 -- * item 8 reads «تجمع -أو: تبعث- عباد» with dashes;
 -- * «ويقرأ آية الكرسي:» and «ويقرأ السور المعوذات:» are printed, the
 --   latter quoting the first verse of each sura between ﴿ ﴾;
@@ -45,7 +45,7 @@ UPDATE contents SET "order" = 9, source = 'ما يقول بعد الصلاة. (�
   search = 'رب قني عذابك يوم تجمع -أو تبعث- عبادك'
   WHERE id = 140;
 UPDATE contents SET "order" = 10, source = 'ما يقول بعد الصلاة. (ص117)' WHERE id = 141;
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1205, 16, 11, 'اللهمَّ لا تُخزِني يومَ القيامةِ', 1, 'ما يقول بعد الصلاة. [المسند (١٨٠٥٦)]. (ص117)', '', '', 'اللهم لا تخزني يوم القيامة', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1250, 16, 11, 'اللهمَّ لا تُخزِني يومَ القيامةِ', 1, 'ما يقول بعد الصلاة. [المسند (١٨٠٥٦)]. (ص117)', '', '', 'اللهم لا تخزني يوم القيامة', '');
 UPDATE contents SET "order" = 12, source = 'ما يقول بعد الصلاة. (ص118)' WHERE id = 143;
 UPDATE contents SET "order" = 13, source = 'ما يقول بعد الصلاة. (ص118)' WHERE id = 144;
 UPDATE contents SET "order" = 14, source = 'ما يقول بعد الصلاة. (ص118)' WHERE id = 1196;
@@ -97,8 +97,8 @@ UPDATE contents SET
   source = 'كيفية التكبير في العيدين. (ص122)'
   WHERE id = 1023;
 UPDATE contents SET "order" = 3, source = 'كيفية التكبير في العيدين. (ص122)' WHERE id = 1024;
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1206, 115, 2, 'وقبل صلاة العيد يخرج من بيته، فيكبر جهرًا حتى يأتي المصلى، ثم يكبر حتى يخرج الإمام.', 0, 'كيفية التكبير في العيدين. (ص122)', '', '', 'وقبل صلاة العيد يخرج من بيته فيكبر جهرا حتى يأتي المصلى ثم يكبر حتى يخرج الإمام', '');
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1207, 115, 4, 'وفي صفة التكبير: آثارٌ موقوفةٌ منها:', 0, 'كيفية التكبير في العيدين. (ص123)', '', '', 'وفي صفة التكبير آثار موقوفة منها', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1251, 115, 2, 'وقبل صلاة العيد يخرج من بيته، فيكبر جهرًا حتى يأتي المصلى، ثم يكبر حتى يخرج الإمام.', 0, 'كيفية التكبير في العيدين. (ص122)', '', '', 'وقبل صلاة العيد يخرج من بيته فيكبر جهرا حتى يأتي المصلى ثم يكبر حتى يخرج الإمام', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1252, 115, 4, 'وفي صفة التكبير: آثارٌ موقوفةٌ منها:', 0, 'كيفية التكبير في العيدين. (ص123)', '', '', 'وفي صفة التكبير آثار موقوفة منها', '');
 
 -- «تكبيرات صلاة العيد» (title 116, p124).
 UPDATE contents SET source = 'تكبيرات صلاة العيد، وما يقول بينها. (ص124)' WHERE titleId = 116;
@@ -106,11 +106,11 @@ UPDATE contents SET source = 'تكبيرات صلاة العيد، وما يقو
 -- «التهنئة يوم العيد» (title 117, p124): the sentence before the greeting is
 -- printed text, so it is a passage, not a `source`; no grade is printed.
 UPDATE contents SET "order" = 2, hokm = '', source = 'التهنئة يوم العيد. (ص124)' WHERE id = 1032;
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1208, 117, 1, 'عن جُبَيْرِ بنِ نُفَيْرٍ، قال: كان أصحابُ النبيِّ صلى الله عليه وسلم إذا الْتَقَوْا يومَ العيدِ يقولُ بعضُهم لبعضٍ:', 0, 'التهنئة يوم العيد. (ص124)', '', '', 'عن جبير بن نفير قال كان أصحاب النبي صلى الله عليه وسلم إذا التقوا يوم العيد يقول بعضهم لبعض', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1253, 117, 1, 'عن جُبَيْرِ بنِ نُفَيْرٍ، قال: كان أصحابُ النبيِّ صلى الله عليه وسلم إذا الْتَقَوْا يومَ العيدِ يقولُ بعضُهم لبعضٍ:', 0, 'التهنئة يوم العيد. (ص124)', '', '', 'عن جبير بن نفير قال كان أصحاب النبي صلى الله عليه وسلم إذا التقوا يوم العيد يقول بعضهم لبعض', '');
 
 -- «ما يفعل عند كسوف الشمس» (title 118, p125): the sermon paragraph was missing.
 UPDATE contents SET source = 'ما يفعل عند كسوف الشمس. (ص125)' WHERE titleId = 118;
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1209, 118, 3, 'ثم يخطب الإمام الناس، ويبدأ بحمد الله والثناء عليه سبحانه، ثم يعظ الناس، ويذكرهم بآيات الله عز وجل، ويحثهم على الدعاء والتكبير والصلاة والصدقة، ويحذرهم من أسباب غضب الله وعقابه.', 0, 'ما يفعل عند كسوف الشمس. (ص125)', '', '', 'ثم يخطب الإمام الناس ويبدأ بحمد الله والثناء عليه سبحانه ثم يعظ الناس ويذكرهم بآيات الله عز وجل ويحثهم على الدعاء والتكبير والصلاة والصدقة ويحذرهم من أسباب غضب الله وعقابه', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1254, 118, 3, 'ثم يخطب الإمام الناس، ويبدأ بحمد الله والثناء عليه سبحانه، ثم يعظ الناس، ويذكرهم بآيات الله عز وجل، ويحثهم على الدعاء والتكبير والصلاة والصدقة، ويحذرهم من أسباب غضب الله وعقابه.', 0, 'ما يفعل عند كسوف الشمس. (ص125)', '', '', 'ثم يخطب الإمام الناس ويبدأ بحمد الله والثناء عليه سبحانه ثم يعظ الناس ويذكرهم بآيات الله عز وجل ويحثهم على الدعاء والتكبير والصلاة والصدقة ويحذرهم من أسباب غضب الله وعقابه', '');
 
 -- «ما يقول عند الاستسقاء» (title 119, pp125-127):
 -- * the opening reads «يبدأ الإمام خطبته بالحمد، ويكثر من الاستغفار…» and the
@@ -142,7 +142,7 @@ UPDATE contents SET "order" = 3, source = 'ما يقول عند الاستسقا
 لَا إِلَهَ إِلَّا اللهُ، يَفْعَلُ مَا يُرِيدُ، اللَّهُمَّ أَنْتَ اللهُ، لَا إِلَهَ إِلَّا أَنْتَ الْغَنِيُّ، وَنَحْنُ الْفُقَرَاءُ، أَنْزِلْ عَلَيْنَا الْغَيْثَ، وَاجْعَلْ مَا أَنْزَلْتَ لَنَا قُوَّةً وَبَلَاغًا إِلَى حِينٍ.',
   search = '124 لا إله إلا الله يفعل ما يريد اللهم أنت الله لا إله إلا أنت الغني ونحن الفقراء أنزل علينا الغيث واجعل ما أنزلت لنا قوة وبلاغا إلى حين'
   WHERE id = 1037;
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1210, 119, 4, 'اللَّهُمَّ اسْقِنَا، اللَّهُمَّ اسْقِنَا، اللَّهُمَّ اسْقِنَا.', 1, 'ما يقول عند الاستسقاء. (ص126)', '', '', 'اللهم اسقنا اللهم اسقنا اللهم اسقنا', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1255, 119, 4, 'اللَّهُمَّ اسْقِنَا، اللَّهُمَّ اسْقِنَا، اللَّهُمَّ اسْقِنَا.', 1, 'ما يقول عند الاستسقاء. (ص126)', '', '', 'اللهم اسقنا اللهم اسقنا اللهم اسقنا', '');
 UPDATE contents SET "order" = 5,
   source = 'ما يقول عند الاستسقاء. (ص126)
 
@@ -164,20 +164,33 @@ UPDATE contents SET
   body = replace(body, ' QuranText[', char(10) || 'QuranText[')
   WHERE id = 1044;
 DELETE FROM contents WHERE id = 1045;
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1211, 121, 2, 'قال الإمام ابن العربي رحمه الله: «وفيه استيفاء وجوه الطاعة في التوبة، لأنه نَدِمَ فطهَّر باطنه، ثم توضأ، ثُمَّ صَلَّى، ثُمَّ استغفر».', 0, 'صلاة التوبة. (ص128)
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1256, 121, 2, 'قال الإمام ابن العربي رحمه الله: «وفيه استيفاء وجوه الطاعة في التوبة، لأنه نَدِمَ فطهَّر باطنه، ثم توضأ، ثُمَّ صَلَّى، ثُمَّ استغفر».', 0, 'صلاة التوبة. (ص128)
 
 حاشية: «عارضة الأحوذي» (٢/ ١٩٧).', '', '', 'قال الإمام ابن العربي رحمه الله وفيه استيفاء وجوه الطاعة في التوبة لأنه ندم فطهر باطنه ثم توضأ ثم صلى ثم استغفر', '');
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1212, 121, 3, 'تنبيهان:', 0, 'صلاة التوبة. (ص128)', '', '', 'تنبيهان', '');
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1213, 121, 4, 'الأول: يستحب أداء صلاة التوبة عند عزمه على التوبة من الذنب الذي اقترفه، والواجب المبادرة إلى التوبة بعد وقوع المعصية مباشرة، فإن أخرها قبلت ما دامت روحه لم تبلغ الحلقوم ولم يغرغر.', 0, 'صلاة التوبة. (ص128)', '', '', 'الأول يستحب أداء صلاة التوبة عند عزمه على التوبة من الذنب الذي اقترفه والواجب المبادرة إلى التوبة بعد وقوع المعصية مباشرة فإن أخرها قبلت ما دامت روحه لم تبلغ الحلقوم ولم يغرغر', '');
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1214, 121, 5, 'الثاني: تشرع صلاة التوبة في جميع الأوقات حتى أوقات النهي عن الصلاة؛ لأنها من ذوات الأسباب التي تشرع عند وجود سببها.', 0, 'صلاة التوبة. (ص129)
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1257, 121, 3, 'تنبيهان:', 0, 'صلاة التوبة. (ص128)', '', '', 'تنبيهان', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1258, 121, 4, 'الأول: يستحب أداء صلاة التوبة عند عزمه على التوبة من الذنب الذي اقترفه، والواجب المبادرة إلى التوبة بعد وقوع المعصية مباشرة، فإن أخرها قبلت ما دامت روحه لم تبلغ الحلقوم ولم يغرغر.', 0, 'صلاة التوبة. (ص128)', '', '', 'الأول يستحب أداء صلاة التوبة عند عزمه على التوبة من الذنب الذي اقترفه والواجب المبادرة إلى التوبة بعد وقوع المعصية مباشرة فإن أخرها قبلت ما دامت روحه لم تبلغ الحلقوم ولم يغرغر', '');
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1259, 121, 5, 'الثاني: تشرع صلاة التوبة في جميع الأوقات حتى أوقات النهي عن الصلاة؛ لأنها من ذوات الأسباب التي تشرع عند وجود سببها.', 0, 'صلاة التوبة. (ص129)
 
 حاشية: «مجموع الفتاوى» (٢٣/ ٢١٥).', '', '', 'الثاني تشرع صلاة التوبة في جميع الأوقات حتى أوقات النهي عن الصلاة لأنها من ذوات الأسباب التي تشرع عند وجود سببها', '');
 
 -- «صلاة التسبيح» (title 120) and «ما يقرأ في الليل» (title 3) are not in the
 -- 10th edition: neither the index (pp445-464) nor pp116-129 prints them.
-DELETE FROM contents WHERE titleId IN (120, 3);
-DELETE FROM titles WHERE id IN (120, 3);
+DELETE FROM contents WHERE titleId = 120;
+DELETE FROM titles WHERE id = 120;
 UPDATE titles SET "order" = 1 WHERE id = 121;
 
-PRAGMA user_version = 146;
+-- Merge with #199 (main): the night section stays (p50 prints «ثالثًا: ما يُقال في الليل»),
+-- and goes back to its chapter: third under «أذكار الصباح والمساء», before its etiquette.
+UPDATE titles SET "order" = 4 WHERE id = 106;
+UPDATE titles SET parentId = 100, "order" = 3 WHERE id = 3;
+-- Labels the book does not print («— آية الكرسي»، «— الصيغة الأولى للتسبيح»…) leave the after-prayer sources.
+UPDATE contents SET source = 'ما يقول بعد الصلاة. (ص117)' WHERE id = 137;
+UPDATE contents SET source = 'ما يقول بعد الصلاة. (ص117)' WHERE id = 138;
+UPDATE contents SET source = 'ما يقول بعد الصلاة. (ص118)' WHERE id = 947;
+UPDATE contents SET source = 'ما يقول بعد الصلاة. (ص118)' WHERE id = 145;
+UPDATE contents SET source = 'ما يقول بعد الصلاة. (ص118)' WHERE id = 948;
+UPDATE contents SET source = 'ما يقول بعد الصلاة. (ص119)' WHERE id = 952;
+UPDATE contents SET source = 'ما يقول بعد الصلاة. (ص119)' WHERE id = 956;
+UPDATE contents SET source = 'ما يقول بعد الصلاة. (ص119)' WHERE id = 959;
+PRAGMA user_version = 148;
 COMMIT;

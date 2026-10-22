@@ -93,23 +93,23 @@ jobs:
           include_comments_by_actor: "mn3m-cs,claude[bot]"
           additional_permissions: |
             actions: read
+          # Every shell command is allowed (owner, #210): narrow prefixes refused flutter, python3,
+          # sqlite3 and pdftoppm in their real forms, and an unattended run has nobody to approve
+          # them, so every book-audit ticket stopped before its pull request. Only the owner's
+          # comments reach Claude (include_comments_by_actor), and the runner is discarded after
+          # each run. Merging stays the owner's.
           claude_args: >-
             --append-system-prompt-file .github/claude/unattended.md
+            --disallowed-tools "Bash(gh pr merge:*)"
             --allowed-tools
-            "Bash(flutter pub get:*)"
-            "Bash(flutter analyze:*)"
-            "Bash(flutter test:*)"
-            "Bash(dart format:*)"
-            "Bash(cd alazkar:*)"
-            "Bash(gh pr create:*)"
-            "Bash(gh pr view:*)"
-            "Bash(gh issue view:*)"
-            "Bash(gh issue edit:*)"
-            "Bash(gh issue comment:*)"
-            "Bash(gh api repos/mn3m-cs/mokhtassar-nasehaa/issues:*)"
-            "Bash(sqlite3 alazkar/assets/db/Al-Azkar.db:*)"
-            "Bash(python3 data_pipeline/:*)"
-            "Bash(jq empty data_pipeline/sections/:*)"
+            "Bash"
+            "WebSearch"
+            "WebFetch(domain:dorar.net)"
+            "WebFetch(domain:sunnah.com)"
+            "WebFetch(domain:shamela.ws)"
+            "WebFetch(domain:islamweb.net)"
+            "WebFetch(domain:www.islamweb.net)"
+            "WebFetch(domain:almukaddem.com)"
 
       # Hermes schedules Claude by how much of the account's limit is left. Only the rate-limit
       # events leave the job: the execution file holds the whole conversation, tool output
