@@ -25,7 +25,7 @@ BEGIN;
 UPDATE titles SET name = 'ما يقول مَن رَدَّته الطِّيَرَةُ عن حاجته' WHERE id = 38;
 
 -- ---- 32: دعاء الاستخارة (pp140-141)
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1227, 32, 1,
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1260, 32, 1,
   'إذا هَمَّ بالأمر، فَلْيَرْكَعْ ركعتين من غير الفريضة، ينوي بها الاستخارة، ثُمَّ يقول:', 0,
   'دعاء الاستخارة. (ص140)
 
@@ -48,7 +48,7 @@ UPDATE contents SET "order" = 2, hokm = '', fadl = '', source = 'دعاء الا
 حاشية: وفي رواية: «عاجِلِ أمري وآجِلِه».
 
 حاشية: انظر: «فتح الباري» (١١/ ١٨٣-١٨٧).' WHERE id = 217;
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1228, 32, 3,
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1261, 32, 3,
   'تنبيه: مِمَّا لا أصلَ له أن يتوقَّفَ المستخيرُ حتَّى يرى مَنامًا يُرشدُه إلى الفعلِ أو التَّرْكِ، وكذلك لا يُشترط انشراحُ الصدر، بل يفعل ما بدا له سواء انشرحت له نفسه أم لا', 0,
   'دعاء الاستخارة. (ص141)
 
@@ -57,7 +57,7 @@ INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, sea
 
 -- ---- 33: دعاء الكرب، والدعاء عند الأمور المهمة (pp142-144)
 UPDATE contents SET hokm = '', fadl = '', source = 'دعاء الكرب، والدعاء عند الأمور المهمة. (ص142)' WHERE id IN (218, 219, 220, 221, 223, 224);
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1229, 33, 5,
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1262, 33, 5,
   'وليكن أكثر دعائه أن يقول:', 0,
   'دعاء الكرب، والدعاء عند الأمور المهمة. (ص142)', '', '', 'وليكن أكثر دعائه أن يقول', '');
 UPDATE contents SET "order" = 6, hokm = '', fadl = '',
@@ -86,7 +86,7 @@ UPDATE contents SET hokm = '', fadl = '', source = 'ما يقول إذا خاف 
 
 -- ---- 35: ما يقول إذا عرض له شيطان أو خافه (pp146-147)
 UPDATE contents SET hokm = '', fadl = '', source = 'ما يقول إذا عرض له شيطان أو خافه. [المؤمنون: ٩٧، ٩٨] (ص146)' WHERE id = 236;
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1230, 35, 2,
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1263, 35, 2,
   'ويقول:', 0, 'ما يقول إذا عرض له شيطان أو خافه. (ص146)', '', '', 'ويقول', '');
 UPDATE contents SET "order" = 3, hokm = '', fadl = '', source = 'ما يقول إذا عرض له شيطان أو خافه. (ص146)',
   body = 'أعوذُ باللهِ السميعِ العليمِ من الشيطانِ الرجيمِ؛ مِنْ هَمْزِهِ ونَفْخِهِ ونَفْثِهِ' WHERE id = 237;
@@ -109,7 +109,7 @@ UPDATE contents SET hokm = '', fadl = '', source = 'ما يقول إذا است�
 حاشية: الحَزْنُ: بفتح الحاء المهملة، وسكون الزاي؛ هو غليظ الأرض وخَشِنُها.' WHERE id = 243;
 
 -- ---- 38: ما يقول مَن ردَّته الطِّيَرَةُ عن حاجته (p148)
-INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1231, 38, 1,
+INSERT INTO contents (id, titleId, "order", body, count, source, hokm, fadl, search, sourceIndex) VALUES (1264, 38, 1,
   'يَمْضِي فيها مُتَوَكِّلًا على الله تعالى، ويُكَفِّرُ عن وِزْرِ تطيُّره بأَنْ يقول:', 0,
   'ما يقول مَن ردَّته الطِّيَرَةُ عن حاجته. (ص148)', '', '', 'يمضي فيها متوكلا على الله تعالى ويكفر عن وزر تطيره بأن يقول', '');
 UPDATE contents SET "order" = 2, hokm = '', fadl = '', source = 'ما يقول مَن ردَّته الطِّيَرَةُ عن حاجته. (ص148)
@@ -120,5 +120,7 @@ UPDATE contents SET "order" = 2, hokm = '', fadl = '', source = 'ما يقول �
 UPDATE contents SET hokm = '', fadl = '', source = 'ما يقول إذا أصابته نكبة قليلة أو كثيرة. (ص149)' WHERE id = 245;
 UPDATE contents SET hokm = '', fadl = '', source = 'ما يقول إذا كان عليه دَين عجز عنه. (ص149)' WHERE id = 246;
 
-PRAGMA user_version = 147;
+-- p140 prints «ينوي بهما» (two rak'as), not «بها».
+UPDATE contents SET body = replace(body, 'ينوي بها الاستخارة', 'ينوي بهما الاستخارة'), search = replace(search, 'ينوي بها الاستخارة', 'ينوي بهما الاستخارة') WHERE id = 1260;
+PRAGMA user_version = 149;
 COMMIT;
