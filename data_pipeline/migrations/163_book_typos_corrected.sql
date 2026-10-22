@@ -108,5 +108,8 @@ UPDATE contents SET body = 'تَمَّ نورُكَ فهديتَ فلك الحم
 -- (a number the book states in the zikr's own line counts like a bracket; owner, 2026-10-22)
 UPDATE contents SET count = 3 WHERE id = 254;
 
+-- p72: the heading «ما يقول إذا لَبِسَ ثوبًا جديدًا أونعلًا» lacks the space
+UPDATE contents SET source = replace(source, 'أونعلًا', 'أو نعلًا') WHERE id IN (64, 65, 1639);
+
 PRAGMA user_version = 163;
 COMMIT;

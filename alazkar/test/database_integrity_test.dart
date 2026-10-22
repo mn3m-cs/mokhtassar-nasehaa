@@ -2737,6 +2737,7 @@ void main() {
       (id: 1667, page: 9, misprint: 'قي مثل', correct: 'في مثل'),
       (id: 1672, page: 13, misprint: '﴾. [', correct: '﴾ [الأنفال: ٤٥]'),
       (id: 1698, page: 23, misprint: 'الطُّرْشوشي', correct: 'الطُّرْطوشي'),
+      (id: 64, page: 72, misprint: 'أونعلًا', correct: 'أو نعلًا'),
       (id: 899, page: 85, misprint: 'عى ', correct: 'محمولٌ على'),
       (id: 1599, page: 152, misprint: 'أشرنا إليه ', correct: 'أشرنا إليها'),
       (id: 1599, page: 154, misprint: 'المرضي', correct: 'المرضى يتحسنون'),
@@ -2903,7 +2904,7 @@ void main() {
         reason: 'p72 sets the footnote on «يسميه باسمه», not on the '
             'supplication');
     expect((await row(64))['source'],
-        'ما يقول إذا لَبِسَ ثوبًا جديدًا أونعلًا أو شبهه. (ص72)');
+        'ما يقول إذا لَبِسَ ثوبًا جديدًا أو نعلًا أو شبهه. (ص72)');
     expect((await row(68))['source']! as String,
         contains('للمخاطَب بذلك، أي أنه تطول حياته حتى يبلى الثوب ويخلق.'));
 
