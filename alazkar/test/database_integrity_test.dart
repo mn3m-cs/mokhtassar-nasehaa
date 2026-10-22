@@ -636,17 +636,38 @@ void main() {
         (SELECT nodeType FROM titles WHERE id = 158) AS root_type,
         (SELECT COUNT(*) FROM titles WHERE parentId = 158) AS child_count,
         (SELECT COUNT(*) FROM contents
-         WHERE titleId IN (159, 160) AND count = 0) AS zero_count,
+         WHERE titleId IN (159, 160, 166) AND count = 0) AS zero_count,
         (SELECT COUNT(*) FROM contents WHERE titleId = 159) AS introduction_count,
         (SELECT COUNT(*) FROM contents WHERE titleId = 160) AS virtues_count,
-        (SELECT search LIKE '%آخر ساعة بعد العصر%'
-         FROM contents WHERE id = 1160) AS friday_time,
-        (SELECT search LIKE '%أحد عشر وردا%'
-         FROM contents WHERE id = 1175) AS eleven_wirds,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 166) AS times_count,
+        (SELECT name FROM titles WHERE id = 159) AS introduction_name,
+        (SELECT "order" FROM titles WHERE id = 166) AS times_order,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId = 159
+           AND (body LIKE '%الطواف بالكعبة%' OR body LIKE '%وقفة المزدلفة%'
+             OR body LIKE '%في السفر%')) AS introduction_times_left,
+        (SELECT source LIKE '%حاشية: وبعض هذه الدعوات%'
+         FROM contents WHERE id = 1160) AS introduction_footnote_kept,
+        (SELECT search LIKE '%أوراد الدعاء المطلق%'
+         FROM contents WHERE id = 1160) AS introduction_wirds,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId = 160 AND body LIKE '%وفي الدعاء معان%') AS meanings_left,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId = 160 AND body LIKE 'وقال زكريا عليه السلام%') AS zakariyya,
         (SELECT search LIKE '%الدعاء هو العبادة%'
          FROM contents WHERE id = 1178) AS worship_hadith,
-        (SELECT search LIKE '%السادس القدرة%'
-         FROM contents WHERE id = 1186) AS six_meanings
+        (SELECT body LIKE 'وعنه رضي الله عنه%'
+         FROM contents WHERE id = 1183) AS hadith_opens_as_printed,
+        (SELECT source LIKE '%حاشية: وذلك لأنه إما قانط%'
+             AND source NOT LIKE '%فيض القدير%'
+         FROM contents WHERE id = 1184) AS anger_footnote_as_printed,
+        (SELECT source LIKE '%وبُنَيُّ آدمَ حين يُسألُ يَغضَبُ%'
+             AND source LIKE '%«وأبخل الناس» أي: أمنعهم للفضل%'
+         FROM contents WHERE id = 1185) AS weakest_people_footnotes,
+        (SELECT body LIKE '%﴿ ٱهۡدِنَا ٱلصِّرَٰطَ ٱلۡمُسۡتَقِيمَ ﴾%'
+         FROM contents WHERE titleId = 166 AND "order" = 7) AS fatiha_time,
+        (SELECT body FROM contents
+         WHERE titleId = 166 AND "order" = 18) AS last_time
     ''');
     final absoluteDuaWirds = await database.rawQuery('''
       SELECT id, parentId, "order"
@@ -655,8 +676,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 152);
-    expect(titleCount.single, {'count': 132});
+    expect(await database.getVersion(), 153);
+    expect(titleCount.single, {'count': 133});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -812,27 +833,38 @@ void main() {
     });
     expect(absoluteDuaContext.single, {
       'root_type': 'category',
-      'child_count': 13,
-      'zero_count': 28,
-      'introduction_count': 17,
-      'virtues_count': 11,
-      'friday_time': 1,
-      'eleven_wirds': 1,
+      'child_count': 14,
+      'zero_count': 34,
+      'introduction_count': 3,
+      'virtues_count': 13,
+      'times_count': 18,
+      'introduction_name': 'تمهيد الأدعية المطلقة',
+      'times_order': 3,
+      'introduction_times_left': 0,
+      'introduction_footnote_kept': 1,
+      'introduction_wirds': 1,
+      'meanings_left': 0,
+      'zakariyya': 1,
       'worship_hadith': 1,
-      'six_meanings': 1,
+      'hadith_opens_as_printed': 1,
+      'anger_footnote_as_printed': 1,
+      'weakest_people_footnotes': 1,
+      'fatiha_time': 1,
+      'last_time': 'عند حضور الميت، وعند تغميضه.',
     });
+    // pp372-380 (#183): the eleven wirds follow the times of answer.
     expect(absoluteDuaWirds, [
-      {'id': 92, 'parentId': 158, 'order': 3},
-      {'id': 82, 'parentId': 158, 'order': 4},
-      {'id': 83, 'parentId': 158, 'order': 5},
-      {'id': 84, 'parentId': 158, 'order': 6},
-      {'id': 93, 'parentId': 158, 'order': 7},
-      {'id': 86, 'parentId': 158, 'order': 8},
-      {'id': 87, 'parentId': 158, 'order': 9},
-      {'id': 88, 'parentId': 158, 'order': 10},
-      {'id': 89, 'parentId': 158, 'order': 11},
-      {'id': 90, 'parentId': 158, 'order': 12},
-      {'id': 91, 'parentId': 158, 'order': 13},
+      {'id': 92, 'parentId': 158, 'order': 4},
+      {'id': 82, 'parentId': 158, 'order': 5},
+      {'id': 83, 'parentId': 158, 'order': 6},
+      {'id': 84, 'parentId': 158, 'order': 7},
+      {'id': 93, 'parentId': 158, 'order': 8},
+      {'id': 86, 'parentId': 158, 'order': 9},
+      {'id': 87, 'parentId': 158, 'order': 10},
+      {'id': 88, 'parentId': 158, 'order': 11},
+      {'id': 89, 'parentId': 158, 'order': 12},
+      {'id': 90, 'parentId': 158, 'order': 13},
+      {'id': 91, 'parentId': 158, 'order': 14},
     ]);
     expect(
       wirdCounts.map((row) => row['count']),
@@ -1547,10 +1579,10 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 175},
+    expect(recordsWithFootnotes.single, {'count': 176},
         reason: 'pp29-68 (#171), pp91-115 (#174), pp116-129 (#175), '
-            'pp140-149 (#177), pp175-207 (#179), pp177-226 (#180) and '
-            'pp247-293 (#182) print their footnotes');
+            'pp140-149 (#177), pp175-207 (#179), pp177-226 (#180), '
+            'pp247-293 (#182) and pp372-380 (#183) print their footnotes');
   });
 
   test('travel to celestial matters follow pp177-226 of the book (#180)',
