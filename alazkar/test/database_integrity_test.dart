@@ -240,7 +240,7 @@ void main() {
         MAX("order") AS last,
         SUM(body IN ('الحمدُ للهِ', 'أعوذُ باللهِ من شرِّها',
                      'أعوذُ باللهِ من الشيطانِ الرجيمِ')) AS app_wording,
-        SUM("order" = 4 AND count = 1 AND search = 'فليستعذ بالله من شره') AS seek_refuge,
+        SUM("order" = 4 AND count = 0 AND search = 'فليستعذ بالله من شره') AS seek_refuge,
         SUM("order" = 5 AND count = 3) AS left_breathing,
         SUM("order" = 6 AND count = 3
             AND search = 'ويتعوذ بالله من الشيطان الرجيم') AS satan_refuge,
@@ -1056,7 +1056,7 @@ void main() {
       'seek_refuge': 1,
       'left_breathing': 1,
       'satan_refuge': 1,
-      'prose_rows': 7,
+      'prose_rows': 8,
       'graded': 0,
     });
     expect(nightAwakeningSection.single, {
@@ -2123,7 +2123,7 @@ void main() {
     );
     expect(chapter[15]['source'], contains('ومع ذلك فهناك ضوابطُ'));
     const sayings = [
-      'قال الإمام أبو بكر محمد بن الوليد الطُّرْطُوشي',
+      'قال الإمام أبو بكر محمد بن الوليد الطُّرْشوشي',
       'وقال القاضي عياض',
       'وقال شيخ الإسلام أحمد بن تيميَّةَ',
       'وقال ذَهَبِيُّ العصرِ',
