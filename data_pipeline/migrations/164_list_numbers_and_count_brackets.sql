@@ -877,5 +877,8 @@ UPDATE contents SET body = '٢-
 QuranText[(14:41:41)]', search = '٢- 144141' WHERE id = 1939;
 UPDATE contents SET body = '٣- ﴿ رَّبِّ ٱرۡحَمۡهُمَا كَمَا رَبَّيَانِي صَغِيرٗا ﴾', search = '٣- ﴿ رب ٱرۡحمۡهما كما ربياني صغيرا ﴾' WHERE id = 1940;
 
+-- p136: the book prints a bare dash before the first of the two duas, then «٢-»: a misprint for «١-» (#226)
+UPDATE contents SET body = '١- أعوذُ بكلماتِ اللهِ التامَّةِ، من غضبِهِ وعِقابِهِ، ومن شرِّ عبادِهِ، ومن هَمَزاتِ الشياطين، وأن يَحضُرونِ', search = '١- أعوذ بكلمات الله التامة من غضبه وعقابه ومن شر عباده ومن همزات الشياطين وأن يحضرون' WHERE id = 212;
+
 PRAGMA user_version = 164;
 COMMIT;
