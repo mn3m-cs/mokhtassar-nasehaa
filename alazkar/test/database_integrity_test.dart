@@ -1861,8 +1861,9 @@ void main() {
         [
           for (final id in [255, 256, 265, 977, 254]) (await row(id))['count'],
         ],
-        [3, 7, 3, 7, 1],
-        reason: 'the bracketed counts of pp158, 160, 161; p157 has none',
+        [3, 7, 3, 7, 3],
+        reason: 'the bracketed counts of pp158, 160, 161; p157-158 says '
+            '«ثلاثَ مرَّاتٍ» in the line itself',
       );
     },
   );
