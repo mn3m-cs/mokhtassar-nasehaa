@@ -710,7 +710,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 162);
+    expect(await database.getVersion(), 163);
     expect(titleCount.single, {'count': 156});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1362,13 +1362,13 @@ void main() {
           1126, 1127, 1128, 1129, 1130, 1131, 1133, 1134, 1135, 1136, 1137,
           1138)) AS hadiths_not_printed_here,
         (SELECT COUNT(*) FROM contents WHERE titleId = 153
-          AND body LIKE 'وعن عائشةَ رضي الله عنه قال%') AS aisha_as_printed,
+          AND body LIKE 'وعن عائشةَ رضي الله عنها قال%') AS aisha_corrected,
         (SELECT COUNT(*) FROM contents WHERE titleId = 154
-          AND body LIKE '%[الكهف: ٤٩]%') AS kahf_reference_as_printed,
+          AND body LIKE '%[الكهف: ٤٦]%') AS kahf_reference_corrected,
         (SELECT COUNT(*) FROM contents WHERE titleId = 154
-          AND body LIKE '%أقريءْ%') AS aqri_as_printed,
+          AND body LIKE '%أقرئْ%') AS aqri_corrected,
         (SELECT COUNT(*) FROM contents WHERE titleId = 172
-          AND body LIKE '%إداراكِهِ%') AS idrak_as_printed,
+          AND body LIKE '%عن إدراكِهِ%') AS idrak_corrected,
         (SELECT COUNT(*) FROM contents WHERE titleId = 153
           AND body LIKE '%لأتيتُكَ بقُرابِها%'
           AND source LIKE '%حاشية: قُرابُ الأرضِ: ما يقارب مَلْأَها.')
@@ -1428,10 +1428,10 @@ void main() {
     expect(await counts(76), [0, 1, 1, 1, 1, 1, 1]);
     expect(regression.single, {
       'hadiths_not_printed_here': 0,
-      'aisha_as_printed': 1,
-      'kahf_reference_as_printed': 1,
-      'aqri_as_printed': 1,
-      'idrak_as_printed': 1,
+      'aisha_corrected': 1,
+      'kahf_reference_corrected': 1,
+      'aqri_corrected': 1,
+      'idrak_corrected': 1,
       'qurab_footnote': 1,
       'two_light_words_footnote': 1,
       'whole_verses': 4,
@@ -1861,8 +1861,9 @@ void main() {
         [
           for (final id in [255, 256, 265, 977, 254]) (await row(id))['count'],
         ],
-        [3, 7, 3, 7, 1],
-        reason: 'the bracketed counts of pp158, 160, 161; p157 has none',
+        [3, 7, 3, 7, 3],
+        reason: 'the bracketed counts of pp158, 160, 161; p157-158 says '
+            '«ثلاثَ مرَّاتٍ» in the line itself',
       );
     },
   );
@@ -2224,8 +2225,9 @@ void main() {
     );
     expect(
       previous[8]['source'],
-      contains('قي مثل هذا'),
-      reason: 'the book prints «قي», kept as printed',
+      contains('في مثل هذا'),
+      reason: 'the book prints «قي», a typo corrected and listed for the '
+          'publisher (#224)',
     );
     expect(previous[12]['body'], contains('وظاهرًا وباطنًا'));
     expect(previous[12]['body'], contains('وخليلِه محمدٍ'));
@@ -2242,7 +2244,7 @@ void main() {
     );
     expect(chapter[15]['source'], contains('ومع ذلك فهناك ضوابطُ'));
     const sayings = [
-      'قال الإمام أبو بكر محمد بن الوليد الطُّرْشوشي',
+      'قال الإمام أبو بكر محمد بن الوليد الطُّرْطوشي',
       'وقال القاضي عياض',
       'وقال شيخ الإسلام أحمد بن تيميَّةَ',
       'وقال ذَهَبِيُّ العصرِ',
@@ -2452,13 +2454,13 @@ void main() {
     );
     expect(
       await value('''
-        SELECT source LIKE '%والتمتع به فيها يلائمه%'
+        SELECT source LIKE '%والتمتع به فيما يلائمه%'
                AND source NOT LIKE '%حاشية: وقال ابن حجر%'
         FROM contents WHERE id = 1149
       '''),
       1,
-      reason: 'p341 prints al-Nawawi and Ibn Hajar as one footnote, with '
-          'its «فيها» as printed',
+      reason: 'p341 prints al-Nawawi and Ibn Hajar as one footnote; its '
+          'misprinted «فيها» reads «فيما» (#224)',
     );
     expect(
       await value(
@@ -2667,8 +2669,8 @@ void main() {
         (SELECT COUNT(*) FROM contents
          WHERE (titleId = 83 AND "order" = 6 OR titleId = 91 AND "order" = 14)
            AND search LIKE 'اللهم إني أسألك بأني أشهد%') AS nos_49_and_223,
-        (SELECT body LIKE '%من عبادِكَ عني المخلَصين.'
-         FROM contents WHERE titleId = 93 AND "order" = 16) AS typo_kept,
+        (SELECT body LIKE '%واجعلني من عبادِكَ المخلَصين.'
+         FROM contents WHERE titleId = 93 AND "order" = 16) AS typo_corrected,
         (SELECT group_concat(count) FROM contents
          WHERE titleId = 91 AND "order" IN (28, 29)) AS no_237,
         (SELECT body LIKE 'تمَّ الكِتابُ%' AND count = 0
@@ -2708,11 +2710,86 @@ void main() {
       'mawquf_source':
           'الورد الأول. [موقوفٌ عن ابن عمر رضي الله عنهما]. (ص386)',
       'nos_49_and_223': 2,
-      'typo_kept': 1,
+      'typo_corrected': 1,
       'no_237': '3,3',
       'closing': 1,
       'earlier_edition_only': 0,
     });
+  });
+
+  test('printing errors read correctly and are listed for the publisher (#224)',
+      () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+    final errata = File('../docs/book-errata.md').readAsStringSync();
+    String arabicDigits(int n) => n
+        .toString()
+        .split('')
+        .map((d) => String.fromCharCode(0x0660 + int.parse(d)))
+        .join();
+
+    const corrections = [
+      (id: 1656, page: 5, misprint: 'والفوئد', correct: 'والفوائد'),
+      (id: 1667, page: 9, misprint: 'قي مثل', correct: 'في مثل'),
+      (id: 1672, page: 13, misprint: '﴾. [', correct: '﴾ [الأنفال: ٤٥]'),
+      (id: 1698, page: 23, misprint: 'الطُّرْشوشي', correct: 'الطُّرْطوشي'),
+      (id: 64, page: 72, misprint: 'أونعلًا', correct: 'أو نعلًا'),
+      (id: 899, page: 85, misprint: 'عى ', correct: 'محمولٌ على'),
+      (id: 1599, page: 152, misprint: 'أشرنا إليه ', correct: 'أشرنا إليها'),
+      (id: 1599, page: 154, misprint: 'المرضي', correct: 'المرضى يتحسنون'),
+      (id: 1496, page: 289, misprint: 'ثلثا اليل', correct: 'ثلثا الليل'),
+      (id: 1116, page: 298, misprint: 'عنه قال', correct: 'عنها قال'),
+      (id: 1751, page: 309, misprint: '[الكهف: ٤٩]', correct: '[الكهف: ٤٦]'),
+      (id: 1123, page: 312, misprint: 'عمر رضي', correct: 'عمرو رضي'),
+      (id: 1759, page: 313, misprint: 'أقريءْ', correct: 'أقرئْ'),
+      (id: 1826, page: 329, misprint: '[الفاتحة: ١]', correct: '[الفاتحة: ٢]'),
+      (
+        id: 1835,
+        page: 330,
+        misprint: 'العالمين»، ثم',
+        correct: 'العالمين»»، ثم'
+      ),
+      (id: 1855, page: 336, misprint: '\nالأول:', correct: '\nالأولى:'),
+      (id: 1858, page: 337, misprint: 'إداراكِهِ', correct: 'إدراكِهِ'),
+      (id: 1149, page: 341, misprint: 'فيها يلائمه', correct: 'فيما يلائمه'),
+      (id: 1951, page: 364, misprint: '»، .', correct: 'لأُعِيذَنَّه».'),
+      (id: 1977, page: 370, misprint: 'قال: ﴿', correct: 'قال: «﴿'),
+      (id: 1176, page: 375, misprint: '﴾. [غافر', correct: '﴾ [غافر: ٦٠]'),
+      (id: 830, page: 383, misprint: '[البقرة: ٢٨٦]', correct: '[البقرة: ٢٨٥]'),
+      (id: 770, page: 406, misprint: 'شرفتنة', correct: 'شر فتنة الفقر'),
+      (
+        id: 2021,
+        page: 409,
+        misprint: 'عني المخلَصين',
+        correct: 'عبادِكَ المخلَصين'
+      ),
+      (id: 2022, page: 410, misprint: 'وفي أنَّه', correct: 'وفيه أنَّه'),
+      (id: 630, page: 432, misprint: 'الرسول الله', correct: 'لرسول الله ﷺ'),
+      (id: 804, page: 437, misprint: 'باسمعي', correct: 'بسمعي'),
+      (id: 2090, page: 438, misprint: 'و بسطتَ', correct: 'وبسطتَ'),
+    ];
+    expect(
+      (await database.rawQuery('SELECT body FROM contents WHERE id = 1645'))
+          .single['body'],
+      'وإذا رأى ما يكره',
+      reason: 'p135 prints no colon after this line',
+    );
+    for (final c in corrections) {
+      final text = (await database.rawQuery(
+        "SELECT body || '\n' || source AS text FROM contents WHERE id = ?",
+        [c.id],
+      ))
+          .single['text']! as String;
+      expect(text, contains(c.correct), reason: 'p${c.page}, row ${c.id}');
+      expect(text, isNot(contains(c.misprint)),
+          reason: 'p${c.page}, row ${c.id}');
+      expect(errata, contains('| ${arabicDigits(c.page)} |'),
+          reason: 'p${c.page} is listed for the publisher');
+    }
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
@@ -2835,7 +2912,7 @@ void main() {
         reason: 'p72 sets the footnote on «يسميه باسمه», not on the '
             'supplication');
     expect((await row(64))['source'],
-        'ما يقول إذا لَبِسَ ثوبًا جديدًا أونعلًا أو شبهه. (ص72)');
+        'ما يقول إذا لَبِسَ ثوبًا جديدًا أو نعلًا أو شبهه. (ص72)');
     expect((await row(68))['source']! as String,
         contains('للمخاطَب بذلك، أي أنه تطول حياته حتى يبلى الثوب ويخلق.'));
 
