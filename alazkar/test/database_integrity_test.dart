@@ -524,14 +524,14 @@ void main() {
         (SELECT COUNT(*) FROM titles WHERE parentId = 100) AS morning_evening_children,
         (SELECT COUNT(*) FROM titles WHERE parentId = 108) AS mosque_children,
         (SELECT COUNT(*) FROM contents
-         WHERE id BETWEEN 1007 AND 1014 AND count = 0) AS zero_count_prose,
+         WHERE id BETWEEN 1007 AND 1013 AND count = 0) AS zero_count_prose,
         (SELECT COUNT(*) FROM contents
-         WHERE id BETWEEN 1007 AND 1014) AS prose_count,
+         WHERE id BETWEEN 1007 AND 1013) AS prose_count,
         (SELECT search LIKE '%فهذا مختصر%الأذكار والأدعية الصحيحة%'
          FROM contents WHERE id = 1008) AS introduction_searchable,
         (SELECT search LIKE '%كل يوم يعيشه المؤمن غنيمة%'
          FROM contents WHERE id = 1013) AS etiquette_searchable,
-        (SELECT hokm FROM contents WHERE id = 1014) AS salaf_judgment
+        (SELECT COUNT(*) FROM titles WHERE id IN (105, 107)) AS removed_sections
     ''');
     final absoluteDuaContext = await database.rawQuery('''
       SELECT
@@ -557,8 +557,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 146);
-    expect(titleCount.single, {'count': 140});
+    expect(await database.getVersion(), 147);
+    expect(titleCount.single, {'count': 138});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -669,13 +669,13 @@ void main() {
       'evening_parent': 100,
       'mosque_parent': 108,
       'about_book_children': 4,
-      'morning_evening_children': 5,
+      'morning_evening_children': 3,
       'mosque_children': 2,
-      'zero_count_prose': 8,
-      'prose_count': 8,
+      'zero_count_prose': 6,
+      'prose_count': 6,
       'introduction_searchable': 1,
       'etiquette_searchable': 1,
-      'salaf_judgment': '',
+      'removed_sections': 0,
     });
     expect(absoluteDuaContext.single, {
       'root_type': 'category',
@@ -705,13 +705,13 @@ void main() {
       wirdCounts.map((row) => row['count']),
       [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
     );
-    expect(morningSection.single, {'count': 28, 'first': 1, 'last': 28});
-    expect(eveningSection.single, {'count': 25, 'first': 1, 'last': 25});
+    expect(morningSection.single, {'count': 34, 'first': 1, 'last': 34});
+    expect(eveningSection.single, {'count': 23, 'first': 1, 'last': 23});
     expect(nightSection.single, {
-      'name': 'ما يُقرأ في الليل',
-      'count': 6,
+      'name': 'ما يُقال في الليل (وأوله بعد المغرب)',
+      'count': 9,
       'first': 1,
-      'last': 6,
+      'last': 9,
     });
     expect(khalaSections, [
       {
@@ -1145,7 +1145,7 @@ void main() {
     ''');
     final morningClosing = await database.rawQuery('''
       SELECT id, count FROM contents
-      WHERE titleId = 1 AND "order" IN (27, 28) ORDER BY "order"
+      WHERE titleId = 1 AND "order" IN (32, 33, 34) ORDER BY "order"
     ''');
     final morningNote = await database.rawQuery('''
       SELECT body FROM contents WHERE id = 1194
@@ -1167,7 +1167,7 @@ void main() {
                    425, 426, 427, 428, 429, 430, 431, 432, 454, 468, 607, 608,
                    609, 610, 626, 627, 629, 630, 647, 648, 649, 686, 687, 688,
                    689, 690, 708, 709, 710, 711, 725, 747, 748, 827, 828, 829,
-                   830, 831, 833, 846, 847, 1013, 1023)
+                   830, 831, 833, 846, 847, 1023, 1227, 1249)
         AND body LIKE '%﴿ %﴾%' AND body NOT LIKE '%QuranText%'
     ''');
     final supplicationsInTheBooksWords = await database.rawQuery('''
@@ -1184,7 +1184,7 @@ void main() {
     final ridingVerseOnce = await database.rawQuery('''
       SELECT id FROM contents WHERE id = 872 AND body LIKE '%QuranText%'
     ''');
-    expect(quotedVerses.length, 67,
+    expect(quotedVerses.length, 68,
         reason: 'the book quotes these verses in part; the app shows the same '
             'words, not the whole verse (#116)');
     expect(supplicationsInTheBooksWords.length, 3,
@@ -1200,12 +1200,14 @@ void main() {
         morningClosing,
         [
           {'id': 1194, 'count': 0},
+          {'id': 1234, 'count': 0},
           {'id': 28, 'count': 1},
         ],
-        reason: 'the «تنبيه» is read before the expiation of the gathering');
+        reason: 'the «تنبيه» and the line «فإذا قام عن مجلسه…» are read '
+            'before the expiation of the gathering (p42-43)');
     expect(
       morningNote.single['body']! as String,
-      allOf(startsWith('تنبيه:'), endsWith('ختمه بكفارة المجلس:')),
+      allOf(startsWith('تنبيه:'), endsWith('والحولقة، وغيرها.')),
     );
 
     final distressFootnotes = await database.rawQuery('''
@@ -1218,8 +1220,8 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 114},
-        reason: 'pp91-115 print footnotes under 20 records (#174)');
+    expect(recordsWithFootnotes.single, {'count': 124},
+        reason: 'pp29-68 (#171) and pp91-115 (#174) print their footnotes');
   });
 
   test('the closing date of the introduction is a small line of its own (#140)',
@@ -1256,6 +1258,112 @@ void main() {
     );
     expect(date['source'], 'المقدمة. (ص9)');
     expect(styled.map((row) => row['id']), [1204]);
+  });
+
+  test('morning and evening adhkar follow pages 29-68 of the book (#171)',
+      () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    Future<Map<String, Object?>> row(int id) async => (await database.rawQuery(
+          'SELECT body, count, source, hokm FROM contents WHERE id = ?',
+          [id],
+        ))
+            .single;
+
+    final removedTitles = await database.rawQuery('''
+      SELECT id FROM titles WHERE id IN (105, 107)
+    ''');
+    final foreignToEvening = await database.rawQuery('''
+      SELECT id FROM contents
+      WHERE titleId = 2
+        AND (search LIKE 'أمسينا على فطرة%' OR search LIKE 'رضيت بالله%'
+             OR search LIKE 'بسم الله الذي%' OR search LIKE 'باسم الله الذي%')
+    ''');
+    final prayerOnTheProphet = await database.rawQuery('''
+      SELECT id FROM contents
+      WHERE titleId IN (1, 2) AND search LIKE '%صل على محمد وعلى آل محمد%'
+    ''');
+    final adab = await database.rawQuery('''
+      SELECT id, count, hokm, substr(body, 1, 6) AS start FROM contents
+      WHERE titleId = 106 ORDER BY "order"
+    ''');
+    final morningIntro = await database.rawQuery('''
+      SELECT body FROM contents WHERE titleId = 1 AND "order" <= 3
+      ORDER BY "order"
+    ''');
+    final night = await database.rawQuery('''
+      SELECT id, count FROM contents WHERE titleId = 3 ORDER BY "order"
+    ''');
+
+    expect(removedTitles, isEmpty,
+        reason: 'the 10th edition has no «كيف أصبحت؟» and prints the «تنبيه» '
+            'inside the morning list (p42)');
+    expect(foreignToEvening, isEmpty,
+        reason: 'the evening list (pp44-49) is not the morning list');
+    expect(prayerOnTheProphet, isEmpty,
+        reason: 'the book prints no prayer on the Prophet among the '
+            'regular adhkar (pp33-49)');
+
+    expect(
+      morningIntro.map((row) => row['body']),
+      [
+        'قال الله تعالى:\nQuranText[(33:41:42)]',
+        'وقال عز وجل:\nQuranText[(7:205:205)]',
+        'وقال سبحانه:\nQuranText[(30:17:17)]',
+      ],
+      reason: 'p29 quotes these verses whole',
+    );
+
+    final firstWhole = await row(14);
+    expect(
+      firstWhole['body'],
+      contains('\nأو: سبحانَ اللهِ وبحمدِهِ عددَ خَلْقِه'),
+      reason: 'p39 prints «أو:» under the third tasbih',
+    );
+    expect(firstWhole['hokm'], '');
+    expect((await row(15))['source'], '',
+        reason: 'p39: the first «اللهم عافني» has no footnote mark');
+    expect((await row(16))['hokm'], 'حسن');
+    for (final id in [17, 45]) {
+      final surahs = await row(id);
+      expect(surahs['body'], 'سُوَر: (الإخلاص)، و(الفلق)، و(الناس)',
+          reason: 'pp39, 47 name the three surahs and do not print them');
+      expect(surahs['count'], 3);
+    }
+    expect((await row(2))['source']! as String,
+        contains('حاشية: الزعيم: الضامن والكفيل.'));
+    expect((await row(7))['source']! as String,
+        contains('وتقول المرأة: «وأنا أَمَتُكَ» مكان: «وأنا عبدُكَ»'));
+    expect((await row(23))['source']! as String, contains('تحفة الذاكرين'));
+    expect((await row(1194))['body']! as String,
+        contains('ثم التهليل، والصلاة على النبي'));
+    expect((await row(1194))['body']! as String, contains('والحولقة'));
+
+    expect(night.map((row) => row['count']), [3, 1, 1, 1, 1, 1, 1, 1, 1],
+        reason: 'pp50-53: nine items, only the first is counted');
+    expect((await row(56))['body'], contains('تَبَٰرَكَ ٱلَّذِي بِيَدِهِ'));
+
+    expect(adab.length, 12);
+    expect(adab.map((row) => row['start']), [
+      'الأول:',
+      'الثاني',
+      'الثالث',
+      'الرابع',
+      'الخامس',
+      'السادس',
+      'واعلم ',
+      'السابع',
+      'الثامن',
+      'التاسع',
+      'العاشر',
+      'الحادي',
+    ]);
+    expect(adab.every((row) => row['count'] == 0 && row['hokm'] == ''), isTrue);
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
