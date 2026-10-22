@@ -81,13 +81,13 @@ void main() {
       now: DateTime(2026, 10, 13, 12),
     );
 
-    final withLine = planned.where((r) => r.body == kRenewHint).toList();
+    bool hasLine(PlannedReminder r) => r.body.startsWith('$kRenewHint\n');
+    final withLine = planned.where(hasLine).toList();
     expect(withLine, hasLength(kRenewHintDays));
     expect(withLine.first.at, planned[kReminderDays - kRenewHintDays].at);
-    expect(
-      planned.take(kReminderDays - kRenewHintDays).every((r) => r.body.isEmpty),
-      isTrue,
-    );
+    expect(planned.take(kReminderDays - kRenewHintDays).any(hasLine), isFalse);
+    // The renewal line comes first, then the quote and its source.
+    expect(withLine.first.body.split('\n'), hasLength(3));
   });
 
   test('the map sent to Android holds the local date and minute', () {
@@ -104,8 +104,9 @@ void main() {
       'minuteOfDay': 17 * 60 + 30,
       'titleId': 2,
       'title': 'أذكار المساء',
-      'body': '',
+      'body': planned.first.body,
     });
+    expect(planned.first.body.split('\n'), hasLength(2));
   });
 
   PrayerTimesCalculator cairoAt(Duration Function(DateTime day) offset) =>

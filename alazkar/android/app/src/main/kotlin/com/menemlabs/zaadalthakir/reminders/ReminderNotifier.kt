@@ -48,7 +48,12 @@ object ReminderNotifier {
             .setContentTitle(reminder.title)
             .setContentIntent(content)
             .setAutoCancel(true)
-        if (reminder.body.isNotEmpty()) builder.setContentText(reminder.body)
+        if (reminder.body.isNotEmpty()) {
+            // Collapsed, the notification shows the first line; opened, the
+            // whole body: the quote and then its source.
+            builder.setContentText(reminder.body.lineSequence().first())
+                .setStyle(Notification.BigTextStyle().bigText(reminder.body))
+        }
         manager.notify(reminder.titleId, builder.build())
     }
 }
