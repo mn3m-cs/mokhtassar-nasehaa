@@ -11,6 +11,7 @@ import com.menemlabs.zaadalthakir.reminders.ReminderScheduler
 import com.menemlabs.zaadalthakir.reminders.ReminderStore
 import com.menemlabs.zaadalthakir.reminders.DeviceLocation
 import android.content.Context
+import android.media.AudioAttributes
 import android.os.Build
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
@@ -99,21 +100,29 @@ class MainActivity: FlutterActivity() {
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
         if (!vibrator.hasVibrator()) return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // From Android 13 a short vibration with no usage counts as touch
-            // feedback, which the reader may have turned off. Media is the
-            // setting a vibration with no usage otherwise follows.
-            vibrator.vibrate(
-                VibrationEffect.createOneShot(COUNT_DONE_PULSE_MS, VibrationEffect.DEFAULT_AMPLITUDE),
-                VibrationAttributes.createForUsage(VibrationAttributes.USAGE_MEDIA),
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(
-                VibrationEffect.createOneShot(COUNT_DONE_PULSE_MS, VibrationEffect.DEFAULT_AMPLITUDE)
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(COUNT_DONE_PULSE_MS)
+        when (CountDoneVibration.routeFor(Build.VERSION.SDK_INT)) {
+            CountDoneRoute.VIBRATION_ATTRIBUTES -> {
+                // From Android 13 a short vibration with no usage counts as touch
+                // feedback, which the reader may have turned off. Media is the
+                // setting a vibration with no usage otherwise follows.
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(COUNT_DONE_PULSE_MS, VibrationEffect.DEFAULT_AMPLITUDE),
+                    VibrationAttributes.createForUsage(VibrationAttributes.USAGE_MEDIA),
+                )
+            }
+            CountDoneRoute.AUDIO_ATTRIBUTES -> {
+                // Android 11 and 12 also class a short vibration with no usage as
+                // touch feedback. Before 13 only AudioAttributes can name a usage.
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(COUNT_DONE_PULSE_MS, VibrationEffect.DEFAULT_AMPLITUDE),
+                    AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build(),
+                )
+            }
+            CountDoneRoute.PLAIN -> {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(COUNT_DONE_PULSE_MS)
+            }
         }
     }
 

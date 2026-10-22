@@ -59,7 +59,7 @@ List<String> _bookMapProblems(
     if (!_statuses.contains(row.status)) {
       problems.add('حالة غير معروفة: «${row.status}» (ص${row.pages})');
     }
-    if (row.status == 'قورن' && !RegExp(r'#\d+').hasMatch(row.reference)) {
+    if (row.status == 'قورن' && !RegExp(r'طلب #\d+').hasMatch(row.reference)) {
       problems.add('صف «قورن» بلا رقم طلب دمج (ص${row.pages})');
     }
   }
@@ -145,17 +145,19 @@ void main() {
     expect(problemsOf(changed), ['حالة غير معروفة: «قورن تقريبًا» (ص445–464)']);
   });
 
-  test('a «قورن» row must name a pull request', () {
-    final changed = markdown.replaceFirst(
-      '| 69 | أذكار الاستيقاظ | 4 | لم يُقارَن | #172 |',
+  test('a «قورن» row must name a pull request, not only a ticket', () {
+    const row = '| 69 | أذكار الاستيقاظ | 4 | لم يُقارَن | #172 |';
+    expect(markdown, contains(row));
+    final ticketOnly = markdown.replaceFirst(
+      row,
       '| 69 | أذكار الاستيقاظ | 4 | قورن | #172 |',
     );
-    expect(problemsOf(changed), isEmpty);
-    final withoutNumber = changed.replaceFirst(
-      '| قورن | #172 |',
-      '| قورن | — |',
+    expect(problemsOf(ticketOnly), ['صف «قورن» بلا رقم طلب دمج (ص69)']);
+    final withPull = markdown.replaceFirst(
+      row,
+      '| 69 | أذكار الاستيقاظ | 4 | قورن | #172، طلب #195 |',
     );
-    expect(problemsOf(withoutNumber), ['صف «قورن» بلا رقم طلب دمج (ص69)']);
+    expect(problemsOf(withPull), isEmpty);
   });
 
   test('the map fails on a gap or an overlap in the pages', () {

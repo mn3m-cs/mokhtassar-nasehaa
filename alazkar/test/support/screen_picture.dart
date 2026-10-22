@@ -38,6 +38,35 @@ Future<void> loadAppFonts() async {
   final icons = FontLoader('MaterialIcons')
     ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
   await icons.load();
+
+  checkArabicFontLoaded();
+}
+
+/// Throws unless an Arabic word measured in Cairo is not drawn as the squares
+/// `flutter test` uses when no font is loaded.
+///
+/// Without a font every glyph is a square as wide as the font size, so the
+/// word is as wide as its letters times that size. Real Arabic letters join
+/// and have their own widths.
+void checkArabicFontLoaded() {
+  const word = 'الإعدادات';
+  const fontSize = 40.0;
+  final painter = TextPainter(
+    text: const TextSpan(
+      text: word,
+      style: TextStyle(fontFamily: 'Cairo', fontSize: fontSize),
+    ),
+    textDirection: TextDirection.rtl,
+  )..layout();
+  final width = painter.width;
+  painter.dispose();
+  if (width == word.length * fontSize) {
+    throw StateError(
+      'The app fonts were not loaded: «$word» measured $width, the width of '
+      '${word.length} squares. A picture drawn now would show squares, not '
+      'Arabic letters.',
+    );
+  }
 }
 
 /// Draws [screen] at [size] logical pixels, with the app's fonts, and saves it

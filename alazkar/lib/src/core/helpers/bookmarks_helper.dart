@@ -10,11 +10,17 @@ class BookmarksDBHelper {
   /* ************* Variables ************* */
 
   static const String dbName = "Bookmarks.db";
-  static const int dbVersion = 3;
+  static const int dbVersion = 4;
 
-  /// Default favourites, in book order: morning, evening, waking up,
-  /// after prayer, sleep, travelling.
-  static const List<int> defaultTitleIds = [1, 2, 4, 16, 18, 49];
+  /// Sections that always stay in favourites and can never be removed:
+  /// morning, evening, waking up, after prayer, sleep.
+  static const List<int> pinnedTitleIds = [1, 2, 4, 16, 18];
+
+  /// Default favourites, in book order: the pinned sections, then travelling,
+  /// which is only a default and may be removed.
+  static const List<int> defaultTitleIds = [...pinnedTitleIds, 49];
+
+  static bool isPinned(int titleId) => pinnedTitleIds.contains(titleId);
 
   /// Defaults shipped before version 3; they were ids of the upstream app and
   /// point to unrelated sections here.
@@ -102,6 +108,18 @@ class BookmarksDBHelper {
     await batch.commit(noResult: true);
   }
 
+  /// Puts back any pinned section that is missing; other rows are untouched.
+  static Future<void> restorePinnedTitles(Database db) async {
+    final batch = db.batch();
+    for (final titleId in pinnedTitleIds) {
+      batch.rawInsert(
+        'INSERT OR IGNORE INTO favourite_titles(titleId) VALUES(?)',
+        [titleId],
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
   /// Replaces the legacy defaults when the user never added a favourite of
   /// their own; any personal choice leaves the table untouched.
   static Future<void> replaceLegacyDefaults(Database db) async {
@@ -130,6 +148,9 @@ class BookmarksDBHelper {
     }
     if (oldVersion < 2) {
       await addDefaultTitles(db);
+    }
+    if (oldVersion < 4) {
+      await restorePinnedTitles(db);
     }
   }
 
@@ -168,6 +189,7 @@ class BookmarksDBHelper {
   Future<void> deleteTitleFromFavourite({
     required int titleId,
   }) async {
+    if (isPinned(titleId)) return;
     final db = await database;
 
     await db
