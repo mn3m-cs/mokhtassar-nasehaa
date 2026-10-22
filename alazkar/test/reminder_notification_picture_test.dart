@@ -19,7 +19,11 @@ Widget _card({
   final lines = body.split('\n');
   return MaterialApp(
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(fontFamily: 'Cairo', brightness: brightness),
+    theme: ThemeData(
+      fontFamily: 'Cairo',
+      fontFamilyFallback: const ['NotoNaskhArabic'],
+      brightness: brightness,
+    ),
     home: Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
