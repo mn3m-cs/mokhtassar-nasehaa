@@ -389,7 +389,7 @@ void main() {
         SUM(titleId = 70) AS salawat_forms,
         SUM(titleId = 70 AND search LIKE '%وعلى أهل بيته%') AS household_salawat,
         SUM(titleId = 92 AND "order" = 1) AS first_wird_starts_at_one,
-        SUM(titleId = 91 AND "order" = 15) AS eleventh_wird_ends_at_fifteen
+        SUM(titleId = 91 AND "order" = 33) AS eleventh_wird_ends_at_33
       FROM contents
       WHERE titleId IN (66, 67, 69, 70, 77, 82,
                          83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
@@ -676,8 +676,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 153);
-    expect(titleCount.single, {'count': 133});
+    expect(await database.getVersion(), 154);
+    expect(titleCount.single, {'count': 134});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -833,7 +833,7 @@ void main() {
     });
     expect(absoluteDuaContext.single, {
       'root_type': 'category',
-      'child_count': 14,
+      'child_count': 4,
       'zero_count': 34,
       'introduction_count': 3,
       'virtues_count': 13,
@@ -852,23 +852,24 @@ void main() {
       'fatiha_time': 1,
       'last_time': 'عند حضور الميت، وعند تغميضه.',
     });
-    // pp372-380 (#183): the eleven wirds follow the times of answer.
+    // pp372-380 (#183), p381 (#167): the eleven wirds follow the times of
+    // answer, under the heading the book prints over them.
     expect(absoluteDuaWirds, [
-      {'id': 92, 'parentId': 158, 'order': 4},
-      {'id': 82, 'parentId': 158, 'order': 5},
-      {'id': 83, 'parentId': 158, 'order': 6},
-      {'id': 84, 'parentId': 158, 'order': 7},
-      {'id': 93, 'parentId': 158, 'order': 8},
-      {'id': 86, 'parentId': 158, 'order': 9},
-      {'id': 87, 'parentId': 158, 'order': 10},
-      {'id': 88, 'parentId': 158, 'order': 11},
-      {'id': 89, 'parentId': 158, 'order': 12},
-      {'id': 90, 'parentId': 158, 'order': 13},
-      {'id': 91, 'parentId': 158, 'order': 14},
+      {'id': 92, 'parentId': 167, 'order': 1},
+      {'id': 82, 'parentId': 167, 'order': 2},
+      {'id': 83, 'parentId': 167, 'order': 3},
+      {'id': 84, 'parentId': 167, 'order': 4},
+      {'id': 93, 'parentId': 167, 'order': 5},
+      {'id': 86, 'parentId': 167, 'order': 6},
+      {'id': 87, 'parentId': 167, 'order': 7},
+      {'id': 88, 'parentId': 167, 'order': 8},
+      {'id': 89, 'parentId': 167, 'order': 9},
+      {'id': 90, 'parentId': 167, 'order': 10},
+      {'id': 91, 'parentId': 167, 'order': 11},
     ]);
     expect(
       wirdCounts.map((row) => row['count']),
-      [13, 9, 11, 13, 15, 14, 10, 12, 6, 10, 15],
+      [22, 21, 20, 15, 25, 22, 17, 22, 20, 25, 33],
     );
     expect(morningSection.single, {'count': 34, 'first': 1, 'last': 34});
     expect(eveningSection.single, {'count': 23, 'first': 1, 'last': 23});
@@ -1162,17 +1163,17 @@ void main() {
         6,
         4,
         1,
-        9,
-        11,
-        13,
-        14,
-        10,
-        12,
-        6,
-        10,
+        21,
+        20,
         15,
-        13,
-        15,
+        22,
+        17,
+        22,
+        20,
+        25,
+        33,
+        22,
+        25,
       ],
     );
     expect(
@@ -1185,7 +1186,7 @@ void main() {
       'salawat_forms': 4,
       'household_salawat': 0,
       'first_wird_starts_at_one': 1,
-      'eleventh_wird_ends_at_fifteen': 1,
+      'eleventh_wird_ends_at_33': 1,
     });
     expect(absoluteDhikrAndWirdJudgments, isEmpty);
     expect(absoluteDhikrHierarchy.single, {'nodes': 22, 'max_depth': 2});
@@ -1523,7 +1524,7 @@ void main() {
       WHERE id IN (222, 227, 236, 253, 273, 304, 305, 306, 327, 328, 337, 355, 356,
                    398, 399, 412, 413, 415, 416, 417, 419, 420, 421, 422, 423,
                    425, 426, 427, 428, 429, 430, 431, 432, 454, 468, 607, 608,
-                   609, 610, 626, 627, 629, 630, 647, 648, 649, 686, 687, 688,
+                   610, 626, 627, 629, 630, 647, 648, 649, 686, 687, 688,
                    689, 690, 708, 709, 710, 711, 725, 747, 748, 827, 828, 829,
                    830, 831, 833, 846, 847, 1023, 1227, 1249)
         AND body LIKE '%﴿ %﴾%' AND body NOT LIKE '%QuranText%'
@@ -1533,23 +1534,18 @@ void main() {
       WHERE id IN (251, 260) AND body NOT LIKE '%QuranText%'
         AND body NOT LIKE '%﴿%'
     ''');
-    final secondRabbana = await database.rawQuery('''
-      SELECT id FROM contents WHERE id = 609 AND search = 'ربنا أفرغ علينا صبرا وتوفنا مسلمين'
-    ''');
     final fatihaVerses = await database.rawQuery('''
       SELECT id FROM contents WHERE id = 1037 AND body LIKE 'QuranText[(1:2:4)]%'
     ''');
     final ridingVerseOnce = await database.rawQuery('''
       SELECT id FROM contents WHERE id = 872 AND body LIKE '%QuranText%'
     ''');
-    expect(quotedVerses.length, 69,
+    expect(quotedVerses.length, 68,
         reason: 'the book quotes these verses in part; the app shows the same '
             'words, not the whole verse (#116)');
     expect(supplicationsInTheBooksWords.length, 2,
         reason: 'pp97, 99 write these as supplications, not as verses; p142 '
             'prints «ربنا آتنا» as the verse (#177)');
-    expect(secondRabbana.single, {'id': 609},
-        reason: 'p207 quotes al-Aʿraf 126 from the second «ربنا»');
     expect(fatihaVerses.single, {'id': 1037},
         reason: 'p74 «الحمد لله رب العالمين…» is al-Fatiha 2-4; 1:1 is the '
             'basmala');
@@ -1579,10 +1575,11 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 176},
+    expect(recordsWithFootnotes.single, {'count': 221},
         reason: 'pp29-68 (#171), pp91-115 (#174), pp116-129 (#175), '
             'pp140-149 (#177), pp175-207 (#179), pp177-226 (#180), '
-            'pp247-293 (#182) and pp372-380 (#183) print their footnotes');
+            'pp247-293 (#182), pp372-380 (#183) and pp381-444 (#167) print '
+            'their footnotes');
   });
 
   test('travel to celestial matters follow pp177-226 of the book (#180)',
@@ -1842,6 +1839,96 @@ void main() {
       'الحادي',
     ]);
     expect(adab.every((row) => row['count'] == 0 && row['hokm'] == ''), isTrue);
+  });
+
+  test('the eleven wirds follow pp381-444 of the book (#167)', () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    final heading = await database.rawQuery('''
+      SELECT nodeType, parentId, "order",
+             (SELECT group_concat(id) FROM
+               (SELECT id FROM titles WHERE parentId = heading.id
+                ORDER BY "order")) AS wirds
+      FROM titles AS heading
+      WHERE name = 'جامع أدعية القرآن المجيد والسنة الصحيحة (الأدعية المطلقة)'
+    ''');
+    final perWird = await database.rawQuery('''
+      SELECT SUM(contents.count > 0) AS said,
+             SUM(contents.count = 0) AS prose,
+             SUM(contents.hokm <> '' OR contents.fadl <> '') AS judged,
+             SUM(contents.source NOT LIKE titles.name || '. %') AS other_heading,
+             SUM(contents.source NOT LIKE '%(ص38%'
+                 AND contents.source NOT LIKE '%(ص39%'
+                 AND contents.source NOT LIKE '%(ص4%') AS other_pages
+      FROM titles JOIN contents ON contents.titleId = titles.id
+      WHERE titles.id IN (92, 82, 83, 84, 93, 86, 87, 88, 89, 90, 91)
+      GROUP BY titles.id
+      ORDER BY titles."order"
+    ''');
+    final cases = await database.rawQuery('''
+      SELECT
+        (SELECT search LIKE '﴿ رب أعوذ بك من% همزت ٱلشيطين ٩٧ وأعوذ بك رب أن %'
+         FROM contents WHERE titleId = 92 AND "order" = 1) AS first_dua,
+        (SELECT source LIKE '%حاشية: بدأنا بالاستعاذة%'
+         FROM contents WHERE titleId = 92 AND "order" = 2) AS isti_adha_footnote,
+        (SELECT body FROM contents
+         WHERE titleId = 92 AND "order" = 3) AS fatiha,
+        (SELECT source FROM contents
+         WHERE titleId = 92 AND "order" = 19) AS mawquf_source,
+        (SELECT COUNT(*) FROM contents
+         WHERE (titleId = 83 AND "order" = 6 OR titleId = 91 AND "order" = 14)
+           AND search LIKE 'اللهم إني أسألك بأني أشهد%') AS nos_49_and_223,
+        (SELECT body LIKE '%من عبادِكَ عني المخلَصين.'
+         FROM contents WHERE titleId = 93 AND "order" = 16) AS typo_kept,
+        (SELECT group_concat(count) FROM contents
+         WHERE titleId = 91 AND "order" IN (28, 29)) AS no_237,
+        (SELECT body LIKE 'تمَّ الكِتابُ%' AND count = 0
+         FROM contents WHERE titleId = 91 AND "order" = 33) AS closing,
+        (SELECT COUNT(*) FROM contents
+         WHERE titleId IN (92, 82, 83, 84, 93, 86, 87, 88, 89, 90, 91)
+           AND (search LIKE '%أفرغ علينا صبرا%'
+             OR search LIKE '%ألهمني رشدي%'
+             OR search LIKE '%أحسنت خلقي%')) AS earlier_edition_only
+    ''');
+
+    expect(heading.single, {
+      'nodeType': 'category',
+      'parentId': 158,
+      'order': 4,
+      'wirds': '92,82,83,84,93,86,87,88,89,90,91',
+    });
+    expect(
+      perWird.map((row) => row['said']),
+      [22, 21, 20, 15, 25, 22, 17, 22, 20, 25, 32],
+      reason: 'the book numbers 1-22, 23-43, 44-63, 64-78, 79-103, 104-125, '
+          '126-142, 143-164, 165-184, 185-209 and 210-240; no. 237 is two '
+          'lines, each «[ثلاثًا]»',
+    );
+    expect(
+        perWird.map((row) => row['prose']), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        reason: 'p444 closes the book with «تمَّ الكتاب…»');
+    expect(perWird.every((row) => row['judged'] == 0), isTrue,
+        reason: 'pp381-444 print no grading and no virtue under a dua');
+    expect(perWird.every((row) => row['other_heading'] == 0), isTrue);
+    expect(perWird.every((row) => row['other_pages'] == 0), isTrue,
+        reason: 'pages are those of the 10th edition, 381-444');
+    expect(cases.single, {
+      'first_dua': 1,
+      'isti_adha_footnote': 1,
+      'fatiha': 'QuranText[(1:1:7)]',
+      'mawquf_source':
+          'الورد الأول. [موقوفٌ عن ابن عمر رضي الله عنهما]. (ص386)',
+      'nos_49_and_223': 2,
+      'typo_kept': 1,
+      'no_237': '3,3',
+      'closing': 1,
+      'earlier_edition_only': 0,
+    });
   });
 
   test('missing bundled database asset fails instead of continuing', () async {
