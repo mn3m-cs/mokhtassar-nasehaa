@@ -343,7 +343,7 @@ void main() {
         SUM(titleId = 62 AND search = 'يرحمنا الله وإياكم ويغفر لنا ولكم') AS ibn_umar_reply,
         SUM(titleId = 63 AND search LIKE 'اللهم إني أسألك من خيرها%') AS wife_dua,
         SUM(titleId = 64 AND body = 'QuranText[(2:128:128)]') AS offspring_dua,
-        SUM(titleId = 65 AND body = 'QuranText[(113:1:5),(114:1:6)]') AS severe_weather_surahs,
+        SUM(titleId = 65 AND count = 0 AND search = 'يقرأ سورتي الفلق والناس') AS severe_weather_surahs,
         SUM(titleId = 68 AND body = 'QuranText[(103:1:3)]') AS meeting_departure_surah
       FROM contents
       WHERE titleId IN (61, 62, 63, 64, 65, 68)
@@ -637,7 +637,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 149);
+    expect(await database.getVersion(), 150);
     expect(titleCount.single, {'count': 137});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1052,7 +1052,7 @@ void main() {
     });
     expect(
       fastingTravelAndPilgrimageSections.map((row) => row['count']),
-      [6, 24, 11, 3, 11, 4, 2, 3, 4, 3, 4, 4, 15],
+      [6, 41, 11, 3, 11, 4, 2, 3, 4, 3, 4, 4, 23],
     );
     expect(
       fastingTravelAndPilgrimageSections
@@ -1065,11 +1065,13 @@ void main() {
       'talbiya_variant': 1,
       'complete_safa_dhikr': 1,
       'unsupported_grave_dua': 0,
-      'misplaced_munkar_verses': 0,
+      // p213 of the 10th edition prints «ما يقول من رأى مُنكرًا» at the end of
+      // the fighting dhikr (#180).
+      'misplaced_munkar_verses': 2,
     });
     expect(
       foodMarriageAndMajlisSections.map((row) => row['count']),
-      [14, 9, 12, 5, 9, 4],
+      [22, 15, 13, 5, 14, 4],
     );
     expect(
       foodMarriageAndMajlisSections.every(
@@ -1357,9 +1359,126 @@ void main() {
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
-    expect(recordsWithFootnotes.single, {'count': 132},
-        reason: 'pp29-68 (#171), pp91-115 (#174), pp116-129 (#175) and '
-            'pp140-149 (#177) print their footnotes');
+    expect(recordsWithFootnotes.single, {'count': 137},
+        reason: 'pp29-68 (#171), pp91-115 (#174), pp116-129 (#175), '
+            'pp140-149 (#177) and pp177-226 (#180) print their footnotes');
+  });
+
+  test('travel to celestial matters follow pp177-226 of the book (#180)',
+      () async {
+    sqfliteFfiInit();
+    final database = await databaseFactoryFfi.openDatabase(
+      File('assets/db/Al-Azkar.db').absolute.path,
+      options: OpenDatabaseOptions(readOnly: true),
+    );
+    addTearDown(database.close);
+
+    final sections = await database.rawQuery('''
+      SELECT titleId AS id, COUNT(*) AS rows,
+             SUM(count = 0) AS passages,
+             SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
+             SUM(source LIKE '%(ص13%' OR source LIKE '%(ص14%'
+                 OR source LIKE '%(ص15%') AS earlier_edition_pages
+      FROM contents
+      WHERE titleId IN (139, 49, 60, 61, 62, 63, 64, 65)
+      GROUP BY titleId ORDER BY titleId
+    ''');
+    final regression = await database.rawQuery('''
+      SELECT
+        (SELECT COUNT(*) FROM contents WHERE id = 880) AS ibn_masud_footnote_as_dhikr,
+        (SELECT COUNT(*) FROM contents WHERE id = 397
+           AND source LIKE '%حاشية: وعن ابن مسعود%') AS ibn_masud_in_footnote,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 65
+           AND body LIKE 'QuranText%') AS unprinted_surahs,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 60
+           AND body IN ('QuranText[(17:81:81)]', 'QuranText[(34:49:49)]')) AS munkar_verses,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 49
+           AND source LIKE '%أبو داود%') AS unprinted_takhrij,
+        (SELECT COUNT(*) FROM contents WHERE id = 309
+           AND source LIKE '%حاشية: هذه الأذكار في هذا الموضع%') AS compiled_note_on_fifth,
+        (SELECT COUNT(*) FROM contents WHERE id = 308
+           AND source LIKE '%حاشية: هذه الأذكار في هذا الموضع%') AS compiled_note_on_fourth,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 49
+           AND body LIKE 'اللهُ أكبرُ، اللهُ أكبرُ، لا إله إلا اللهُ وحدَه%') AS two_takbirs_on_return,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 61
+           AND body LIKE '%ولا مُسْتَغْنًى عنه رَبُّنا' AND source LIKE '%[الضحى: ٣]%') AS khattabi_footnote,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 62
+           AND body LIKE 'أو: %') AS sneeze_alternatives,
+        (SELECT COUNT(*) FROM contents WHERE titleId = 63
+           AND source LIKE 'ما يُقال عند إرادة الجماع%') AS intercourse_heading
+    ''');
+
+    expect(sections, [
+      {
+        'id': 49,
+        'rows': 41,
+        'passages': 18,
+        'judgments_or_virtues': 0,
+        'earlier_edition_pages': 0,
+      },
+      {
+        'id': 60,
+        'rows': 23,
+        'passages': 5,
+        'judgments_or_virtues': 0,
+        'earlier_edition_pages': 0,
+      },
+      {
+        'id': 61,
+        'rows': 22,
+        'passages': 9,
+        'judgments_or_virtues': 0,
+        'earlier_edition_pages': 0,
+      },
+      {
+        'id': 62,
+        'rows': 15,
+        'passages': 6,
+        'judgments_or_virtues': 0,
+        'earlier_edition_pages': 0,
+      },
+      {
+        'id': 63,
+        'rows': 13,
+        'passages': 2,
+        'judgments_or_virtues': 0,
+        'earlier_edition_pages': 0,
+      },
+      {
+        'id': 64,
+        'rows': 5,
+        'passages': 0,
+        'judgments_or_virtues': 0,
+        'earlier_edition_pages': 0,
+      },
+      {
+        'id': 65,
+        'rows': 14,
+        'passages': 6,
+        'judgments_or_virtues': 0,
+        'earlier_edition_pages': 0,
+      },
+      {
+        'id': 139,
+        'rows': 1,
+        'passages': 1,
+        'judgments_or_virtues': 0,
+        'earlier_edition_pages': 0,
+      },
+    ]);
+    expect(regression.single, {
+      'ibn_masud_footnote_as_dhikr': 0,
+      'ibn_masud_in_footnote': 1,
+      'unprinted_surahs': 0,
+      'munkar_verses': 2,
+      'unprinted_takhrij': 0,
+      'compiled_note_on_fifth': 1,
+      'compiled_note_on_fourth': 0,
+      'two_takbirs_on_return': 1,
+      'khattabi_footnote': 1,
+      'sneeze_alternatives': 4,
+      'intercourse_heading': 1,
+    });
   });
 
   test('the closing date of the introduction is a small line of its own (#140)',
