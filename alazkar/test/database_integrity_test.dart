@@ -165,7 +165,7 @@ void main() {
         SUM("order" = 7 AND search LIKE '٥- التحيات لله الزاكيات لله%') AS fifth_tashahhud,
         SUM("order" = 9 AND search LIKE '١- اللهم صل على محمد وعلى آل محمد%') AS first_salawat,
         SUM("order" = 15 AND search LIKE '٧- اللهم صل على محمد وعلى آل محمد وبارك%') AS seventh_salawat,
-        SUM("order" = 4 AND count = 0 AND body = 'وفي روايةٍ: «عبدُه ورسولُه».') AS second_tashahhud_variant,
+        SUM("order" = 4 AND count = 0 AND body = 'وفي روايةٍ: «عبدُهُ ورسولُه».') AS second_tashahhud_variant,
         SUM(count = 0) AS passages
       FROM contents
       WHERE titleId = 14
@@ -227,7 +227,7 @@ void main() {
         SUM("order" = 17 AND count = 34) AS first_takbir,
         SUM("order" = 24 AND count = 34) AS third_tasbih,
         SUM("order" = 26 AND source LIKE '%[موقوفٌ على عائشة رضي الله عنها]%') AS stopped_report,
-        SUM("order" = 27 AND body LIKE '١٧- يقرأ سورة:%QuranText[(109:1:6)]%حتى يختِمَها.') AS kafirun,
+        SUM("order" = 27 AND body LIKE '١٧- يقرأ سورة:%QuranText[(109:1:6)]%حتى يخْتِمَها.') AS kafirun,
         SUM(hokm != '') AS graded,
         SUM(source LIKE '%(ص7_)%' OR source LIKE '%(ص8_)%') AS old_edition_pages
       FROM contents
@@ -532,7 +532,7 @@ void main() {
         SUM(titleId = 35 AND count = 0 AND search = 'ويقول') AS satan_says,
         SUM(titleId = 35 AND search LIKE '%إلا طارقا يطرق بخير يا رحمن')
           AS knocker_without_comma,
-        SUM(titleId = 35 AND body LIKE '%طارقٍ يطرقُ، إلا طارقًا يطرقُ بخيرٍ يا رحمن'
+        SUM(titleId = 35 AND body LIKE '%طارقٍ يطرقُ، إلَّا طارقًا يَطرُقُ بخيرٍ يا رحمن'
             AND source LIKE '%تنوير الحوالك%') AS knocker_footnote,
         SUM(titleId = 36 AND body LIKE '%(أو: قَدَرُ اللهِ)%') AS or_alternative,
         SUM(titleId = 37 AND source LIKE '%غليظ الأرض%') AS hazn_footnote,
@@ -608,13 +608,13 @@ void main() {
         SUM(titleId = 117 AND "order" = 2 AND hokm = ''
             AND source NOT LIKE '%جبير%') AS greeting_source,
         SUM(titleId = 118 AND "order" = 3 AND count = 0
-            AND body LIKE 'ثم يخطب الإمام الناس%') AS eclipse_sermon,
+            AND body LIKE 'ثُمَّ يَخْطُبُ الإمامُ النَّاسَ%') AS eclipse_sermon,
         SUM(titleId = 119 AND "order" <= 2 AND count != 0) AS counted_rain_guidance,
         SUM(titleId = 119 AND "order" = 1
-            AND body LIKE 'يبدأ الإمام خطبته بالحمد%:' || char(10) || 'QuranText[(71:10:12)]')
+            AND body LIKE 'يبدأ الإمامُ خُطبَتَهُ بالحمدِ%:' || char(10) || 'QuranText[(71:10:12)]')
           AS rain_opening,
         SUM(titleId = 119 AND "order" = 2
-            AND body LIKE '%ويبالغ في رفع يديه%بالأدعية التالية:'
+            AND body LIKE '%ويُبالِغُ في رَفْعِ يديه%بالأدعية التالية:'
             AND source LIKE '%حاشية: انظر: دعاء الكرب%(ص١٤٢)%حاشية: ويجعل بطون كفيه%')
           AS rain_guidance_footnotes,
         SUM(titleId = 119 AND "order" = 3
@@ -710,7 +710,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 164);
+    expect(await database.getVersion(), 166);
     expect(titleCount.single, {'count': 156});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1833,11 +1833,11 @@ void main() {
       );
       expect(
         (await row(272))['body'],
-        '٢- ما أرى الأجلَ إلا اقتربَ، فاتقوا اللهَ واصبروا',
+        '٢- ما أرى الأجَلَ إلا اقتربَ، فاتَّقوا اللهَ واصْبِرُوا',
         reason: 'p163 has no «قد»',
       );
       expect((await row(284))['body'], contains('سُنَّةِ -أو مِلَّةِ- رسولِ'));
-      expect((await row(288))['body'], contains('وإيَّاكُم، وما تُوعَدونَ'));
+      expect((await row(288))['body'], contains('وإيَّاكُم، وما تُوعَدُونَ'));
       for (final (id, number) in [(288, '٢'), (289, '٣'), (290, '٤')]) {
         expect((await row(id))['body'], startsWith('$number- أو: '));
       }
@@ -1905,7 +1905,7 @@ void main() {
         (SELECT COUNT(*) FROM contents WHERE id = 308
            AND source LIKE '%حاشية: هذه الأذكار في هذا الموضع%') AS compiled_note_on_fourth,
         (SELECT COUNT(*) FROM contents WHERE titleId = 49
-           AND body LIKE 'اللهُ أكبرُ، اللهُ أكبرُ، لا إله إلا اللهُ وحدَه%') AS two_takbirs_on_return,
+           AND body LIKE 'اللهُ أكبرُ، اللهُ أكبرُ، لا إله إل% اللهُ وحدَه%') AS two_takbirs_on_return,
         (SELECT COUNT(*) FROM contents WHERE titleId = 61
            AND body LIKE '%ولا مُسْتَغْنًى عنه رَبُّنا' AND source LIKE '%[الضحى: ٣]%') AS khattabi_footnote,
         (SELECT COUNT(*) FROM contents WHERE titleId = 62
@@ -2323,7 +2323,7 @@ void main() {
     expect(
       morningIntro.map((row) => row['body']),
       [
-        'قال الله تعالى:\nQuranText[(33:41:42)]',
+        'قَالَ اللهُ تعالى:\nQuranText[(33:41:42)]',
         'وقال عز وجل:\nQuranText[(7:205:205)]',
         'وقال سبحانه:\nQuranText[(30:17:17)]',
       ],
@@ -2779,6 +2779,11 @@ void main() {
       (id: 630, page: 432, misprint: 'الرسول الله', correct: 'لرسول الله ﷺ'),
       (id: 804, page: 437, misprint: 'باسمعي', correct: 'بسمعي'),
       (id: 2090, page: 438, misprint: 'و بسطتَ', correct: 'وبسطتَ'),
+      (id: 912, page: 94, misprint: 'أسرْتُ', correct: 'أسررْتُ'),
+      (id: 1254, page: 125, misprint: 'يَخُطبُ', correct: 'يَخْطُبُ'),
+      (id: 1267, page: 221, misprint: 'يَدُه', correct: 'يَدَه'),
+      (id: 860, page: 431, misprint: 'بارِكَ على', correct: 'بارِكْ على'),
+      (id: 804, page: 437, misprint: 'وانْصُرُنِي', correct: 'وانْصُرْنِي'),
     ];
     expect(
       (await database.rawQuery('SELECT body FROM contents WHERE id = 1645'))
@@ -2957,15 +2962,15 @@ void main() {
     // One row for each case in the ticket's table: body as printed, counter.
     final cases = {
       971: ('٢- وَيَنفُثُ عن يَسارِه. [ثلاثًا]', 3),
-      220: ('٣- لا إلهَ إلا أنتَ، سبحانَكَ، إني كنتُ من الظالمين', 1),
+      220: ('٣- لا إلهَ إلَّا أنتَ، سُبْحانَكَ، إنِّي كُنتُ من الظالمين', 1),
       970: ('١- فَلْيَسْتَعِذْ باللهِ من شَرِّه.', 0),
       255: ('باسمِ اللهِ [ثلاثًا]', 3),
       1738: ('١- أستغفِرُ الله، وأتوبُ إليه. [كثيرًا]', 1),
       914: ('٣- اللهُ أكبرُ [عشرًا]', 10),
       1205: ('الحمدُ للهِ [عشرًا]', 10),
       212: (
-        '١- أعوذُ بكلماتِ اللهِ التامَّةِ، من غضبِهِ وعِقابِهِ، ومن شرِّ عبادِهِ، '
-            'ومن هَمَزاتِ الشياطين، وأن يَحضُرونِ',
+        '١- أعوذُ بكلماتِ اللهِ التَّامَّةِ، مِن غَضَبِهِ وعِقابِهِ، ومِنْ شَرِّ عِبادِهِ، '
+            'ومِن هَمَزاتِ الشَّياطين، وأن يَحْضُرُونِ',
         1
       ),
     };
@@ -3018,5 +3023,54 @@ void main() {
         reason: 'no count bracket «[$count…]» is left in a source line',
       );
     }
+  });
+
+  test('diacritics follow the marks the book prints (#229)', () async {
+    sqfliteFfiInit();
+    final directory = await Directory.systemTemp.createTemp('zaad-harakat-');
+    addTearDown(() => directory.delete(recursive: true));
+    final copy =
+        await File('assets/db/Al-Azkar.db').copy('${directory.path}/db');
+    final database = await databaseFactoryFfi.openDatabase(copy.path);
+    addTearDown(database.close);
+
+    Future<String> body(int id) async => (await database.rawQuery(
+          'SELECT body FROM contents WHERE id = ?',
+          [id],
+        ))
+            .single['body']! as String;
+
+    // One row for each rule of the audit.
+    final cases = {
+      2080: (
+        'لا مانِعَ لما أعطيتَ',
+        'p435: the book marks a letter the app left bare'
+      ),
+      245: ('أْجُرْنِي', "p149: the book's mark replaces the app's other mark"),
+      1525: (
+        'فَتُخَيِّبَني',
+        "p375: a letter the book leaves bare keeps the app's mark"
+      ),
+      804: (
+        'وانْصُرْنِي على',
+        'p437: the misprinted damma on the ra is not followed'
+      ),
+      1895: ('٥- اللهم إني أسألك المعافاة.', 'p351 prints item ٥ bare'),
+    };
+    for (final MapEntry(key: id, value: (text, reason)) in cases.entries) {
+      expect(await body(id), contains(text), reason: reason);
+    }
+
+    final before = await database.rawQuery('SELECT * FROM contents');
+    await database.execute(
+      File('../data_pipeline/migrations/166_harakat_from_book.sql')
+          .readAsStringSync(),
+    );
+    expect(
+      await database.rawQuery('SELECT * FROM contents'),
+      before,
+      reason: 'migration 166 is applied to the bundled database: running '
+          'it again changes no row',
+    );
   });
 }
