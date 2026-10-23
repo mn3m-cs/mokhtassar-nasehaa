@@ -18,42 +18,86 @@ void main() {
         now: DateTime(2026, 10, 13, 5),
       );
 
-  test('every reminder has its own set, of seven quotes or more', () {
+  test('every reminder has a set of seven quotes or more', () {
     for (final slot in ReminderSlot.values) {
       expect(kReminderQuotes[slot.titleId], isNotNull, reason: slot.name);
       expect(kReminderQuotes[slot.titleId]!.length, greaterThanOrEqualTo(7));
     }
-    final sets = {
-      for (final set in kReminderQuotes.values) set.map((q) => q.text).join(),
-    };
-    expect(sets, hasLength(kReminderQuotes.length));
-  });
-
-  test('a quote is whole and each one names its speaker and its reporter', () {
     for (final set in kReminderQuotes.values) {
       expect(set.map((q) => q.text).toSet(), hasLength(set.length));
       for (final quote in set) {
-        expect(quote.text.length, lessThanOrEqualTo(250));
         expect(quote.text, isNot(contains('\n')));
-        expect(quote.source, startsWith('النبي ﷺ — '));
-        expect(quote.source, matches('رواه|متفق|اتفق'));
       }
     }
   });
 
-  test('each quote reads as the page it cites prints it, not cut short', () {
+  test('morning and evening show the seven sayings of pages 29 and 30 alone',
+      () {
+    expect(kReminderQuotes[2], same(kReminderQuotes[1]));
+    final set = kReminderQuotes[1]!;
+    expect(set, hasLength(7));
+    expect([for (final q in set) q.zikrId],
+        [1228, 1229, 1230, null, null, null, null]);
+    expect([
+      for (final q in set) q.page
+    ], [
+      'ص29',
+      'ص29',
+      'ص29',
+      'ص29',
+      'ص30',
+      'ص30',
+      'ص30، الحاشية 2',
+    ]);
+    for (final quote in set) {
+      expect(quote.source, isNull);
+      expect(reminderBody(quote), quote.text);
+    }
+  });
+
+  test('each saying from the book reads as the page prints it', () {
+    // The page sets the Shawkani quotation in «» over two paragraphs. The
+    // notification shows it alone, on one line.
+    String shown(String printed) =>
+        printed.replaceAll(RegExp('[«»]'), '').replaceAll('\n', ' ');
+    for (final quote in kReminderQuotes[1]!.where((q) => q.zikrId == null)) {
+      expect(quote.text, shown(quote.reference!), reason: quote.page);
+    }
+    expect(
+      kReminderQuotes[1]!.map((q) => q.text),
+      contains(startsWith('إنَّ ذكرَ الله عَزَّ وَجَلَّ في الصباحِ والمساء')),
+    );
+    expect(
+      kReminderQuotes[1]!.last.text,
+      endsWith('وهو أجدر بأن يدومَ عليه.'),
+      reason: 'the page-9 reference that ends the footnote is left out',
+    );
+    expect(
+      kReminderQuotes[1]!.map((q) => q.text).join(),
+      contains('من كيدِ شيطانِ الجِنَّةِ وشيطانِ الناس'),
+    );
+  });
+
+  test('a sleep quote is whole and names its speaker and its reporter', () {
+    for (final quote in kReminderQuotes[18]!) {
+      expect(quote.text.length, lessThanOrEqualTo(250));
+      expect(quote.source, startsWith('النبي ﷺ — '));
+      expect(quote.source, matches('رواه|متفق|اتفق'));
+    }
+  });
+
+  test('each sleep quote reads as the page it cites prints it, not cut short',
+      () {
     // Marks, punctuation and Quran brackets are added for reading, so the
     // comparison is of the letters and the spaces between words.
     String letters(String s) => s
         .replaceAll(RegExp('[\u064B-\u0652\u0670ـ،؛:.,()﴿﴾«»]'), '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
-    for (final set in kReminderQuotes.values) {
-      for (final quote in set) {
-        expect(quote.page, matches(r'^https://(www\.)?islamweb\.net/'));
-        expect(letters(quote.text), letters(quote.reference),
-            reason: quote.page);
-      }
+    for (final quote in kReminderQuotes[18]!) {
+      expect(quote.page, matches(r'^https://(www\.)?islamweb\.net/'));
+      expect(letters(quote.text), letters(quote.reference!),
+          reason: quote.page);
     }
   });
 
@@ -103,12 +147,21 @@ void main() {
   test('each reminder shows a quote from its own set, under its title', () {
     for (final slot in ReminderSlot.values) {
       final set = kReminderQuotes[slot.titleId]!;
-      final allowed = {for (final q in set) '${q.text}\n${q.source}'};
+      final allowed = {for (final q in set) reminderBody(q)};
       for (final r in planOnly(slot).take(kReminderDays - kRenewHintDays)) {
         expect(r.title, titles[slot.titleId]);
         expect(allowed, contains(r.body));
       }
     }
+  });
+
+  test('a sleep quote carries its source on the line under it', () {
+    final quote = kReminderQuotes[18]!.first;
+    expect(reminderBody(quote), '${quote.text}\n${quote.source}');
+    expect(
+      reminderBody(kReminderQuotes[1]!.first, renewHint: kRenewHint),
+      '$kRenewHint\n${kReminderQuotes[1]!.first.text}',
+    );
   });
 
   test('the morning set holds a quote the sleep set does not', () {

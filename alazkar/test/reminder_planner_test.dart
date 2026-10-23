@@ -2,6 +2,7 @@ import 'package:alazkar/src/features/reminders/data/models/prayer_method.dart';
 import 'package:alazkar/src/features/reminders/data/models/reminder.dart';
 import 'package:alazkar/src/features/reminders/domain/prayer_times_calculator.dart';
 import 'package:alazkar/src/features/reminders/domain/reminder_planner.dart';
+import 'package:alazkar/src/features/reminders/domain/reminder_quotes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -106,7 +107,11 @@ void main() {
       'title': 'أذكار المساء',
       'body': planned.first.body,
     });
-    expect(planned.first.body.split('\n'), hasLength(2));
+    // An evening saying from the book shows alone, with no source line.
+    expect(
+      planned.first.body,
+      quoteFor(2, DateTime(2026, 10, 13))!.text,
+    );
   });
 
   PrayerTimesCalculator cairoAt(Duration Function(DateTime day) offset) =>

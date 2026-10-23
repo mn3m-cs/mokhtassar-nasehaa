@@ -79,7 +79,7 @@ void main() {
   const titles = {1: 'أذكار الصباح', 2: 'أذكار المساء', 18: 'أذكار النوم'};
   const off = ReminderSetting(enabled: false, minuteOfDay: 0);
 
-  PlannedReminder first(ReminderSlot slot, {int skip = 0}) => planReminders(
+  List<PlannedReminder> plan(ReminderSlot slot) => planReminders(
         settings: {
           for (final s in ReminderSlot.values)
             s: s == slot
@@ -88,21 +88,36 @@ void main() {
         },
         titles: titles,
         now: DateTime(2026, 10, 13, 5),
-      )[skip];
+      );
+
+  bool isVerse(ReminderQuote q) => q.zikrId != null;
+
+  /// The first reminder of [slot] whose quote passes [test], from [skip] on.
+  (ReminderQuote, PlannedReminder) first(
+    ReminderSlot slot,
+    bool Function(ReminderQuote) test, {
+    int skip = 0,
+  }) {
+    final r = plan(slot)
+        .skip(skip)
+        .firstWhere((r) => test(quoteFor(r.titleId, r.at)!));
+    return (quoteFor(r.titleId, r.at)!, r);
+  }
 
   final longest = [
     for (final set in kReminderQuotes.entries)
       for (final q in set.value) (set.key, q),
   ].reduce((a, b) => a.$2.text.length >= b.$2.text.length ? a : b);
 
-  (ReminderQuote, PlannedReminder) planned(PlannedReminder r) =>
-      (quoteFor(r.titleId, r.at)!, r);
-
   final cases = <String, (ReminderQuote, PlannedReminder)>{
-    'morning': planned(first(ReminderSlot.morning)),
-    'last_week': planned(first(ReminderSlot.morning, skip: kReminderDays - 3)),
-    'evening': planned(first(ReminderSlot.evening)),
-    'sleep': planned(first(ReminderSlot.sleep)),
+    'morning': first(ReminderSlot.morning, isVerse),
+    'last_week': first(
+      ReminderSlot.morning,
+      (_) => true,
+      skip: kReminderDays - 3,
+    ),
+    'evening': first(ReminderSlot.evening, (q) => !isVerse(q)),
+    'sleep': first(ReminderSlot.sleep, (_) => true),
     'longest': (
       longest.$2,
       PlannedReminder(
@@ -113,6 +128,14 @@ void main() {
       ),
     ),
   };
+
+  test('the cases are the ones the ticket names', () {
+    expect(isVerse(cases['morning']!.$1), isTrue);
+    expect(isVerse(cases['evening']!.$1), isFalse);
+    expect(cases['longest']!.$1.text, startsWith('ومِن أكثرِ الأذكارِ'));
+    expect(cases['last_week']!.$2.body, startsWith('$kRenewHint\n'));
+    expect(cases['sleep']!.$1.source, isNotNull);
+  });
 
   for (final MapEntry(key: name, value: (quote, reminder)) in cases.entries) {
     for (final brightness in Brightness.values) {
@@ -136,10 +159,14 @@ void main() {
           expect(find.text(reminder.title), findsOneWidget);
           expect(
             opened
-                ? find.textContaining('${quote.text}\n${quote.source}')
+                ? find.textContaining(reminderBody(quote))
                 : find.text(quote.text),
             findsOneWidget,
           );
+          if (opened && quote.source == null) {
+            // A saying from the book shows alone: nothing under it.
+            expect(reminder.body, endsWith(quote.text));
+          }
         });
       }
     }

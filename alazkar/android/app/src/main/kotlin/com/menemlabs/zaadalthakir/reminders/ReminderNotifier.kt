@@ -50,7 +50,7 @@ object ReminderNotifier {
             .setAutoCancel(true)
         if (reminder.body.isNotEmpty()) {
             // Collapsed, the notification shows the first line; opened, the
-            // whole body: the quote and then its source.
+            // whole body: the quote, and its source when it has one.
             builder.setContentText(reminder.body.lineSequence().first())
                 .setStyle(Notification.BigTextStyle().bigText(reminder.body))
         }
