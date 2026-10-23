@@ -64,6 +64,7 @@ class AboutScreen extends StatelessWidget {
               "الكتاب: مختصر النصيحة في الأذكار والأدعية الصحيحة\n"
               "تأليف: محمد أحمد إسماعيل المقدم\n"
               "الطبعة العاشرة المعدلة، ١٤٤٦هـ - ٢٠٢٥م\n"
+              "قوبل نص التطبيق بهذه الطبعة صفحة صفحة\n"
               "almukaddem.com",
             ),
             onTap: () => openUrl(kBookPageUrl),
