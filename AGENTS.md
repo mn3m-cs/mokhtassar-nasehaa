@@ -55,6 +55,8 @@ The ticket body is the specification. Its `## Decisions` section holds the owner
 
 A small call that any sensible builder would make the same way, such as a variable name, a helper's place, or a test's shape, is yours. List these calls in the PR description, marked as your calls, so the owner can check them.
 
+**Facts you cannot see.** What you cannot verify in a system outside this repository must not ship as a silent failure. Either stop and ask in the ticket (`needs-decision`), or make the code say "unknown" in output that a log or a developer reads, never in content a reader sees, which comes from the book alone. Never skip a check without a trace. A fake in a test, such as a stubbed platform channel or Android notification, is built from a real sample of the object, copied from its source or captured from a run, never from the shape you guessed: a fake of a guessed shape only confirms the guess. Write any guess that remains in the PR description, with the line of code that holds it, so the reviewer checks it against the real source before anything else. This came from mn3m-cs/hermes-skills#279: a ticket named a field from memory, the builder guessed where it lived, its test built a fake of the guessed shape, and the code skipped the check silently when the field was absent (mn3m-cs/hermes-skills#280).
+
 ## Proving it
 
 - Run the app's checks: `fvm flutter analyze` and `fvm flutter test`, from `alazkar/`. Format only with `fvm dart format <files>`. The bare `dart` on the PATH is a different SDK, and it restyles unrelated files.
@@ -66,6 +68,8 @@ A small call that any sensible builder would make the same way, such as a variab
 ## Finishing
 
 Open a PR from a branch cut from the current `main` that says `Closes #<n>`. A ticket that came back from review already has its PR: continue on that PR's branch, merging `main` into it first, and do not open a second PR. The ticket's body then carries a dated amendment, and the amendment's Decisions, cases and acceptance items are what you build to. Swap the ticket's label from `ready-for-dev` to `in-review`. **Never merge**: merging is the owner's step after review. Never rewrite pushed history; to update a branch, merge `main` into it.
+
+Write no attribution to Claude, Claude Code or any other AI tool in what you leave behind: commit messages, PR descriptions, issue and PR comments, and code. That means no `Co-Authored-By` line and no «Generated with/by Claude Code» footer, even when your tool adds one by default. The owner does not want the tool named in the project's history or its discussions. The git author of a commit may stay as your tool sets it; only the added text is unwanted.
 
 ## Content rules
 
