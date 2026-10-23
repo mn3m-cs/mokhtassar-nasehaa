@@ -1,10 +1,10 @@
 {
   "title": {
     "id": 116,
-    "order": 2,
+    "order": 18,
     "name": "تكبيرات صلاة العيد، وما يقول بينها",
     "freq": "d",
-    "parentId": 110,
+    "parentId": 96,
     "nodeType": "content"
   },
   "items": [

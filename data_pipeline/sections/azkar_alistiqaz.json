@@ -1,9 +1,10 @@
 {
   "title": {
-    "name": "أذكار الاستيقاظ",
+    "name": "ما يقول إذا استيقظَ من نَومِه",
     "freq": "d",
-    "order": 3,
-    "nodeType": "content"
+    "order": 1,
+    "nodeType": "content",
+    "parentId": 332
   },
   "items": [
     {

@@ -1,8 +1,8 @@
 {
   "title": {
     "id": 145,
-    "order": 6,
-    "name": "الباقيات الصالحات",
+    "order": 5,
+    "name": "النوع الخامس: وِرْدُ الباقياتِ الصَّالحات",
     "freq": "d",
     "parentId": 140,
     "nodeType": "category"

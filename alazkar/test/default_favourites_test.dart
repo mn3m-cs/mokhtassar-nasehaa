@@ -44,12 +44,16 @@ void main() {
     );
 
     expect(rows, [
-      {'id': 1, 'name': 'أذكار الصباح', 'nodeType': 'content'},
-      {'id': 2, 'name': 'أذكار المساء', 'nodeType': 'content'},
-      {'id': 4, 'name': 'أذكار الاستيقاظ', 'nodeType': 'content'},
+      {'id': 1, 'name': 'أولًا: أذكار الصَّباح', 'nodeType': 'content'},
+      {'id': 2, 'name': 'ثانيًا: أذكارُ المساء', 'nodeType': 'content'},
+      {'id': 4, 'name': 'ما يقول إذا استيقظَ من نَومِه', 'nodeType': 'content'},
       {'id': 16, 'name': 'ما يقول بعد الصلاة', 'nodeType': 'content'},
-      {'id': 18, 'name': 'أذكار النوم', 'nodeType': 'content'},
-      {'id': 49, 'name': 'أذكار المسافر', 'nodeType': 'content'},
+      {'id': 18, 'name': 'ما يقول إذا أراد النوم', 'nodeType': 'content'},
+      {
+        'id': 49,
+        'name': 'ما يقول المسافر ومَن يُودِّعه',
+        'nodeType': 'content'
+      },
     ]);
   });
 

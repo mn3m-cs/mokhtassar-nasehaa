@@ -10,7 +10,7 @@ class BookmarksDBHelper {
   /* ************* Variables ************* */
 
   static const String dbName = "Bookmarks.db";
-  static const int dbVersion = 4;
+  static const int dbVersion = 5;
 
   /// Sections that always stay in favourites and can never be removed:
   /// morning, evening, waking up, after prayer, sleep.
@@ -25,6 +25,18 @@ class BookmarksDBHelper {
   /// Defaults shipped before version 3; they were ids of the upstream app and
   /// point to unrelated sections here.
   static const List<int> legacyDefaultTitleIds = [2, 84, 89, 94, 99, 191, 254];
+
+  /// Sections that left the navigation when it became the book's index
+  /// (#220, Al-Azkar.db 165), each with the section that now holds its first
+  /// rows: an introduction that is no line of the index, or a heading the
+  /// index does not list.
+  static const Map<int, int> movedTitleIds = {
+    139: 49,
+    157: 156,
+    161: 151,
+    176: 74,
+    187: 188,
+  };
 
   /* ************* Singleton Constructor ************* */
 
@@ -132,6 +144,20 @@ class BookmarksDBHelper {
     await addDefaultTitles(db);
   }
 
+  /// Moves the favourites saved on [movedTitleIds] to the sections that hold
+  /// their rows now; a section already in favourites is not added twice.
+  static Future<void> moveFavouriteTitles(Database db) async {
+    final batch = db.batch();
+    movedTitleIds.forEach((from, to) {
+      batch.rawUpdate(
+        'UPDATE OR IGNORE favourite_titles SET titleId = ? WHERE titleId = ?',
+        [to, from],
+      );
+      batch.rawDelete('DELETE FROM favourite_titles WHERE titleId = ?', [from]);
+    });
+    await batch.commit(noResult: true);
+  }
+
   /// On upgrade database version
   Future<void> _onUpgradeDatabase(
     Database db,
@@ -151,6 +177,9 @@ class BookmarksDBHelper {
     }
     if (oldVersion < 4) {
       await restorePinnedTitles(db);
+    }
+    if (oldVersion < 5) {
+      await moveFavouriteTitles(db);
     }
   }
 

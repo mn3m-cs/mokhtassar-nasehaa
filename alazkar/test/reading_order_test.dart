@@ -26,8 +26,8 @@ void main() {
 
     final ids = stateOf(titles).readingOrder().map((t) => t.id).toList();
 
-    expect(ids.take(6), [171, 102, 104, 1, 2, 3]);
-    expect(ids.indexOf(68), ids.indexOf(67) + 1,
+    expect(ids.take(8), [171, 102, 104, 197, 198, 1, 2, 3]);
+    expect(ids.indexOf(68), ids.indexOf(330) + 1,
         reason: "p242 prints the gathering's dhikr right after the sunna's");
     expect(ids.toSet().length, ids.length);
     expect(
@@ -53,12 +53,12 @@ void main() {
     expect(
       state.favouriteTitles().map((t) => t.name),
       [
-        'أذكار الصباح',
-        'أذكار المساء',
-        'أذكار الاستيقاظ',
+        'أولًا: أذكار الصَّباح',
+        'ثانيًا: أذكارُ المساء',
+        'ما يقول إذا استيقظَ من نَومِه',
         'ما يقول بعد الصلاة',
-        'أذكار النوم',
-        'أذكار المسافر',
+        'ما يقول إذا أراد النوم',
+        'ما يقول المسافر ومَن يُودِّعه',
       ],
     );
   });
