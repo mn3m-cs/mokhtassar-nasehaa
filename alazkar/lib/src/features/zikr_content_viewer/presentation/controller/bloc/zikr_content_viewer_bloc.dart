@@ -4,6 +4,7 @@ import 'package:alazkar/app.dart';
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
 import 'package:alazkar/src/core/manager/vibration_manager.dart';
 import 'package:alazkar/src/core/manager/volume_button_manager.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_extension.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
@@ -68,18 +69,37 @@ class ZikrContentViewerBloc
     final RegExp regExp = RegExp(r'\(.*?\)');
 
     /// get all zikr
+    final card = event.card;
     final List<Zikr> azkarToSet;
-    final azkarFromDB =
-        (await azkarDBHelper.getContentByTitleId(event.zikrTitleId))
-            .map(
-              (e) => showTextInBrackets || e.body.contains("QuranText")
-                  ? e
-                  : e.copyWith(body: e.body.replaceAll(regExp, "")),
-            )
-            .toList();
-    final zikrTitle = await azkarDBHelper.getTitlesById(event.zikrTitleId);
+    final rows = card == null
+        ? await azkarDBHelper.getContentByTitleId(event.zikrTitleId)
+        : await azkarDBHelper.getContentByIds(card.zikrIds);
+    final azkarFromDB = rows
+        .map(
+          (e) => showTextInBrackets || e.body.contains("QuranText")
+              ? e
+              : e.copyWith(body: e.body.replaceAll(regExp, "")),
+        )
+        .toList();
     final allTitles = await azkarDBHelper.getAllTitles();
-    final sectionPath = buildParentPath(zikrTitle, allTitles);
+    final ZikrTitle zikrTitle;
+    final String sectionPath;
+    if (card == null) {
+      zikrTitle = await azkarDBHelper.getTitlesById(event.zikrTitleId);
+      sectionPath = buildParentPath(zikrTitle, allTitles);
+    } else {
+      // A card sits where the section of its first zikr sits, so it keeps
+      // its progress as that section does.
+      final first = allTitles.firstWhere((t) => t.id == rows.first.titleId);
+      zikrTitle = ZikrTitle(
+        id: card.id,
+        order: first.order,
+        name: card.name,
+        freq: first.freq,
+        parentId: first.parentId,
+      );
+      sectionPath = '';
+    }
     final progressKeeping = progressKeepingOf(zikrTitle, allTitles);
 
     /// filter out zikr
@@ -127,6 +147,9 @@ class ZikrContentViewerBloc
         focusOrder: event.zikrOrder,
         resumeZikrId: resumeZikrId,
         progressKeeping: progressKeeping,
+        card: card,
+        firstSectionId: card == null ? null : rows.first.titleId,
+        lastSectionId: card == null ? null : rows.last.titleId,
       ),
     );
   }
@@ -214,6 +237,9 @@ class ZikrContentViewerBloc
         sectionPath: state.sectionPath,
         focusOrder: state.focusOrder,
         progressKeeping: state.progressKeeping,
+        card: state.card,
+        firstSectionId: state.firstSectionId,
+        lastSectionId: state.lastSectionId,
       ),
     );
     await readingProgressStorage.clear(state.zikrTitle.id);
@@ -295,7 +321,7 @@ class ZikrContentViewerBloc
     try {
       final titles = homeState.readingOrder();
       final int currentTitleIndex =
-          titles.indexWhere((e) => e.id == state.zikrTitle.id);
+          titles.indexWhere((e) => e.id == state.nextFromId);
       appPrint(currentTitleIndex);
       if (currentTitleIndex == -1) return;
       if (currentTitleIndex == titles.length - 1) {
@@ -321,7 +347,7 @@ class ZikrContentViewerBloc
     try {
       final titles = homeState.readingOrder();
       final int currentTitleIndex =
-          titles.indexWhere((e) => e.id == state.zikrTitle.id);
+          titles.indexWhere((e) => e.id == state.previousFromId);
       if (currentTitleIndex == -1 || currentTitleIndex == 0) return;
       add(ZikrContentViewerStartEvent(titles[currentTitleIndex - 1].id));
     } catch (e) {

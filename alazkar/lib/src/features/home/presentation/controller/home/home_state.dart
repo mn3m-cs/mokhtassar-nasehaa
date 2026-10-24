@@ -10,24 +10,55 @@ sealed class HomeState extends Equatable {
 
 final class HomeLoadingState extends HomeState {}
 
+/// A tile on the home page: a home card, or a favourite section of the index.
+final class HomeTile extends Equatable {
+  final HomeCard? card;
+  final ZikrTitle? title;
+
+  const HomeTile.card(HomeCard this.card) : title = null;
+  const HomeTile.section(ZikrTitle this.title) : card = null;
+
+  String get name => card?.name ?? title!.name;
+
+  @override
+  List<Object?> get props => [card?.id, title];
+}
+
 final class HomeLoadedState extends HomeState {
   final List<ZikrTitle> titles;
   final List<ZikrTitle> titlesToShow;
   final bool isSearching;
   final List<int> favouriteTitlesIds;
 
+  /// For each home card, by id, the index section its first zikr sits in.
+  final Map<int, int> cardSections;
+
   const HomeLoadedState({
     required this.titles,
     required this.titlesToShow,
     required this.isSearching,
     required this.favouriteTitlesIds,
+    this.cardSections = const {},
   });
 
-  /// Favourite sections, in the order the book reads them.
-  List<ZikrTitle> favouriteTitles() {
-    return readingOrder()
-        .where((title) => favouriteTitlesIds.contains(title.id))
-        .toList();
+  /// The favourites, in the order the book reads them. A favourite that is a
+  /// home card shows the card, where the section of its first zikr stands;
+  /// any other shows its section.
+  List<HomeTile> favouriteTiles() {
+    final tiles = <HomeTile>[];
+    for (final title in readingOrder()) {
+      for (final card in kHomeCards) {
+        if (cardSections[card.id] == title.id &&
+            favouriteTitlesIds.contains(card.favouriteId)) {
+          tiles.add(HomeTile.card(card));
+        }
+      }
+      if (favouriteTitlesIds.contains(title.id) &&
+          homeCardByFavouriteId(title.id) == null) {
+        tiles.add(HomeTile.section(title));
+      }
+    }
+    return tiles;
   }
 
   /// Shown sections in the order the book reads them: depth-first through
@@ -63,6 +94,7 @@ final class HomeLoadedState extends HomeState {
         titlesToShow,
         isSearching,
         favouriteTitlesIds,
+        cardSections,
       ];
 
   HomeLoadedState copyWith({
@@ -76,6 +108,7 @@ final class HomeLoadedState extends HomeState {
       titlesToShow: titlesToShow ?? this.titlesToShow,
       isSearching: isSearching ?? this.isSearching,
       favouriteTitlesIds: favouriteTitlesIds ?? this.favouriteTitlesIds,
+      cardSections: cardSections,
     );
   }
 }

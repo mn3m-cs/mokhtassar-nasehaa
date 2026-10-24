@@ -110,14 +110,14 @@ void main() {
       freq: 'd',
       nodeType: ZikrTitleNodeType.category,
     );
-    const section = ZikrTitle(id: 1, order: 1, name: 'أذكار الصباح', freq: 'd');
+    const section = ZikrTitle(id: 197, order: 1, name: 'ذكر الله', freq: 'd');
     const state = HomeLoadedState(
       titles: [category, section],
       titlesToShow: [category, section],
       isSearching: false,
-      favouriteTitlesIds: [1, 99],
+      favouriteTitlesIds: [197, 99],
     );
 
-    expect(state.favouriteTitles(), [section]);
+    expect(state.favouriteTiles(), [const HomeTile.section(section)]);
   });
 }

@@ -120,6 +120,23 @@ class AzkarDBHelper {
     );
   }
 
+  /// The azkar with [ids], in the order of [ids].
+  Future<List<Zikr>> getContentByIds(List<int> ids) async {
+    final Database db = await database;
+
+    final List<Map<String, dynamic>> maps = await db.rawQuery(
+      'SELECT * FROM contents WHERE id IN '
+      '(${List.filled(ids.length, '?').join(',')})',
+      ids,
+    );
+    final byId = {for (final map in maps) map['id'] as int: Zikr.fromMap(map)};
+
+    return flattenZikrBodyText([
+      for (final id in ids)
+        if (byId[id] case final zikr?) zikr,
+    ]);
+  }
+
   Future<List<Zikr>> flattenZikrBodyText(List<Zikr> contents) {
     return Future.wait(
       contents

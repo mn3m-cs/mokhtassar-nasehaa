@@ -200,9 +200,9 @@ void main() {
         await db.rawQuery('SELECT titleId FROM favourite_titles ORDER BY 1');
     expect(
       rows.map((row) => row['titleId']),
-      [1, 2, 4, 16, 18, 49, 74, 156],
-      reason: '139 joins 49, which is already there; 157 goes to 156 and '
-          '176 to 74',
+      [-176, 1, 2, 4, 16, 18, 49, 156],
+      reason: '139 joins 49, which is already there; 157 goes to 156; 176 '
+          'stays the card «ورد التسبيح», stored as -176',
     );
   });
 }

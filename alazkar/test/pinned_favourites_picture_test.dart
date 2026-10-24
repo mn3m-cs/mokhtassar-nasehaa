@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
 import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/features/home/presentation/components/bookmark_title_button.dart';
@@ -46,6 +47,13 @@ class _FakeAzkarDB implements AzkarDBHelper {
           sourceIndex: '',
         ),
       ];
+
+  /// A card's first zikr sits in the section of the card's id, as before #220.
+  @override
+  Future<Zikr> getContentById(int id) async => (await getContentByTitleId(
+        kHomeCards.firstWhere((card) => card.zikrIds.first == id).id,
+      ))
+          .single;
 
   @override
   Future<List<ZikrTitle>> getAllTitles() async => [..._titles];

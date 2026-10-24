@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/utils/app_print.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,12 +30,12 @@ class BookmarksDBHelper {
   /// Sections that left the navigation when it became the book's index
   /// (#220, Al-Azkar.db 167), each with the section that now holds its first
   /// rows: an introduction that is no line of the index, or a heading the
-  /// index does not list.
+  /// index does not list. «ورد التسبيح» (176) left it too, and became a home
+  /// card instead ([keepSavedCards]).
   static const Map<int, int> movedTitleIds = {
     139: 49,
     157: 156,
     161: 151,
-    176: 74,
     187: 188,
   };
 
@@ -144,6 +145,20 @@ class BookmarksDBHelper {
     await addDefaultTitles(db);
   }
 
+  /// Keeps a favourite saved before #220 on a section that is now a home card
+  /// other than a default one: the card replaces it, under
+  /// [HomeCard.favouriteId], so it opens what it opened before.
+  static Future<void> keepSavedCards(Database db) async {
+    final batch = db.batch();
+    for (final card in kHomeCards.where((card) => !card.isDefault)) {
+      batch.rawUpdate(
+        'UPDATE OR IGNORE favourite_titles SET titleId = ? WHERE titleId = ?',
+        [card.favouriteId, card.id],
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
   /// Moves the favourites saved on [movedTitleIds] to the sections that hold
   /// their rows now; a section already in favourites is not added twice.
   static Future<void> moveFavouriteTitles(Database db) async {
@@ -179,6 +194,7 @@ class BookmarksDBHelper {
       await restorePinnedTitles(db);
     }
     if (oldVersion < 5) {
+      await keepSavedCards(db);
       await moveFavouriteTitles(db);
     }
   }

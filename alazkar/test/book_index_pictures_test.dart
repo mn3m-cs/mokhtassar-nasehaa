@@ -229,7 +229,7 @@ void main() {
                             titlesToShow: titles,
                             isSearching: false,
                             favouriteTitlesIds: favourites,
-                          ).favouriteTitles(),
+                          ).favouriteTiles(),
                         ),
                   itemBuilder: (context, row) => IndexRow(row: row),
                 ),
