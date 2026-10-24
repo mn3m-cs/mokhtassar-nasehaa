@@ -27,7 +27,7 @@ class BookmarksDBHelper {
   static const List<int> legacyDefaultTitleIds = [2, 84, 89, 94, 99, 191, 254];
 
   /// Sections that left the navigation when it became the book's index
-  /// (#220, Al-Azkar.db 165), each with the section that now holds its first
+  /// (#220, Al-Azkar.db 167), each with the section that now holds its first
   /// rows: an introduction that is no line of the index, or a heading the
   /// index does not list.
   static const Map<int, int> movedTitleIds = {

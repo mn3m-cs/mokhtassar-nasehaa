@@ -69,6 +69,8 @@ A small call that any sensible builder would make the same way, such as a variab
 
 Open a PR from a branch cut from the current `main` that says `Closes #<n>`. A ticket that came back from review already has its PR: continue on that PR's branch, merging `main` into it first, and do not open a second PR. The ticket's body then carries a dated amendment, and the amendment's Decisions, cases and acceptance items are what you build to. Swap the ticket's label from `ready-for-dev` to `in-review`. **Never merge**: merging is the owner's step after review. Never rewrite pushed history; to update a branch, merge `main` into it.
 
+Write no attribution to Claude, Claude Code or any other AI tool in what you leave behind: commit messages, PR descriptions, issue and PR comments, and code. That means no `Co-Authored-By` line and no «Generated with/by Claude Code» footer, even when your tool adds one by default. The owner does not want the tool named in the project's history or its discussions. The git author of a commit may stay as your tool sets it; only the added text is unwanted.
+
 ## Content rules
 
 The app must match the book «مختصر النصيحة في الأذكار والأدعية الصحيحة» exactly. Every word a reader sees as content comes from the book verbatim. Nothing is paraphrased, summarised or added in an agent's own words. When the app and the book differ, the book wins. Content not in the book is deleted, not labelled. Detailed content procedure is in `CONTENT_AUDIT_AGENT_PLAN.md`; its section «مطابقة صفحة صفحة» (§9) is the page-by-page method. `docs/book-map.md` records which book chapters were compared with their pages. Never call the app «مطابق للكتاب» except for rows whose status is «قورن».

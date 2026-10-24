@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-navigation_from_book_index.py — writes migration 165 (#220).
+navigation_from_book_index.py — writes migration 167 (#220).
 
 The navigation tree becomes a copy of the book's index (docs/book-index.json):
 every chapter a category, every index line a section, in the printed order.
@@ -17,10 +17,10 @@ An old content section keeps its id on the line whose name it carries (أذكا�
 first row. A section left without an id (its rows spread to other sections)
 is listed in MOVED, so the favourites saved on it follow its first row.
 
-Run it against the database at dbVersion 164:
+Run it against the database at dbVersion 166:
   python3 navigation_from_book_index.py [--db PATH] [--apply]
-It writes migrations/165_navigation_as_book_index.sql and, with --apply, runs
-it on the database and sets user_version 165.
+It writes migrations/167_navigation_as_book_index.sql and, with --apply, runs
+it on the database and sets user_version 167.
 """
 
 import argparse
@@ -34,8 +34,8 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(THIS_DIR, ".."))
 DEFAULT_DB = os.path.join(ROOT, "alazkar", "assets", "db", "Al-Azkar.db")
 INDEX = os.path.join(ROOT, "docs", "book-index.json")
-OUT = os.path.join(THIS_DIR, "migrations", "165_navigation_as_book_index.sql")
-VERSION = 165
+OUT = os.path.join(THIS_DIR, "migrations", "167_navigation_as_book_index.sql")
+VERSION = 167
 
 # The root category the index does not cover (decision 7).
 ABOUT_BOOK = 99

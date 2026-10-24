@@ -2,6 +2,7 @@ import 'package:alazkar/src/features/reminders/data/models/prayer_method.dart';
 import 'package:alazkar/src/features/reminders/data/models/reminder.dart';
 import 'package:alazkar/src/features/reminders/domain/prayer_times_calculator.dart';
 import 'package:alazkar/src/features/reminders/domain/reminder_planner.dart';
+import 'package:alazkar/src/features/reminders/domain/reminder_quotes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -81,13 +82,13 @@ void main() {
       now: DateTime(2026, 10, 13, 12),
     );
 
-    final withLine = planned.where((r) => r.body == kRenewHint).toList();
+    bool hasLine(PlannedReminder r) => r.body.startsWith('$kRenewHint\n');
+    final withLine = planned.where(hasLine).toList();
     expect(withLine, hasLength(kRenewHintDays));
     expect(withLine.first.at, planned[kReminderDays - kRenewHintDays].at);
-    expect(
-      planned.take(kReminderDays - kRenewHintDays).every((r) => r.body.isEmpty),
-      isTrue,
-    );
+    expect(planned.take(kReminderDays - kRenewHintDays).any(hasLine), isFalse);
+    // The renewal line comes first, then the quote and its source.
+    expect(withLine.first.body.split('\n'), hasLength(3));
   });
 
   test('the map sent to Android holds the local date and minute', () {
@@ -104,8 +105,13 @@ void main() {
       'minuteOfDay': 17 * 60 + 30,
       'titleId': 2,
       'title': 'أذكار المساء',
-      'body': '',
+      'body': planned.first.body,
     });
+    // An evening saying from the book shows alone, with no source line.
+    expect(
+      planned.first.body,
+      quoteFor(2, DateTime(2026, 10, 13))!.text,
+    );
   });
 
   PrayerTimesCalculator cairoAt(Duration Function(DateTime day) offset) =>

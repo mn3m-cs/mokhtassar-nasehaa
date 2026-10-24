@@ -28,6 +28,7 @@ void main() {
         'الكتاب: مختصر النصيحة في الأذكار والأدعية الصحيحة\n'
         'تأليف: محمد أحمد إسماعيل المقدم\n'
         'الطبعة العاشرة المعدلة، ١٤٤٦هـ - ٢٠٢٥م\n'
+        'قوبل نص التطبيق بهذه الطبعة صفحة صفحة\n'
         'almukaddem.com',
       ),
       findsOneWidget,
@@ -36,5 +37,15 @@ void main() {
     await tester.tap(find.text('المصدر'));
 
     expect(opened, ['https://almukaddem.com/ar/3240']);
+  });
+
+  testWidgets('the source tile says the app was matched with this edition',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: AboutScreen()));
+
+    expect(
+      find.textContaining('\nقوبل نص التطبيق بهذه الطبعة صفحة صفحة\n'),
+      findsOneWidget,
+    );
   });
 }
