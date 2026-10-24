@@ -6,7 +6,8 @@
 /// or changed from its source.
 ///
 /// A saying from the book shows alone, with no [source]. A verse carries
-/// [zikrId], the record whose verses the app shows in the same words; any
+/// [zikrId], the record whose verses the app shows in the same words, less
+/// the number of the last verse, which the book does not print before ﴾; any
 /// other saying carries [reference], the book's words on [page].
 class ReminderQuote {
   final String text;
@@ -26,22 +27,23 @@ class ReminderQuote {
 
 /// The morning and evening set: what the book says on pages 29 and 30 in
 /// favour of these remembrances, in its order. Each verse is its own saying,
-/// as the app shows it for its record, with nothing before or after it.
+/// as the app shows it for its record but with no number after its last
+/// verse, as the book prints it: nothing before or after it.
 const _morningAndEvening = [
   ReminderQuote(
-    '﴿ يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُواْ ٱذۡكُرُواْ ٱللَّهَ ذِكۡرٗا كَثِيرٗا ٤١ وَسَبِّحُوهُ بُكۡرَةٗ وَأَصِيلًا ٤٢ ﴾',
+    '﴿ يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُواْ ٱذۡكُرُواْ ٱللَّهَ ذِكۡرٗا كَثِيرٗا ٤١ وَسَبِّحُوهُ بُكۡرَةٗ وَأَصِيلًا ﴾',
     null,
     page: 'ص29',
     zikrId: 1228,
   ),
   ReminderQuote(
-    '﴿ وَٱذۡكُر رَّبَّكَ فِي نَفۡسِكَ تَضَرُّعٗا وَخِيفَةٗ وَدُونَ ٱلۡجَهۡرِ مِنَ ٱلۡقَوۡلِ بِٱلۡغُدُوِّ وَٱلۡأٓصَالِ وَلَا تَكُن مِّنَ ٱلۡغَٰفِلِينَ ٢٠٥ ﴾',
+    '﴿ وَٱذۡكُر رَّبَّكَ فِي نَفۡسِكَ تَضَرُّعٗا وَخِيفَةٗ وَدُونَ ٱلۡجَهۡرِ مِنَ ٱلۡقَوۡلِ بِٱلۡغُدُوِّ وَٱلۡأٓصَالِ وَلَا تَكُن مِّنَ ٱلۡغَٰفِلِينَ ﴾',
     null,
     page: 'ص29',
     zikrId: 1229,
   ),
   ReminderQuote(
-    '﴿ فَسُبۡحَٰنَ ٱللَّهِ حِينَ تُمۡسُونَ وَحِينَ تُصۡبِحُونَ ١٧ ﴾',
+    '﴿ فَسُبۡحَٰنَ ٱللَّهِ حِينَ تُمۡسُونَ وَحِينَ تُصۡبِحُونَ ﴾',
     null,
     page: 'ص29',
     zikrId: 1230,

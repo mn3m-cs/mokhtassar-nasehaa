@@ -11,7 +11,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// A verse in the morning and evening set is the verse the app shows for its
 /// record, read through the same code and the same Quran database, from ﴿ to
-/// ﴾ with nothing before or after.
+/// ﴾ with nothing before or after, and no number after the last verse, as the
+/// book prints it on page 29.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -53,7 +54,14 @@ void main() {
         shown.indexOf('﴿'),
         shown.lastIndexOf('﴾') + 1,
       );
-      expect(quote.text, verse, reason: '${quote.zikrId}');
+      // The book prints no number after the last verse, so it goes.
+      final lastNumber = RegExp(r' [٠-٩]+ ﴾$');
+      expect(verse, contains(lastNumber), reason: '${quote.zikrId}');
+      expect(
+        quote.text,
+        verse.replaceFirst(lastNumber, ' ﴾'),
+        reason: '${quote.zikrId}',
+      );
       expect(quote.text, startsWith('﴿'));
       expect(quote.text, endsWith('﴾'));
     }
