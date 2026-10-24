@@ -42,6 +42,9 @@ class _FakeAzkarDB implements AzkarDBHelper {
   Future<List<Zikr>> getContentByTitleId(int id) async => [_zikr(id)];
 
   @override
+  Future<Zikr> getContentById(int id) async => _zikr(id);
+
+  @override
   Future<List<ZikrTitle>> getAllTitles() async => [..._titles];
 
   @override

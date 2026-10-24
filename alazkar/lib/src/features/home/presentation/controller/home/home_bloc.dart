@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
 import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/core/utils/app_print.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/models/zikr_filter.dart';
@@ -66,6 +67,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         titlesToShow: titlesToSet,
         isSearching: false,
         favouriteTitlesIds: favouriteTitlesIds,
+        cardSections: {
+          for (final card in kHomeCards)
+            card.id: (await azkarDBHelper.getContentById(card.zikrIds.first))
+                .titleId,
+        },
       ),
     );
   }

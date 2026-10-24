@@ -1,8 +1,8 @@
 {
   "title": {
     "id": 141,
-    "order": 2,
-    "name": "القرآن الكريم",
+    "order": 1,
+    "name": "النوع الأول: تلاوة القرآن الكريم",
     "freq": "d",
     "parentId": 140,
     "nodeType": "category"

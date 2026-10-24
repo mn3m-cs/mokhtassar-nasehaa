@@ -11,10 +11,22 @@ class ZikrContentViewerStartEvent extends ZikrContentViewerEvent {
   final int zikrTitleId;
   final int? zikrOrder;
 
-  const ZikrContentViewerStartEvent(this.zikrTitleId, {this.zikrOrder});
+  /// Opens this home card instead of the section [zikrTitleId].
+  final HomeCard? card;
+
+  const ZikrContentViewerStartEvent(
+    this.zikrTitleId, {
+    this.zikrOrder,
+    this.card,
+  });
+
+  /// Opens [card] in one page.
+  ZikrContentViewerStartEvent.card(HomeCard this.card)
+      : zikrTitleId = card.id,
+        zikrOrder = null;
 
   @override
-  List<Object?> get props => [zikrTitleId, zikrOrder];
+  List<Object?> get props => [zikrTitleId, zikrOrder, card];
 }
 
 class ZikrContentViewerDecreaseEvent extends ZikrContentViewerEvent {

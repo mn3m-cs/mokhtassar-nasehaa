@@ -5,6 +5,111 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+/// The sections as they stood before the navigation became the book's index
+/// (#220, dbVersion 167). Most checks below were written one old section at a
+/// time; they read `former_contents`, which gives every row the id of its old
+/// section as `titleId` and its place among that section's rows as `order`.
+///
+/// Each old section that was split or merged is listed with the parts that now
+/// hold its rows, in book order: a section, or a section with the first and
+/// last place of the rows that came from the old one. Every other section
+/// holds the rows it held before.
+final Map<int, List<(int, int?, int?)>> _formerSections = {
+  1: [(197, null, null), (198, 1, 1), (1, null, null)],
+  2: [(198, 2, 2), (2, null, null)],
+  5: _whole([5, 199]),
+  6: _whole([6, 200, 201, 202]),
+  7: _whole([7, 203, 204]),
+  9: _whole([9, 206, 207, 208, 209]),
+  10: _whole([10, 210, 211]),
+  11: _whole([11, 212]),
+  13: _whole([13, 213]),
+  14: _whole([14, 214]),
+  16: _whole([16, 215, 216, 217]),
+  41: _whole([41, 218, 219, 220]),
+  45: _whole([45, 221, 222, 223, 224, 225, 226]),
+  46: _whole([46, 227, 228, 229, 230, 231]),
+  48: _whole([48, 232, 233, 234, 235]),
+  139: [(49, 1, 1)],
+  49: [
+    (49, 2, null),
+    ..._whole([for (var id = 236; id <= 245; id++) id])
+  ],
+  50: _whole([50, 246, 247, 248]),
+  52: _whole([52, 249]),
+  54: _whole([54, 250, 251, 252]),
+  55: _whole([55, 253]),
+  56: _whole([56, 254, 255]),
+  60: _whole([60, 256, 257, 258, 259, 260, 261]),
+  61: _whole([61, 262, 263, 264, 265, 266]),
+  63: _whole([63, 267, 268, 269]),
+  65: _whole([65, 270, 271, 272, 273, 274, 275]),
+  66: _whole([66, for (var id = 290; id <= 300; id++) id]),
+  67: _whole([67, for (var id = 301; id <= 330; id++) id]),
+  68: _whole([68, 331]),
+  176: [(74, 1, 13)],
+  74: [
+    (74, 14, null),
+    ..._whole([282, 283])
+  ],
+  75: _whole([75, 284]),
+  147: [
+    ..._whole([147, 192, 193, 194, 195, 196]),
+    (148, 1, 2)
+  ],
+  148: [(148, 3, null), (149, 1, 1)],
+  149: [(149, 2, null)],
+  161: [(151, 1, 7)],
+  151: [
+    (151, 8, null),
+    ..._whole([280, 281])
+  ],
+  156: [(156, 1, 5)],
+  157: [(156, 6, null)],
+  165: _whole([165, 276, 277, 278, 279]),
+  168: _whole([168, 205]),
+  172: _whole([172, 285]),
+  179: _whole([179, 288, 289]),
+  187: [(188, 1, 11)],
+  188: [(188, 12, null)],
+  190: _whole([190, 286, 287]),
+};
+
+List<(int, int?, int?)> _whole(List<int> ids) =>
+    [for (final id in ids) (id, null, null)];
+
+/// Creates the `former_contents` view described at [_formerSections]. The
+/// bundled database opens read-only, so the parts are a `VALUES` list in the
+/// view itself.
+Future<void> _createFormerContents(Database database) async {
+  final parts = [
+    for (final MapEntry(key: formerId, value: parts) in _formerSections.entries)
+      for (final (part, (titleId, first, last)) in parts.indexed)
+        '($formerId, $part, $titleId, ${first ?? 1}, ${last ?? 1000000})',
+  ].join(', ');
+  await database.execute('''
+    CREATE TEMP VIEW IF NOT EXISTS former_contents AS
+    WITH former_parts(formerId, part, titleId, first, last) AS (
+      VALUES $parts
+    )
+    SELECT contents.id, former_parts.formerId AS titleId,
+           ROW_NUMBER() OVER (
+             PARTITION BY former_parts.formerId
+             ORDER BY former_parts.part, contents."order"
+           ) AS "order",
+           contents.body, contents.count, contents.source, contents.hokm,
+           contents.fadl, contents.search, contents.sourceIndex, contents.style
+    FROM contents
+    JOIN former_parts ON former_parts.titleId = contents.titleId
+     AND contents."order" BETWEEN former_parts.first AND former_parts.last
+    UNION ALL
+    SELECT id, titleId, "order", body, count, source, hokm, fadl, search,
+           sourceIndex, style
+    FROM contents
+    WHERE titleId NOT IN (SELECT titleId FROM former_parts)
+  ''');
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -15,6 +120,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final foreignKeyViolations =
         await database.rawQuery('PRAGMA foreign_key_check');
@@ -33,7 +139,7 @@ void main() {
       FROM titles
       WHERE nodeType NOT IN ('category', 'content')
          OR (nodeType = 'category' AND EXISTS (
-           SELECT 1 FROM contents WHERE contents.titleId = titles.id
+           SELECT 1 FROM former_contents WHERE former_contents.titleId = titles.id
          ))
          OR (nodeType = 'content' AND EXISTS (
            SELECT 1 FROM titles AS children WHERE children.parentId = titles.id
@@ -54,31 +160,31 @@ void main() {
       HAVING COUNT(*) > 1
     ''');
     final wirdCounts = await database.rawQuery('''
-      SELECT COUNT(contents.id) AS count
+      SELECT COUNT(former_contents.id) AS count
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
-      WHERE titles.name LIKE 'الورد %'
+      JOIN former_contents ON former_contents.titleId = titles.id
+      WHERE titles.parentId = 191
       GROUP BY titles.id
       ORDER BY titles."order"
     ''');
     final eveningSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
-      FROM contents
+      FROM former_contents
       WHERE titleId = 2
     ''');
     final morningSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
-      FROM contents
+      FROM former_contents
       WHERE titleId = 1
     ''');
     final nightSection = await database.rawQuery('''
       SELECT
         titles.name,
-        COUNT(contents.id) AS count,
-        MIN(contents."order") AS first,
-        MAX(contents."order") AS last
+        COUNT(former_contents.id) AS count,
+        MIN(former_contents."order") AS first,
+        MAX(former_contents."order") AS last
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id = 3
       GROUP BY titles.id
     ''');
@@ -87,34 +193,34 @@ void main() {
         (SELECT COUNT(*) FROM titles WHERE id = 120) AS titles,
         (SELECT COUNT(*) FROM titles
          WHERE name IN ('ما يُقرأ في الليل', 'صلاة التسبيح')) AS named,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 120) AS contents
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 120) AS contents
     ''');
     final khalaSections = await database.rawQuery('''
-      SELECT titles."order", titles.name, COUNT(contents.id) AS count
+      SELECT titles."order", titles.name, COUNT(former_contents.id) AS count
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id IN (94, 95)
       GROUP BY titles.id
       ORDER BY titles."order"
     ''');
     final mosqueSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
-      FROM contents
+      FROM former_contents
       WHERE titleId = 8
     ''');
     final adhanListenerSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
-      FROM contents
+      FROM former_contents
       WHERE titleId = 9
     ''');
     final duaAlistiftahSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
-      FROM contents
+      FROM former_contents
       WHERE titleId = 10
     ''');
     final rukuAndRisingSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
-      FROM contents
+      FROM former_contents
       WHERE titleId = 11
     ''');
     final sujudSection = await database.rawQuery('''
@@ -123,7 +229,7 @@ void main() {
         MIN("order") AS first,
         MAX("order") AS last,
         SUM(search LIKE '%واجعل من فوقي نورا%واجعل خلفي نورا%') AS complete_light_dua
-      FROM contents
+      FROM former_contents
       WHERE titleId = 12
     ''');
     final betweenProstrationsSection = await database.rawQuery('''
@@ -134,7 +240,7 @@ void main() {
         SUM(search = '٢- اللهم اغفر لي وارحمني واجبرني وارفعني واهدني وعافني وارزقني') AS correct_between_dua,
         SUM(search LIKE '%فتبارك%') AS unprinted_tilawa_ending,
         SUM(search LIKE '٢- اللهم اكتب لي بها عندك أجرا وضع عني بها وزرا%') AS ordered_tilawa_dua
-      FROM contents
+      FROM former_contents
       WHERE titleId = 13
     ''');
     final prayerSectionOrder = await database.rawQuery('''
@@ -154,7 +260,7 @@ void main() {
         SUM(search LIKE 'اللهم إنا نستعينك%اللهم إياك نعبد%عذابك الجد بالكفار ملحق' AND search NOT LIKE '%قاتل%') AS closing_dua,
         SUM(search LIKE 'اللهم اغفر للمؤمنين والمؤمنات%واجعلنا منهم') AS third_paragraph,
         SUM(search LIKE 'ويشرع القنوت في الصلوات الخمس للنازلة%' AND count = 0) AS calamity_guidance
-      FROM contents
+      FROM former_contents
       WHERE titleId = 17
     ''');
     final tashahhudSection = await database.rawQuery('''
@@ -167,7 +273,7 @@ void main() {
         SUM("order" = 15 AND search LIKE '٧- اللهم صل على محمد وعلى آل محمد وبارك%') AS seventh_salawat,
         SUM("order" = 4 AND count = 0 AND body = 'وفي روايةٍ: «عبدُهُ ورسولُه».') AS second_tashahhud_variant,
         SUM(count = 0) AS passages
-      FROM contents
+      FROM former_contents
       WHERE titleId = 14
     ''');
     final postTashahhudSection = await database.rawQuery('''
@@ -178,7 +284,7 @@ void main() {
         SUM("order" = 13 AND search LIKE '١١- أحسن الكلام كلام الله وأحسن الهدي هدي محمد%') AS prophetic_guidance,
         SUM("order" = 15 AND search LIKE '١٢- اللهم اغفر لي ما قدمت%') AS closing_dua,
         SUM(count = 0) AS passages
-      FROM contents
+      FROM former_contents
       WHERE titleId = 15
     ''');
     final afterPrayerSection = await database.rawQuery('''
@@ -206,7 +312,7 @@ void main() {
             AND source LIKE '%حاشية: انظر (ص116).') AS earlier_pointer,
         SUM(hokm != '') AS graded,
         SUM(source LIKE '%(ص6_)%' OR source LIKE '%(ص7_)%') AS old_edition_pages
-      FROM contents
+      FROM former_contents
       WHERE titleId = 16
     ''');
     final sleepSection = await database.rawQuery('''
@@ -230,7 +336,7 @@ void main() {
         SUM("order" = 27 AND body LIKE '١٧- يقرأ سورة:%QuranText[(109:1:6)]%حتى يخْتِمَها.') AS kafirun,
         SUM(hokm != '') AS graded,
         SUM(source LIKE '%(ص7_)%' OR source LIKE '%(ص8_)%') AS old_edition_pages
-      FROM contents
+      FROM former_contents
       WHERE titleId = 18
     ''');
     final visionSection = await database.rawQuery('''
@@ -246,7 +352,7 @@ void main() {
             AND search = '٣- ويتعوذ بالله من الشيطان الرجيم ثلاثا') AS satan_refuge,
         SUM(count = 0) AS prose_rows,
         SUM(hokm != '') AS graded
-      FROM contents
+      FROM former_contents
       WHERE titleId = 30
     ''');
     final nightAwakeningSection = await database.rawQuery('''
@@ -261,7 +367,7 @@ void main() {
         SUM("order" = 4 AND body LIKE '%مَن آوَى إلى فِراشِهِ طاهِرًا%') AS pure_sleeper,
         SUM("order" = 6 AND search LIKE 'باسمك اللهم وضعت جنبي%') AS return_to_bed,
         SUM(hokm != '') AS graded
-      FROM contents
+      FROM former_contents
       WHERE titleId = 31
     ''');
     // p139 prints its own heading (index p450); p130's «من آداب النوم» is a footnote.
@@ -270,18 +376,18 @@ void main() {
         titles.name,
         titles.parentId,
         titles."order",
-        COUNT(contents.id) AS count,
-        SUM(contents."order" = 1 AND contents.search LIKE '%3190200') AS al_imran_ending,
-        SUM(contents.count = 0 AND contents.body LIKE 'وقال ﷺ: «%') AS hadiths,
+        COUNT(former_contents.id) AS count,
+        SUM(former_contents."order" = 1 AND former_contents.search LIKE '%3190200') AS al_imran_ending,
+        SUM(former_contents.count = 0 AND former_contents.body LIKE 'وقال ﷺ: «%') AS hadiths,
         (SELECT COUNT(*) FROM titles WHERE id = 125) AS sleep_etiquette_titles,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 125) AS sleep_etiquette_rows
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 125) AS sleep_etiquette_rows
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id = 170
     ''');
     final istikharaSection = await database.rawQuery('''
       SELECT COUNT(*) AS count, MIN("order") AS first, MAX("order") AS last
-      FROM contents
+      FROM former_contents
       WHERE titleId = 32
         AND search LIKE 'اللهم إني أستخيرك بعلمك%ثم رضني به'
         AND source LIKE '%ص140–141%'
@@ -292,7 +398,7 @@ void main() {
         MIN("order") AS first,
         MAX("order") AS last,
         SUM("order" = 10 AND search LIKE '%ابن أمتك في قبضتك ناصيتي بيدك%') AS complete_distress_dua
-      FROM contents
+      FROM former_contents
       WHERE titleId = 33
     ''');
     final fearSection = await database.rawQuery('''
@@ -301,7 +407,7 @@ void main() {
         MIN("order") AS first,
         MAX("order") AS last,
         SUM("order" = 1 AND search = '١- ﴿ رب نجني من ٱلۡقوۡم ٱلظلمين ﴾') AS qasas_dua
-      FROM contents
+      FROM former_contents
       WHERE titleId = 34
     ''');
     final satanSection = await database.rawQuery('''
@@ -311,22 +417,22 @@ void main() {
         MAX("order") AS last,
         SUM("order" = 4 AND count = 3) AS repeated_refuge,
         SUM("order" = 5 AND count = 3) AS repeated_curse
-      FROM contents
+      FROM former_contents
       WHERE titleId = 35
     ''');
     final situationalSections = await database.rawQuery('''
-      SELECT titles.id, titles.name, COUNT(contents.id) AS count
+      SELECT titles.id, titles.name, COUNT(former_contents.id) AS count
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id BETWEEN 36 AND 40
       GROUP BY titles.id
       ORDER BY titles.id
     ''');
     final illnessAndDeathSections = await database.rawQuery('''
-      SELECT titles.id, titles.name, COUNT(contents.id) AS count,
-             MIN(contents."order") AS first, MAX(contents."order") AS last
+      SELECT titles.id, titles.name, COUNT(former_contents.id) AS count,
+             MIN(former_contents."order") AS first, MAX(former_contents."order") AS last
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id BETWEEN 41 AND 47
       GROUP BY titles.id
       ORDER BY titles.id
@@ -340,14 +446,14 @@ void main() {
         SUM(titleId = 46 AND search = '١- اللهم اجعله لنا سلفا وفرطا وأجرا') AS child_funeral_dua,
         SUM(titleId = 47) AS misplaced_child_dua,
         SUM(titleId = 46 AND source LIKE 'ما يقول زائرُ القبور. %' AND search LIKE '%السلام%') AS grave_visit_forms
-      FROM contents
+      FROM former_contents
       WHERE titleId BETWEEN 41 AND 47
     ''');
     final fastingTravelAndPilgrimageSections = await database.rawQuery('''
-      SELECT titles.id, COUNT(contents.id) AS count,
-             MIN(contents."order") AS first, MAX(contents."order") AS last
+      SELECT titles.id, COUNT(former_contents.id) AS count,
+             MIN(former_contents."order") AS first, MAX(former_contents."order") AS last
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id BETWEEN 48 AND 60 OR titles.id = 164
       GROUP BY titles.id
       ORDER BY titles.id
@@ -374,20 +480,20 @@ void main() {
         SUM(titleId = 56 AND search = 'السلام عليك يا أبا بكر') AS visit_abu_bakr,
         SUM(titleId = 59 AND count = 1) AS baqi_forms,
         SUM(titleId = 60 AND body IN ('QuranText[(17:81:81)]', 'QuranText[(34:49:49)]')) AS misplaced_munkar_verses
-      FROM contents
+      FROM former_contents
       WHERE titleId BETWEEN 48 AND 60 OR titleId IN (136, 164)
     ''');
     final removedPilgrimageSections = await database.rawQuery('''
       SELECT
         (SELECT COUNT(*) FROM titles WHERE id IN (57, 58, 134, 135, 137, 138)) AS titles,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE titleId IN (57, 58, 134, 135, 137, 138)) AS contents
     ''');
     final foodMarriageAndMajlisSections = await database.rawQuery('''
-      SELECT titles.id, COUNT(contents.id) AS count,
-             MIN(contents."order") AS first, MAX(contents."order") AS last
+      SELECT titles.id, COUNT(former_contents.id) AS count,
+             MIN(former_contents."order") AS first, MAX(former_contents."order") AS last
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id IN (61, 62, 63, 64, 65, 68)
       GROUP BY titles.id
       ORDER BY titles.id
@@ -400,20 +506,20 @@ void main() {
         SUM(titleId = 64 AND body = '٤-' || char(10) || 'QuranText[(2:128:128)]') AS offspring_dua,
         SUM(titleId = 65 AND count = 0 AND search = 'يقرأ سورتي الفلق والناس') AS severe_weather_surahs,
         SUM(titleId = 68 AND count = 0 AND body LIKE '%﴿ وَٱلۡعَصۡرِ ١ إِنَّ ٱلۡإِنسَٰنَ لَفِي خُسۡرٍ ﴾ [سورة العصر]%') AS meeting_departure_asr
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (61, 62, 63, 64, 65, 68)
     ''');
     final foodMarriageAndMajlisJudgments = await database.rawQuery('''
       SELECT id, hokm
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (61, 62, 63, 64, 65, 68)
         AND hokm NOT IN ('', 'صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
     ''');
     final absoluteDhikrAndWirdSections = await database.rawQuery('''
-      SELECT titles.id, COUNT(contents.id) AS count,
-             MIN(contents."order") AS first, MAX(contents."order") AS last
+      SELECT titles.id, COUNT(former_contents.id) AS count,
+             MIN(former_contents."order") AS first, MAX(former_contents."order") AS last
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id IN (66, 67, 69, 70, 82,
                            83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
       GROUP BY titles.id
@@ -425,17 +531,17 @@ void main() {
         SUM(titleId = 70 AND search LIKE '%وعلى أهل بيته%') AS household_salawat,
         SUM(titleId = 92 AND "order" = 1) AS first_wird_starts_at_one,
         SUM(titleId = 91 AND "order" = 33) AS eleventh_wird_ends_at_33
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (66, 67, 69, 70, 82,
                          83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
     ''');
     final absoluteDhikrAndWirdJudgments = await database.rawQuery('''
-      SELECT contents.id, contents.hokm
-      FROM contents
-      WHERE contents.titleId IN
+      SELECT former_contents.id, former_contents.hokm
+      FROM former_contents
+      WHERE former_contents.titleId IN
             (66, 67, 69, 70, 82,
               83, 84, 86, 87, 88, 89, 90, 91, 92, 93)
-        AND contents.hokm NOT IN
+        AND former_contents.hokm NOT IN
             ('', 'صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
     ''');
     final absoluteDhikrHierarchy = await database.rawQuery('''
@@ -453,7 +559,7 @@ void main() {
       SELECT titleId, COUNT(*) AS count,
              SUM(count = 0) AS zero_count,
              MIN("order") AS first, MAX("order") AS last
-      FROM contents
+      FROM former_contents
       WHERE titleId BETWEEN 149 AND 157 OR titleId = 165
       GROUP BY titleId
       ORDER BY titleId
@@ -474,12 +580,12 @@ void main() {
         SUM(titleId = 155 AND search LIKE '%لا حول في دفع شر%') AS meaning,
         SUM(titleId = 156 AND search LIKE '%كنز من كنوز الجنة%') AS hawqala,
         SUM(titleId = 157 AND body LIKE '%كلمة استعانة%') AS notice
-      FROM contents
+      FROM former_contents
       WHERE titleId BETWEEN 149 AND 157
     ''');
     final unsupportedJudgments = await database.rawQuery('''
       SELECT id, hokm
-      FROM contents
+      FROM former_contents
       WHERE titleId BETWEEN 33 AND 60
         AND hokm NOT IN ('', 'صحيح', 'حسن', 'ضعيف', 'موضوع', 'أثر')
     ''');
@@ -488,11 +594,11 @@ void main() {
         (SELECT parentId FROM titles WHERE id = 10) AS opening_parent,
         (SELECT parentId FROM titles WHERE id = 16) AS after_prayer_parent,
         (SELECT nodeType FROM titles WHERE id = 96) AS prayer_type,
-        (SELECT nodeType FROM titles WHERE id = 97) AS inside_prayer_type,
+        (SELECT COUNT(*) FROM titles WHERE id = 97) AS inside_prayer_titles,
         (SELECT COUNT(*) FROM titles WHERE id = 98) AS introduction_titles,
-        (SELECT COUNT(*) FROM contents WHERE id = 1006) AS introduction_rows,
+        (SELECT COUNT(*) FROM former_contents WHERE id = 1006) AS introduction_rows,
         (SELECT source LIKE '%حاشية: هذا ما ورد من الأذكار في دعاء التوجُّه، فيستحب الجمع بينها كلُّها%'
-         FROM contents WHERE id = 907) AS introduction_as_footnote
+         FROM former_contents WHERE id = 907) AS introduction_as_footnote
     ''');
     final prayerPages91To115 = await database.rawQuery('''
       SELECT
@@ -514,7 +620,7 @@ void main() {
         SUM(titleId = 17 AND count = 0) AS qunut_passages,
         SUM(titleId = 14 AND count = 0) AS tashahhud_passages,
         SUM(titleId = 15 AND count = 0) AS after_tashahhud_passages
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (10, 11, 12, 13, 14, 15, 17)
     ''');
     final incidentalPages140To149 = await database.rawQuery('''
@@ -538,7 +644,7 @@ void main() {
         SUM(titleId = 37 AND source LIKE '%غليظ الأرض%') AS hazn_footnote,
         SUM(titleId = 38 AND count = 0 AND search LIKE 'يمضي فيها متوكلا%') AS tira_instruction,
         SUM(titleId = 38 AND count = 1 AND source LIKE '%أنت سبحانك%') AS tira_footnote
-      FROM contents
+      FROM former_contents
       WHERE titleId BETWEEN 32 AND 40
     ''');
     final pilgrimageGuide = await database.rawQuery('''
@@ -553,7 +659,7 @@ void main() {
         (SELECT MAX(depth) FROM ancestry WHERE id BETWEEN 50 AND 59 OR id BETWEEN 128 AND 139 OR id = 164) AS depth,
         (SELECT COUNT(*) FROM titles
          WHERE id BETWEEN 128 AND 133 AND nodeType = 'category') AS categories,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE titleId = 139 AND count = 0) AS prose_rows,
         (SELECT parentId FROM titles WHERE id = 49) AS traveler_parent,
         (SELECT parentId FROM titles WHERE id = 50) AS ihram_parent,
@@ -582,11 +688,11 @@ void main() {
     ''');
     final prayerSupplementSections = await database.rawQuery('''
       SELECT titles.id, titles.name, titles.parentId,
-             COUNT(contents.id) AS count,
-             MIN(contents."order") AS first,
-             MAX(contents."order") AS last
+             COUNT(former_contents.id) AS count,
+             MIN(former_contents."order") AS first,
+             MAX(former_contents."order") AS last
       FROM titles
-      JOIN contents ON contents.titleId = titles.id
+      JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id BETWEEN 114 AND 121
       GROUP BY titles.id
       ORDER BY titles.id
@@ -638,7 +744,7 @@ void main() {
         SUM(titleId = 121 AND "order" = 5
             AND source LIKE '%حاشية: «مجموع الفتاوى» (٢٣/ ٢١٥).') AS second_notice_footnote,
         SUM(titleId BETWEEN 115 AND 121 AND hokm != '') AS graded
-      FROM contents
+      FROM former_contents
       WHERE titleId BETWEEN 114 AND 121
     ''');
 
@@ -653,54 +759,54 @@ void main() {
         (SELECT COUNT(*) FROM titles WHERE parentId = 99) AS about_book_children,
         (SELECT COUNT(*) FROM titles WHERE parentId = 100) AS morning_evening_children,
         (SELECT COUNT(*) FROM titles WHERE parentId = 108) AS mosque_children,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE id BETWEEN 1007 AND 1013 AND count = 0) AS zero_count_prose,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE id BETWEEN 1007 AND 1013) AS prose_count,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE titleId = 102
            AND search LIKE '%فهذا مختصر%الأذكار والأدعية الصحيحة%')
           AS introduction_searchable,
         (SELECT search LIKE '%كل يوم يعيشه المؤمن غنيمة%'
-         FROM contents WHERE id = 1013) AS etiquette_searchable,
+         FROM former_contents WHERE id = 1013) AS etiquette_searchable,
         (SELECT COUNT(*) FROM titles WHERE id IN (105, 107)) AS removed_sections
     ''');
     final absoluteDuaContext = await database.rawQuery('''
       SELECT
         (SELECT nodeType FROM titles WHERE id = 158) AS root_type,
         (SELECT COUNT(*) FROM titles WHERE parentId = 158) AS child_count,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE titleId IN (159, 160, 166) AND count = 0) AS zero_count,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 159) AS introduction_count,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 160) AS virtues_count,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 166) AS times_count,
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 159) AS introduction_count,
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 160) AS virtues_count,
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 166) AS times_count,
         (SELECT name FROM titles WHERE id = 159) AS introduction_name,
         (SELECT "order" FROM titles WHERE id = 166) AS times_order,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE titleId = 159
            AND (body LIKE '%الطواف بالكعبة%' OR body LIKE '%وقفة المزدلفة%'
              OR body LIKE '%في السفر%')) AS introduction_times_left,
         (SELECT source LIKE '%حاشية: وبعض هذه الدعوات%'
-         FROM contents WHERE id = 1160) AS introduction_footnote_kept,
+         FROM former_contents WHERE id = 1160) AS introduction_footnote_kept,
         (SELECT search LIKE '%أوراد الدعاء المطلق%'
-         FROM contents WHERE id = 1160) AS introduction_wirds,
-        (SELECT COUNT(*) FROM contents
+         FROM former_contents WHERE id = 1160) AS introduction_wirds,
+        (SELECT COUNT(*) FROM former_contents
          WHERE titleId = 160 AND body LIKE '%وفي الدعاء معان%') AS meanings_left,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE titleId = 160 AND body LIKE 'وقال زكريا عليه السلام%') AS zakariyya,
         (SELECT search LIKE '%الدعاء هو العبادة%'
-         FROM contents WHERE id = 1178) AS worship_hadith,
+         FROM former_contents WHERE id = 1178) AS worship_hadith,
         (SELECT body LIKE 'وعنه رضي الله عنه%'
-         FROM contents WHERE id = 1183) AS hadith_opens_as_printed,
+         FROM former_contents WHERE id = 1183) AS hadith_opens_as_printed,
         (SELECT source LIKE '%حاشية: وذلك لأنه إما قانط%'
              AND source NOT LIKE '%فيض القدير%'
-         FROM contents WHERE id = 1184) AS anger_footnote_as_printed,
+         FROM former_contents WHERE id = 1184) AS anger_footnote_as_printed,
         (SELECT source LIKE '%وبُنَيُّ آدمَ حين يُسألُ يَغضَبُ%'
              AND source LIKE '%«وأبخل الناس» أي: أمنعهم للفضل%'
-         FROM contents WHERE id = 1185) AS weakest_people_footnotes,
+         FROM former_contents WHERE id = 1185) AS weakest_people_footnotes,
         (SELECT body LIKE '%﴿ ٱهۡدِنَا ٱلصِّرَٰطَ ٱلۡمُسۡتَقِيمَ ﴾%'
-         FROM contents WHERE titleId = 166 AND "order" = 7) AS fatiha_time,
-        (SELECT body FROM contents
+         FROM former_contents WHERE titleId = 166 AND "order" = 7) AS fatiha_time,
+        (SELECT body FROM former_contents
          WHERE titleId = 166 AND "order" = 18) AS last_time
     ''');
     final absoluteDuaWirds = await database.rawQuery('''
@@ -710,8 +816,8 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 166);
-    expect(titleCount.single, {'count': 156});
+    expect(await database.getVersion(), 167);
+    expect(titleCount.single, {'count': 295});
     expect(foreignKeyViolations, isEmpty);
     expect(
         hierarchyColumns.map((row) => row['name']), ['nodeType', 'parentId']);
@@ -719,10 +825,12 @@ void main() {
     expect(duplicateSiblingOrder, isEmpty);
     expect(duplicateRootOrder, isEmpty);
     expect(prayerPilot.single, {
-      'opening_parent': 97,
+      // #220: «أذكار الصلاة» (96) holds its index lines; the index prints no
+      // «أذكار داخل الصلاة» (97).
+      'opening_parent': 96,
       'after_prayer_parent': 96,
       'prayer_type': 'category',
-      'inside_prayer_type': 'category',
+      'inside_prayer_titles': 0,
       'introduction_titles': 0,
       'introduction_rows': 0,
       'introduction_as_footnote': 1,
@@ -767,15 +875,17 @@ void main() {
       'after_tashahhud_passages': 3,
     });
     expect(pilgrimageGuide.single, {
-      'depth': 3,
-      'categories': 6,
+      // #220: the hajj chapter (128) holds its index lines directly; the
+      // app's own groups 129-132 are gone (decision 8).
+      'depth': 2,
+      'categories': 2,
       'prose_rows': 1,
       'traveler_parent': 133,
-      'ihram_parent': 129,
-      'tawaf_parent': 130,
-      'safa_parent': 130,
-      'arafah_parent': 131,
-      'prophet_mosque_parent': 132,
+      'ihram_parent': 128,
+      'tawaf_parent': 128,
+      'safa_parent': 128,
+      'arafah_parent': 128,
+      'prophet_mosque_parent': 128,
     });
     expect(guidanceNotes.single, {
       'categories': 3,
@@ -784,36 +894,12 @@ void main() {
       'illness_parent': 123,
       'death_parent': 124,
     });
-    expect(prayerSupplementCategories, [
-      {
-        'id': 110,
-        'name': 'صلاة العيد',
-        'parentId': 96,
-        'order': 4,
-        'nodeType': 'category',
-      },
-      {
-        'id': 111,
-        'name': 'صلاة الكسوف',
-        'parentId': 96,
-        'order': 5,
-        'nodeType': 'category',
-      },
-      {
-        'id': 112,
-        'name': 'صلاة الاستسقاء',
-        'parentId': 96,
-        'order': 6,
-        'nodeType': 'category',
-      },
-      {
-        'id': 113,
-        'name': 'صلوات متفرقة',
-        'parentId': 96,
-        'order': 7,
-        'nodeType': 'category',
-      },
-    ]);
+    expect(
+      prayerSupplementCategories,
+      isEmpty,
+      reason: '#220: the eid, eclipse, rain and repentance sections are lines '
+          'of «أذكار الصلاة» as the index prints them, not groups of the app',
+    );
     expect(
       prayerSupplementSections.map((row) => row['count']),
       [9, 9, 2, 2, 3, 7, 5],
@@ -855,8 +941,8 @@ void main() {
       'evening_parent': 100,
       'mosque_parent': 108,
       'about_book_children': 3,
-      'morning_evening_children': 4,
-      'mosque_children': 5,
+      'morning_evening_children': 6,
+      'mosque_children': 6,
       'zero_count_prose': 5,
       'prose_count': 5,
       'introduction_searchable': 1,
@@ -865,12 +951,12 @@ void main() {
     });
     expect(absoluteDuaContext.single, {
       'root_type': 'category',
-      'child_count': 4,
+      'child_count': 3,
       'zero_count': 34,
       'introduction_count': 3,
       'virtues_count': 13,
       'times_count': 18,
-      'introduction_name': 'تمهيد الأدعية المطلقة',
+      'introduction_name': 'ما هي الأدعية المطلقة؟',
       'times_order': 3,
       'introduction_times_left': 0,
       'introduction_footnote_kept': 1,
@@ -906,7 +992,7 @@ void main() {
     expect(morningSection.single, {'count': 34, 'first': 1, 'last': 34});
     expect(eveningSection.single, {'count': 23, 'first': 1, 'last': 23});
     expect(nightSection.single, {
-      'name': 'ما يُقال في الليل (وأوله بعد المغرب)',
+      'name': 'ثالثًا: ما يُقالُ في الليل (وأوله بعد المغرب)',
       'count': 9,
       'first': 1,
       'last': 9,
@@ -919,11 +1005,11 @@ void main() {
     );
     expect(khalaSections, [
       {
-        'order': 4,
-        'name': 'ما يقول إذا أراد دخول الخلاء',
+        'order': 2,
+        'name': 'ما يقول إذا أرادَ دخولَ الخلاء',
         'count': 2,
       },
-      {'order': 5, 'name': 'ما يقول إذا خرج من الخلاء', 'count': 1},
+      {'order': 3, 'name': 'ما يقول إذا خرج من الخلاء', 'count': 1},
     ]);
     expect(mosqueSection.single, {'count': 2, 'first': 1, 'last': 2});
     expect(adhanListenerSection.single, {'count': 26, 'first': 1, 'last': 26});
@@ -944,13 +1030,13 @@ void main() {
 
     // Verify presence of specific formulas as requested in #19
     final ruku8thFormula = await database.rawQuery(
-      "SELECT 1 FROM contents WHERE titleId=11 AND body LIKE '%وعليك توكلت%دمي ولحمي%'",
+      "SELECT 1 FROM former_contents WHERE titleId=11 AND body LIKE '%وعليك توكلت%دمي ولحمي%'",
     );
     expect(ruku8thFormula, isNotEmpty,
         reason: 'Missing 8th independent ruku formula');
 
     final hamdAlternatives = await database.rawQuery(
-      "SELECT search FROM contents WHERE titleId=11 AND search IN "
+      "SELECT search FROM former_contents WHERE titleId=11 AND search IN "
       "('١- ربنا لك الحمد أو ربنا ولك الحمد', '٢- أو اللهم ربنا ولك الحمد')",
     );
     expect(hamdAlternatives.length, 2,
@@ -970,11 +1056,11 @@ void main() {
       'ordered_tilawa_dua': 1,
     });
     expect(prayerSectionOrder, [
-      {'id': 13, 'order': 4, 'name': 'ما يقول بين السجدتين وسجدة التلاوة'},
-      {'id': 17, 'order': 5, 'name': 'قنوت الوتر في رمضان وغيره'},
-      {'id': 14, 'order': 6, 'name': 'التشهد والصلاة على النبي بعد التشهد'},
-      {'id': 15, 'order': 7, 'name': 'الدعاء بعد التشهد الأخير'},
-      {'id': 16, 'order': 3, 'name': 'ما يقول بعد الصلاة'},
+      {'id': 13, 'order': 7, 'name': 'ما يقول بين السجدتين'},
+      {'id': 17, 'order': 9, 'name': 'قنوت الوتر في رمضان وغيره'},
+      {'id': 14, 'order': 10, 'name': 'التشهُّد في الصلاة'},
+      {'id': 15, 'order': 12, 'name': 'الدعاء بعد التَّشَهُّدِ الأخير'},
+      {'id': 16, 'order': 13, 'name': 'ما يقول بعد الصلاة'},
     ]);
     expect(qunutSection.single, {
       'count': 7,
@@ -1071,7 +1157,7 @@ void main() {
       'graded': 0,
     });
     expect(nightExitSection.single, {
-      'name': 'ما يقول إذا استيقظ في الليل، وخرج من بيته',
+      'name': 'ما يقول إذا استيقظَ في الليل، وخرج من بيته',
       'parentId': 122,
       'order': 4,
       'count': 3,
@@ -1101,22 +1187,28 @@ void main() {
       'repeated_curse': 1,
     });
     expect(situationalSections, [
-      {'id': 36, 'name': 'ما يقول إذا غلبه أمر', 'count': 1},
-      {'id': 37, 'name': 'ما يقول إذا استصعب عليه أمر', 'count': 1},
+      {'id': 36, 'name': 'ما يقول إذا غَلَبَه أمرٌ', 'count': 1},
+      {'id': 37, 'name': 'ما يقولُ إذا استصعبَ عليه أمرٌ', 'count': 1},
       {
         'id': 38,
-        'name': 'ما يقول مَن رَدَّته الطِّيَرَةُ عن حاجته',
+        'name': 'ما يقول مَنْ رَدَّتْه الطِّيَرَةُ عَنْ حاجَتِه',
         'count': 2
       },
       {
         'id': 39,
-        'name': 'ما يقول إذا أصابته نكبة قليلة أو كثيرة',
+        'name': 'ما يقول إذا أصابته نكبةٌ قليلةٌ أو كثيرة',
         'count': 1,
       },
-      {'id': 40, 'name': 'ما يقول إذا كان عليه دَين عجز عنه', 'count': 1},
+      {'id': 40, 'name': 'ما يقول إذا كان عليه دَيْنٌ عَجَزَ عنه', 'count': 1},
     ]);
     expect(illnessAndDeathSections, [
-      {'id': 41, 'name': 'أذكار المرض', 'count': 10, 'first': 1, 'last': 10},
+      {
+        'id': 41,
+        'name': 'ما يَقرَأ على الملدوغ',
+        'count': 10,
+        'first': 1,
+        'last': 10,
+      },
       {
         'id': 42,
         'name': 'ما يقوله المريض',
@@ -1126,13 +1218,19 @@ void main() {
       },
       {
         'id': 43,
-        'name': 'ما يقال عند المريض، ويُقرأ عليه',
+        'name': 'ما يُقَال عند المريض، ويُقْرَأ عليه',
         'count': 8,
         'first': 1,
         'last': 8,
       },
       {'id': 44, 'name': 'رقية المريض', 'count': 8, 'first': 1, 'last': 8},
-      {'id': 45, 'name': 'أذكار الموت', 'count': 31, 'first': 1, 'last': 31},
+      {
+        'id': 45,
+        'name': 'ما يقول إذا استشعر حُضُورَ أَجَلِه',
+        'count': 31,
+        'first': 1,
+        'last': 31,
+      },
       {
         'id': 46,
         'name': 'أذكار الصلاة على الميت',
@@ -1237,7 +1335,9 @@ void main() {
       'eleventh_wird_ends_at_33': 1,
     });
     expect(absoluteDhikrAndWirdJudgments, isEmpty);
-    expect(absoluteDhikrHierarchy.single, {'nodes': 45, 'max_depth': 2});
+    expect(absoluteDhikrHierarchy.single, {'nodes': 55, 'max_depth': 3},
+        reason: '#220: «من صِيَغ الحمد:» is a group inside «النوع السابع» '
+            '(decision 10), one level below the kinds');
     expect(
       absoluteDhikrContent,
       [
@@ -1253,13 +1353,14 @@ void main() {
       ],
     );
     expect(absoluteDhikrParents, [
+      // #220: each in its kind at the place of its index line.
       {'id': 69, 'parentId': 143, 'order': 2},
-      {'id': 70, 'parentId': 142, 'order': 3},
+      {'id': 70, 'parentId': 142, 'order': 4},
       {'id': 71, 'parentId': 144, 'order': 2},
       {'id': 72, 'parentId': 144, 'order': 3},
-      {'id': 74, 'parentId': 173, 'order': 2},
-      {'id': 75, 'parentId': 174, 'order': 2},
-      {'id': 76, 'parentId': 175, 'order': 2},
+      {'id': 74, 'parentId': 173, 'order': 1},
+      {'id': 75, 'parentId': 344, 'order': 1},
+      {'id': 76, 'parentId': 175, 'order': 3},
     ]);
     expect(absoluteDhikrSamples.single, {
       'quran': 1,
@@ -1281,19 +1382,20 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final sections = await database.rawQuery('''
       SELECT titleId, COUNT(*) AS count, SUM(count <> 0) AS counted,
              SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
              SUM(source LIKE '%(ص1__)%' OR source LIKE '%(ص1__–%') AS old_edition_pages
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (147, 148, 149, 165, 152, 161, 151, 70)
       GROUP BY titleId
       ORDER BY titleId
     ''');
     final tahlilWird = await database.rawQuery('''
       SELECT "order", count, source LIKE '%(ص28_)%' AS printed_page
-      FROM contents WHERE titleId = 69 ORDER BY "order"
+      FROM former_contents WHERE titleId = 69 ORDER BY "order"
     ''');
 
     expect(
@@ -1330,6 +1432,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final titles = await database.rawQuery('''
       SELECT id, parentId, name FROM titles
@@ -1343,14 +1446,14 @@ void main() {
              SUM(source NOT LIKE '%(ص2__)%' AND source NOT LIKE '%(ص3__)%'
                  AND source NOT LIKE '%(ص2__–___)%'
                  AND source NOT LIKE '%(ص3__–3__)%') AS without_page
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (153, 71, 72, 154, 176, 74, 177, 75, 172, 76)
       GROUP BY titleId
       ORDER BY titleId
     ''');
     Future<List<Object?>> counts(int titleId) async {
       final rows = await database.rawQuery(
-        'SELECT count FROM contents WHERE titleId = ? ORDER BY "order"',
+        'SELECT count FROM former_contents WHERE titleId = ? ORDER BY "order"',
         [titleId],
       );
       return rows.map((row) => row['count']).toList();
@@ -1358,48 +1461,48 @@ void main() {
 
     final regression = await database.rawQuery('''
       SELECT
-        (SELECT COUNT(*) FROM contents WHERE id IN (1118, 1119, 1122, 1125,
+        (SELECT COUNT(*) FROM former_contents WHERE id IN (1118, 1119, 1122, 1125,
           1126, 1127, 1128, 1129, 1130, 1131, 1133, 1134, 1135, 1136, 1137,
           1138)) AS hadiths_not_printed_here,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 153
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 153
           AND body LIKE 'وعن عائشةَ رضي الله عنها قال%') AS aisha_corrected,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 154
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 154
           AND body LIKE '%[الكهف: ٤٦]%') AS kahf_reference_corrected,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 154
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 154
           AND body LIKE '%أقرئْ%') AS aqri_corrected,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 172
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 172
           AND body LIKE '%عن إدراكِهِ%') AS idrak_corrected,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 153
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 153
           AND body LIKE '%لأتيتُكَ بقُرابِها%'
           AND source LIKE '%حاشية: قُرابُ الأرضِ: ما يقارب مَلْأَها.')
           AS qurab_footnote,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 74
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 74
           AND body = '٩- سبحان الله وبحمده، سبحان الله العظيم.'
           AND source LIKE '%حاشية: عن أبي هريرةَ%' AND source LIKE '%تنبيه:%')
           AS two_light_words_footnote,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 71
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 71
           AND body LIKE '%-' || char(10) || 'QuranText%') AS whole_verses,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 71
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 71
           AND body LIKE '%- ﴿ %﴾') AS quoted_parts,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 76 AND "order" = 1
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 76 AND "order" = 1
           AND source LIKE '%حاشية: تقدَّمت (ص١٢٣).') AS takbir_heading_footnote
     ''');
 
     expect(
         titles.map((row) => '${row['parentId']}:${row['id']}:${row['name']}'), [
-      '140:173:التسبيح',
-      '140:174:التحميد',
-      '140:175:التكبير',
-      '144:153:فضل الاستغفار',
-      '144:71:من صيغ الاستغفار في القرآن الكريم',
-      '144:72:من صيغ الاستغفار في السنة الشريفة',
-      '145:154:ورد الباقيات الصالحات',
-      '173:176:ورد التسبيح',
-      '173:74:صيغ التسبيح في القرآن والسنة',
-      '174:177:ورد التحميد',
-      '174:75:من صيغ الحمد',
-      '175:172:ورد التكبير',
+      // #220: the index's lines; «ورد التسبيح» (176) is no line of it.
+      '140:173:النوع السادس: وِرْدُ التَّسْبيح',
+      '140:174:النوع السابع: وِرْدُ التحميد',
+      '140:175:النوع الثامن: وِرْدُ التكبير',
+      '144:153:من فضائلِ الاستغفار',
+      '144:71:من صِيَغ الاستغفار في القرآن الكريم',
+      '144:72:من صِيَغ الاستغفار في السُّنَّةِ الشَّرِيفَةِ',
+      '145:154:من فضائل «الباقيات الصالحات»',
+      '173:74:صِيَغُ التَّسبيحِ في القُرآنِ والسُّنَّة',
+      '174:177:فضائل التحميد',
+      '175:172:أَمْرُ اللهِ بالتكبير والحكمة منه',
       '175:76:من صيغ التكبير',
+      '344:75:أولًا: في القرآن الكريم',
     ]);
     expect(sections.map((row) => '${row['titleId']}:${row['count']}'), [
       '71:20',
@@ -1450,12 +1553,13 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final sections = await database.rawQuery('''
       SELECT titleId, COUNT(*) AS count, SUM(count <> 0) AS counted,
              SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
              SUM(source LIKE '%(ص1__)%' OR source LIKE '%(ص1__–%') AS old_edition_pages
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (147, 148, 149, 165)
       GROUP BY titleId
       ORDER BY titleId
@@ -1465,12 +1569,12 @@ void main() {
     );
     final tahzib = await database.rawQuery('''
       SELECT name, parentId, nodeType,
-             (SELECT body FROM contents WHERE titleId = 165 AND "order" = 1) AS heading
+             (SELECT body FROM former_contents WHERE titleId = 165 AND "order" = 1) AS heading
       FROM titles WHERE id = 165
     ''');
     final inventedOrOldWording = await database.rawQuery('''
       SELECT COUNT(*) AS rows
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (147, 148, 149, 165)
         AND (search LIKE '%الأذكار المطلقة هي أذكار ثبت فضلها%'
           OR search LIKE '%إنكم لا ترجعون إلى الله بشيء أفضل%'
@@ -1483,7 +1587,7 @@ void main() {
         SUM(titleId = 147 AND source LIKE '%طاقة وَرْد في فقه الوِرْد%') AS book_footnote,
         SUM(titleId = 148 AND body LIKE '%وَرَتِّلِ%' AND body LIKE '%[المزمل: ٤]%') AS partial_verse,
         SUM(titleId = 147 AND search LIKE '%مراقبة الأوقات وعمارتها بالأوراد%') AS closing_line
-      FROM contents
+      FROM former_contents
     ''');
 
     expect(sections, [
@@ -1540,6 +1644,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     Future<List<Object?>> childIds(String parentFilter) async {
       final rows = await database.rawQuery('''
@@ -1551,14 +1656,14 @@ void main() {
     final removedSections = await database.rawQuery('''
       SELECT
         (SELECT COUNT(*) FROM titles WHERE id IN (73, 78, 79, 80)) AS titles,
-        (SELECT COUNT(*) FROM contents WHERE titleId IN (73, 78, 79, 80))
+        (SELECT COUNT(*) FROM former_contents WHERE titleId IN (73, 78, 79, 80))
           AS contents
     ''');
     final editorialSuffixes = await database.rawQuery('''
       SELECT id FROM titles WHERE name LIKE '%تنظيمي%'
     ''');
     final salawatIntroduction = await database.rawQuery('''
-      SELECT id FROM contents WHERE titleId = 161 ORDER BY "order"
+      SELECT id FROM former_contents WHERE titleId = 161 ORDER BY "order"
     ''');
     final salawatIntroductionText = await database.rawQuery('''
       SELECT
@@ -1568,14 +1673,14 @@ void main() {
         SUM(body LIKE 'وقال ابن قيم الجوزية%') AS ibn_qayyim_long,
         SUM(body LIKE 'وقال ابن القيم%') AS ibn_qayyim,
         SUM(count = 0 AND hokm = '') AS prose
-      FROM contents
+      FROM former_contents
       WHERE titleId = 161
     ''');
     final paraphrasedSummaries = await database.rawQuery('''
-      SELECT id FROM contents WHERE body LIKE '%وقد ذكر الكتاب%'
+      SELECT id FROM former_contents WHERE body LIKE '%وقد ذكر الكتاب%'
     ''');
     final salawatVirtuesOpening = await database.rawQuery('''
-      SELECT id FROM contents WHERE titleId = 151 AND "order" = 1
+      SELECT id FROM former_contents WHERE titleId = 151 AND "order" = 1
     ''');
 
     expect(removedSections.single, {'titles': 0, 'contents': 0});
@@ -1583,25 +1688,28 @@ void main() {
     expect(
       await childIds('parentId IS NULL'),
       [
-        99, 100, 4, 94, 95, 5, 6, 7, 108, 9, 114, 96, 122, 162, 123, 124, //
-        48, 128, 133, 60, 61, 62, 63, 64, 65, 163, 140, 158,
+        99, 100, 332, 333, 334, 335, 108, 336, 96, 122, 162, 123, 124, //
+        337, 133, 128, 338, 339, 340, 341, 163, 147, 192, 193, 194, 195, //
+        196, 140, 158, 191,
       ],
-      reason: 'root order follows the book index (pp. 228-239)',
+      reason: 'root order follows the book index (pp446-464, #220)',
     );
-    expect(await childIds('parentId = 113'), [121]);
-    expect(await childIds('parentId = 100'), [1, 2, 3, 106],
+    expect((await childIds('parentId = 96')).last, 121,
+        reason: 'p127 prints «صلاة التوبة» last in «أذكار الصلاة» (p449)');
+    expect(await childIds('parentId = 100'), [197, 198, 1, 2, 3, 106],
         reason: 'p50 prints «ثالثًا: ما يُقال في الليل» in the morning and '
             'evening chapter, before its etiquette (index p446)');
     expect(
       await childIds('parentId = 162'),
       [32, 33, 34, 35, 36, 37, 38, 39, 40],
     );
-    expect(await childIds('parentId = 163'), [66, 67, 68],
+    expect(await childIds('parentId = 163'), [342, 343]);
+    expect((await childIds('parentId = 343')).skip(30), [330, 68, 331],
         reason: "pp242-244 print the gathering's dhikr inside «الأذكار "
             'المتفرقة», before «القسم الثاني» (p245)');
-    expect(await childIds('parentId = 142'), [161, 151, 70]);
+    expect(await childIds('parentId = 142'), [151, 280, 281, 70]);
     expect(await childIds('parentId = 140'),
-        [147, 141, 143, 142, 144, 145, 173, 174, 175, 146, 180, 183, 186, 189],
+        [141, 143, 142, 144, 145, 173, 174, 175, 146, 180, 183, 186, 189],
         reason: 'p281 prints tahlil (النوع الثاني) before p287 prints the '
             'prayers on the Prophet (النوع الثالث), pp294-338 print '
             'istighfar, al-baqiyat, tasbih, tahmid and takbir as the fourth '
@@ -1631,18 +1739,18 @@ void main() {
             'before it are in 161');
 
     final footnotesAsVirtues = await database.rawQuery('''
-      SELECT id FROM contents WHERE id > 1006 AND TRIM(fadl) <> ''
+      SELECT id FROM former_contents WHERE id > 1006 AND TRIM(fadl) <> ''
     ''');
     final editorialNotes = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE body || source || fadl LIKE '%نقل المؤلف%'
          OR body || source || fadl LIKE '%نقل الكتاب%'
          OR body || source || fadl LIKE '%ذكر الكتاب%'
     ''');
     final ubayyComment = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE titleId = 151
-        AND "order" = (SELECT "order" + 1 FROM contents WHERE id = 1496)
+        AND "order" = (SELECT "order" + 1 FROM former_contents WHERE id = 1496)
     ''');
 
     expect(footnotesAsVirtues, isEmpty,
@@ -1651,7 +1759,7 @@ void main() {
     expect(ubayyComment.single, {'id': 1497});
 
     final virtueRecords = await database.rawQuery('''
-      SELECT id FROM contents WHERE TRIM(fadl) <> '' ORDER BY id
+      SELECT id FROM former_contents WHERE TRIM(fadl) <> '' ORDER BY id
     ''');
     expect(
       virtueRecords.map((row) => row['id']),
@@ -1663,25 +1771,25 @@ void main() {
     );
 
     final alternatives = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE id IN (21, 49) AND count = 100 AND body LIKE '%' || char(10) || 'أو: %'
     ''');
     final separateAlternatives = await database.rawQuery('''
-      SELECT id FROM contents WHERE id IN (22, 50)
+      SELECT id FROM former_contents WHERE id IN (22, 50)
     ''');
     final tawbah129 = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE id IN (18, 46, 414) AND body LIKE '%﴿ حَسۡبِيَ%' AND body NOT LIKE '%QuranText%'
     ''');
     final appLabels = await database.rawQuery('''
-      SELECT COUNT(*) AS count FROM contents WHERE hokm = 'قرآني'
+      SELECT COUNT(*) AS count FROM former_contents WHERE hokm = 'قرآني'
     ''');
     final morningClosing = await database.rawQuery('''
-      SELECT id, count FROM contents
+      SELECT id, count FROM former_contents
       WHERE titleId = 1 AND "order" IN (32, 33, 34) ORDER BY "order"
     ''');
     final morningNote = await database.rawQuery('''
-      SELECT body FROM contents WHERE id = 1194
+      SELECT body FROM former_contents WHERE id = 1194
     ''');
     expect(alternatives.length, 2,
         reason: '«أو:» is one choice in one card, counted a hundred times '
@@ -1694,7 +1802,7 @@ void main() {
         reason: '«قرآني» is not a grading the book gives');
 
     final quotedVerses = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE id IN (222, 227, 236, 253, 254, 273, 304, 305, 306, 327, 328, 337, 355, 356,
                    398, 399, 412, 413, 415, 416, 417, 419, 420, 421, 422, 423,
                    425, 426, 427, 428, 429, 430, 431, 432, 454, 468, 607, 608,
@@ -1704,16 +1812,16 @@ void main() {
         AND body LIKE '%﴿ %﴾%' AND body NOT LIKE '%QuranText%'
     ''');
     final supplicationsInTheBooksWords = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE id IN (251, 260) AND body NOT LIKE '%QuranText%'
         AND body NOT LIKE '%﴿%'
     ''');
     final fatihaVerses = await database.rawQuery('''
-      SELECT id FROM contents WHERE id = 1037
+      SELECT id FROM former_contents WHERE id = 1037
         AND body LIKE '١-' || char(10) || 'QuranText[(1:2:4)]%'
     ''');
     final ridingVerseOnce = await database.rawQuery('''
-      SELECT id FROM contents WHERE id = 872 AND body LIKE '%QuranText%'
+      SELECT id FROM former_contents WHERE id = 872 AND body LIKE '%QuranText%'
     ''');
     expect(quotedVerses.length, 71,
         reason: 'the book quotes these verses in part; the app shows the same '
@@ -1743,10 +1851,10 @@ void main() {
     final distressFootnotes = await database.rawQuery('''
       SELECT (LENGTH(source) - LENGTH(REPLACE(source, 'حاشية:', ''))) / 6
         AS notes
-      FROM contents WHERE id = 225
+      FROM former_contents WHERE id = 225
     ''');
     final recordsWithFootnotes = await database.rawQuery('''
-      SELECT COUNT(*) AS count FROM contents WHERE source LIKE '%حاشية:%'
+      SELECT COUNT(*) AS count FROM former_contents WHERE source LIKE '%حاشية:%'
     ''');
     expect(distressFootnotes.single, {'notes': 4},
         reason: 'p. 90 footnotes on «جهد البلاء» (#87)');
@@ -1767,10 +1875,11 @@ void main() {
         options: OpenDatabaseOptions(readOnly: true),
       );
       addTearDown(database.close);
+      await _createFormerContents(database);
 
       Future<Map<String, Object?>> row(int id) async =>
           (await database.rawQuery(
-            'SELECT body, count, source, hokm, fadl FROM contents WHERE id = ?',
+            'SELECT body, count, source, hokm, fadl FROM former_contents WHERE id = ?',
             [id],
           ))
               .single;
@@ -1780,16 +1889,16 @@ void main() {
              SUM(hokm <> '') AS gradings,
              SUM(source NOT GLOB '*(ص1[5-7][0-9])*'
                  AND source NOT GLOB '*(ص1[5-7][0-9]–1[5-7][0-9])*') AS other_pages
-      FROM contents WHERE titleId BETWEEN 41 AND 46
+      FROM former_contents WHERE titleId BETWEEN 41 AND 46
       GROUP BY titleId ORDER BY titleId
     ''');
       final removed = await database.rawQuery('''
       SELECT (SELECT COUNT(*) FROM titles WHERE id IN (47, 126, 127)) AS titles,
-             (SELECT COUNT(*) FROM contents
+             (SELECT COUNT(*) FROM former_contents
               WHERE id IN (285, 1047, 1048) OR titleId IN (47, 126, 127)) AS rows
     ''');
       final fatihaPrinted = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE titleId BETWEEN 41 AND 46 AND body LIKE '%QuranText%'
     ''');
 
@@ -1878,6 +1987,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final sections = await database.rawQuery('''
       SELECT titleId AS id, COUNT(*) AS rows,
@@ -1885,32 +1995,32 @@ void main() {
              SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
              SUM(source LIKE '%(ص13%' OR source LIKE '%(ص14%'
                  OR source LIKE '%(ص15%') AS earlier_edition_pages
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (139, 49, 60, 61, 62, 63, 64, 65)
       GROUP BY titleId ORDER BY titleId
     ''');
     final regression = await database.rawQuery('''
       SELECT
-        (SELECT COUNT(*) FROM contents WHERE id = 880) AS ibn_masud_footnote_as_dhikr,
-        (SELECT COUNT(*) FROM contents WHERE id = 397
+        (SELECT COUNT(*) FROM former_contents WHERE id = 880) AS ibn_masud_footnote_as_dhikr,
+        (SELECT COUNT(*) FROM former_contents WHERE id = 397
            AND source LIKE '%حاشية: وعن ابن مسعود%') AS ibn_masud_in_footnote,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 65
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 65
            AND body LIKE 'QuranText%') AS unprinted_surahs,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 60
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 60
            AND body IN ('QuranText[(17:81:81)]', 'QuranText[(34:49:49)]')) AS munkar_verses,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 49
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 49
            AND source LIKE '%أبو داود%') AS unprinted_takhrij,
-        (SELECT COUNT(*) FROM contents WHERE id = 309
+        (SELECT COUNT(*) FROM former_contents WHERE id = 309
            AND source LIKE '%حاشية: هذه الأذكار في هذا الموضع%') AS compiled_note_on_fifth,
-        (SELECT COUNT(*) FROM contents WHERE id = 308
+        (SELECT COUNT(*) FROM former_contents WHERE id = 308
            AND source LIKE '%حاشية: هذه الأذكار في هذا الموضع%') AS compiled_note_on_fourth,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 49
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 49
            AND body LIKE 'اللهُ أكبرُ، اللهُ أكبرُ، لا إله إل% اللهُ وحدَه%') AS two_takbirs_on_return,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 61
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 61
            AND body LIKE '%ولا مُسْتَغْنًى عنه رَبُّنا' AND source LIKE '%[الضحى: ٣]%') AS khattabi_footnote,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 62
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 62
            AND body LIKE 'أو: %') AS sneeze_alternatives,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 63
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 63
            AND source LIKE 'ما يُقال عند إرادة الجماع%') AS intercourse_heading
     ''');
 
@@ -1996,6 +2106,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final sections = await database.rawQuery('''
       SELECT titleId AS id, COUNT(*) AS rows,
@@ -2004,49 +2115,49 @@ void main() {
              SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
              SUM(source NOT LIKE '%(ص2__)%' AND source NOT LIKE '%(ص2__–2__)%')
                AS without_tenth_edition_page
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (66, 67, 68)
       GROUP BY titleId ORDER BY titleId
     ''');
     final regression = await database.rawQuery('''
       SELECT
-        (SELECT COUNT(*) FROM contents WHERE id = 413
+        (SELECT COUNT(*) FROM former_contents WHERE id = 413
            AND source LIKE 'ما يقول من دُعِيَ إلى حكم الله ورسوله. [النور: ٥١].%')
           AS called_to_judgement_heading,
-        (SELECT COUNT(*) FROM contents WHERE id = 429
+        (SELECT COUNT(*) FROM former_contents WHERE id = 429
            AND source LIKE '%حاشية: حِفظًا أو حافظًا%') AS hifz_footnote,
-        (SELECT COUNT(*) FROM contents WHERE id = 434
+        (SELECT COUNT(*) FROM former_contents WHERE id = 434
            AND search = 'وأنا والله يا فلان أحبك في الله') AS named_brother,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 67
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 67
            AND search IN ('أو أهلكتم -أو قطعتم- ظهر الرجل',
                           'أو عقرت الرجل عقرك الله', 'أو المدح ذبح'))
           AS praise_alternatives,
-        (SELECT COUNT(*) FROM contents WHERE id = 447
+        (SELECT COUNT(*) FROM former_contents WHERE id = 447
            AND body = '﴿ سُبۡحَانَ رَبِّي ﴾') AS wonder_verse,
-        (SELECT COUNT(*) FROM contents WHERE id = 457
+        (SELECT COUNT(*) FROM former_contents WHERE id = 457
            AND search = '٤- رضينا بالله ربا وبالإسلام دينا وبمحمد رسولا نعوذ بالله من سوء الفتن')
           AS ridina_as_printed,
-        (SELECT COUNT(*) FROM contents WHERE id = 454
+        (SELECT COUNT(*) FROM former_contents WHERE id = 454
            AND search LIKE '%اهدني لما اختلف فيه من الحق بإذنك%') AS fitna_dua_whole,
-        (SELECT COUNT(*) FROM contents WHERE id = 458
+        (SELECT COUNT(*) FROM former_contents WHERE id = 458
            AND source LIKE '%[موقوف عن ابن عمر رضي الله عنهما – ضعيف]%') AS mawquf_in_source,
-        (SELECT COUNT(*) FROM contents WHERE id = 463
+        (SELECT COUNT(*) FROM former_contents WHERE id = 463
            AND search LIKE '%على كثير من خلقه تفضيلا') AS min_khalqihi,
-        (SELECT COUNT(*) FROM contents WHERE titleId = 67
+        (SELECT COUNT(*) FROM former_contents WHERE titleId = 67
            AND body LIKE '٢- أعوذُ باللهِ السميعِ العليمِ من الشيطانِ الرجيمِ%QuranText[(113:1:5),(114:1:6)]')
           AS evil_eye_muawwidhatayn,
-        (SELECT count FROM contents WHERE id = 474) AS shirk_dua_count,
-        (SELECT COUNT(*) FROM contents WHERE id = 477 AND count = 100
+        (SELECT count FROM former_contents WHERE id = 474) AS shirk_dua_count,
+        (SELECT COUNT(*) FROM former_contents WHERE id = 477 AND count = 100
            AND source LIKE '%حاشية: وفي رواية: «الرحيم» مكان «الغفور».')
           AS hundred_istighfar,
         (SELECT COUNT(*) FROM titles WHERE id = 103) AS unprinted_conclusion
     ''');
     final loveOrder = await database.rawQuery('''
-      SELECT id FROM contents WHERE titleId = 67 AND "order" <= 4 ORDER BY "order"
+      SELECT id FROM former_contents WHERE titleId = 67 AND "order" <= 4 ORDER BY "order"
     ''');
     final afterWish = await database.rawQuery('''
-      SELECT MAX("order") - (SELECT "order" FROM contents WHERE id = 475) AS rows
-      FROM contents WHERE titleId = 67
+      SELECT MAX("order") - (SELECT "order" FROM former_contents WHERE id = 475) AS rows
+      FROM former_contents WHERE titleId = 67
     ''');
 
     expect(sections, [
@@ -2105,13 +2216,14 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final styled = await database.rawQuery('''
-      SELECT id, titleId, "order", count, body, source FROM contents
+      SELECT id, titleId, "order", count, body, source FROM former_contents
       WHERE style <> '' ORDER BY titleId DESC
     ''');
     final lastOrder = await database.rawQuery('''
-      SELECT titleId, MAX("order") AS last FROM contents
+      SELECT titleId, MAX("order") AS last FROM former_contents
       WHERE titleId IN (102, 171) GROUP BY titleId ORDER BY titleId DESC
     ''');
 
@@ -2147,9 +2259,10 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     Future<List<Map<String, Object?>>> rows(int titleId) => database.rawQuery(
-          'SELECT id, body, count, source, hokm, fadl FROM contents '
+          'SELECT id, body, count, source, hokm, fadl FROM former_contents '
           'WHERE titleId = ? ORDER BY "order"',
           [titleId],
         );
@@ -2163,7 +2276,7 @@ void main() {
       SELECT id, "order", name FROM titles WHERE parentId = 99 ORDER BY "order"
     ''');
     final conclusion = await database.rawQuery('''
-      SELECT id FROM contents WHERE body LIKE '%وهذا آخر ما تيسر جمعه%'
+      SELECT id FROM former_contents WHERE body LIKE '%وهذا آخر ما تيسر جمعه%'
     ''');
     final thisEdition = await rows(171);
     final previous = await rows(102);
@@ -2279,9 +2392,10 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     Future<Map<String, Object?>> row(int id) async => (await database.rawQuery(
-          'SELECT body, count, source, hokm FROM contents WHERE id = ?',
+          'SELECT body, count, source, hokm FROM former_contents WHERE id = ?',
           [id],
         ))
             .single;
@@ -2290,25 +2404,25 @@ void main() {
       SELECT id FROM titles WHERE id IN (105, 107)
     ''');
     final foreignToEvening = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE titleId = 2
         AND (search LIKE 'أمسينا على فطرة%' OR search LIKE 'رضيت بالله%'
              OR search LIKE 'بسم الله الذي%' OR search LIKE 'باسم الله الذي%')
     ''');
     final prayerOnTheProphet = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE titleId IN (1, 2) AND search LIKE '%صل على محمد وعلى آل محمد%'
     ''');
     final adab = await database.rawQuery('''
-      SELECT id, count, hokm, substr(body, 1, 6) AS start FROM contents
+      SELECT id, count, hokm, substr(body, 1, 6) AS start FROM former_contents
       WHERE titleId = 106 ORDER BY "order"
     ''');
     final morningIntro = await database.rawQuery('''
-      SELECT body FROM contents WHERE titleId = 1 AND "order" <= 3
+      SELECT body FROM former_contents WHERE titleId = 1 AND "order" <= 3
       ORDER BY "order"
     ''');
     final night = await database.rawQuery('''
-      SELECT id, count FROM contents WHERE titleId = 3 ORDER BY "order"
+      SELECT id, count FROM former_contents WHERE titleId = 3 ORDER BY "order"
     ''');
 
     expect(removedTitles, isEmpty,
@@ -2387,6 +2501,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final sections = await database.rawQuery('''
       SELECT titleId, group_concat(count, '') AS counts,
@@ -2395,7 +2510,7 @@ void main() {
              SUM((length(source) - length(replace(source, 'حاشية:', ''))) / 6)
                AS footnotes,
              SUM(body LIKE '%حاشية%') AS footnotes_in_body
-      FROM (SELECT * FROM contents ORDER BY titleId, "order")
+      FROM (SELECT * FROM former_contents ORDER BY titleId, "order")
       WHERE titleId IN (155, 156, 157, 178, 179, 181, 182, 184, 185,
                         187, 188, 190)
       GROUP BY titleId
@@ -2437,17 +2552,17 @@ void main() {
           'SELECT id, name FROM titles WHERE id IN (146, 155, 156, 157, 77)'
           ' ORDER BY id'),
       [
-        {'id': 146, 'name': 'الحولقة'},
+        {'id': 146, 'name': 'النوع التاسع: وِرْدُ الحَوْلَقة'},
         {'id': 155, 'name': 'معنى الحولقة'},
-        {'id': 156, 'name': 'فضائل الحولقة'},
-        {'id': 157, 'name': 'تنبيهان'},
+        {'id': 156, 'name': 'فضائل الحولَقَة'},
       ],
       reason: 'pp339-343 spell «الحولقة», and print no separate hawqala '
-          'dhikr for the old section 77',
+          'dhikr for the old section 77; «تنبيهان» (157) is no line of the '
+          'index (p462), so its rows end «فضائل الحولقة» (#220)',
     );
     expect(
       await value('''
-        SELECT COUNT(*) FROM contents
+        SELECT COUNT(*) FROM former_contents
         WHERE titleId IN (155, 156, 157)
           AND (search LIKE '%يا عبد الله بن قيس%'
             OR search LIKE '%أكثروا من غرس الجنة%'
@@ -2461,7 +2576,7 @@ void main() {
       await value('''
         SELECT source LIKE '%والتمتع به فيما يلائمه%'
                AND source NOT LIKE '%حاشية: وقال ابن حجر%'
-        FROM contents WHERE id = 1149
+        FROM former_contents WHERE id = 1149
       '''),
       1,
       reason: 'p341 prints al-Nawawi and Ibn Hajar as one footnote; its '
@@ -2469,19 +2584,19 @@ void main() {
     );
     expect(
       await value(
-          'SELECT search FROM contents WHERE titleId = 185 AND "order" = 2'),
+          'SELECT search FROM former_contents WHERE titleId = 185 AND "order" = 2'),
       '١- ﴿ حسۡبنا ٱلله ونعۡم ٱلۡوكيل ﴾',
       reason: 'p357 quotes only the end of Al Imran 173',
     );
     expect(
       await value(
-          'SELECT body FROM contents WHERE titleId = 188 AND "order" = 5'),
+          'SELECT body FROM former_contents WHERE titleId = 188 AND "order" = 5'),
       '٢-\nQuranText[(14:41:41)]',
       reason: 'p361 quotes Ibrahim 41 whole',
     );
     expect(
       await value('''
-        SELECT COUNT(*) FROM contents
+        SELECT COUNT(*) FROM former_contents
         WHERE (titleId BETWEEN 155 AND 157 OR titleId BETWEEN 178 AND 190)
           AND body LIKE '%وَآلِهِ%'
       '''),
@@ -2498,12 +2613,13 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     Future<List<Object?>> column(String sql) async =>
         (await database.rawQuery(sql)).map((row) => row.values.single).toList();
     Future<Map<String, Object?>> row(int id) async => (await database.rawQuery(
           'SELECT titleId, body, count, source, hokm, fadl '
-          'FROM contents WHERE id = ?',
+          'FROM former_contents WHERE id = ?',
           [id],
         ))
             .single;
@@ -2516,10 +2632,11 @@ void main() {
       await column(
           'SELECT name FROM titles WHERE parentId = 108 ORDER BY "order"'),
       [
-        'ما يقول إذا توجَّه إلى المسجد',
-        'ما يقول عند دخول المسجد',
+        'ما يقول إذا تَوَجَّهَ إلى المسجد',
+        'ما يقولُ عندَ دخولِ المسجد',
         'ما يقول في المسجد',
-        'ما يقول إذا سمع من ينشد ضالة في المسجد',
+        'ما يقول إذا سَمِعَ من يَنْشُدُ ضالَّةً في المسجد',
+        'ما يقول إذا رأى من يبيع أو يبتاع في المسجد',
         'ما يقول عند الخروج من المسجد',
       ],
       reason: 'p77 prints «ما يقول في المسجد» between entering the mosque '
@@ -2530,12 +2647,12 @@ void main() {
       OR titleId IN (9, 114)
     ''';
     expect(
-      await column('SELECT COUNT(*) FROM contents WHERE $chapterRows'),
+      await column('SELECT COUNT(*) FROM former_contents WHERE $chapterRows'),
       [54],
     );
     expect(
       await column('''
-        SELECT COUNT(*) FROM contents
+        SELECT COUNT(*) FROM former_contents
         WHERE ($chapterRows)
           AND (hokm != '' OR fadl != ''
                OR source NOT GLOB '*(ص[0-9]*)*'
@@ -2559,7 +2676,7 @@ void main() {
     expect((await row(894))['body'], startsWith('١- باسم الله،'));
     expect(
       await column(
-          'SELECT body FROM contents WHERE id IN (79, 896, 897) ORDER BY id'),
+          'SELECT body FROM former_contents WHERE id IN (79, 896, 897) ORDER BY id'),
       everyElement(startsWith('أو: ')),
     );
     expect((await row(81))['body'], startsWith('٢- أو: '),
@@ -2570,12 +2687,13 @@ void main() {
           'و«الأدعية المطلقة» (ص٣٨١)، وما بعدها.'),
     );
     expect(
-      await column('SELECT "order" FROM contents WHERE id IN (1531, 892) '
+      await column(
+          'SELECT "order" FROM former_contents WHERE id IN (1531, 892) '
           'ORDER BY id'),
       [7, 6],
     );
     expect(
-      await column('SELECT count FROM contents WHERE titleId = 9 '
+      await column('SELECT count FROM former_contents WHERE titleId = 9 '
           'ORDER BY "order"'),
       [
         0,
@@ -2641,6 +2759,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     final heading = await database.rawQuery('''
       SELECT nodeType, parentId, "order",
@@ -2648,17 +2767,23 @@ void main() {
                (SELECT id FROM titles WHERE parentId = heading.id
                 ORDER BY "order")) AS wirds
       FROM titles AS heading
-      WHERE name = 'جامع أدعية القرآن المجيد والسنة الصحيحة (الأدعية المطلقة)'
+      WHERE name = 'جامعُ أدعيةِ القرآنِ المجيدِ والسُّنَّةِ الصحيحة (الأدعية المُطلقة)'
     ''');
     final perWird = await database.rawQuery('''
-      SELECT SUM(contents.count > 0) AS said,
-             SUM(contents.count = 0) AS prose,
-             SUM(contents.hokm <> '' OR contents.fadl <> '') AS judged,
-             SUM(contents.source NOT LIKE titles.name || '. %') AS other_heading,
-             SUM(contents.source NOT LIKE '%(ص38%'
-                 AND contents.source NOT LIKE '%(ص39%'
-                 AND contents.source NOT LIKE '%(ص4%') AS other_pages
-      FROM titles JOIN contents ON contents.titleId = titles.id
+      SELECT SUM(former_contents.count > 0) AS said,
+             SUM(former_contents.count = 0) AS prose,
+             SUM(former_contents.hokm <> '' OR former_contents.fadl <> '') AS judged,
+             SUM(former_contents.source NOT LIKE (CASE titles.id
+               WHEN 92 THEN 'الورد الأول' WHEN 82 THEN 'الورد الثاني'
+               WHEN 83 THEN 'الورد الثالث' WHEN 84 THEN 'الورد الرابع'
+               WHEN 93 THEN 'الورد الخامس' WHEN 86 THEN 'الورد السادس'
+               WHEN 87 THEN 'الورد السابع' WHEN 88 THEN 'الورد الثامن'
+               WHEN 89 THEN 'الورد التاسع' WHEN 90 THEN 'الورد العاشر'
+               WHEN 91 THEN 'الورد الحادي عشر' END) || '. %') AS other_heading,
+             SUM(former_contents.source NOT LIKE '%(ص38%'
+                 AND former_contents.source NOT LIKE '%(ص39%'
+                 AND former_contents.source NOT LIKE '%(ص4%') AS other_pages
+      FROM titles JOIN former_contents ON former_contents.titleId = titles.id
       WHERE titles.id IN (92, 82, 83, 84, 93, 86, 87, 88, 89, 90, 91)
       GROUP BY titles.id
       ORDER BY titles."order"
@@ -2666,24 +2791,24 @@ void main() {
     final cases = await database.rawQuery('''
       SELECT
         (SELECT search LIKE '١- ﴿ رب أعوذ بك من% همزت ٱلشيطين ٩٧ وأعوذ بك رب أن %'
-         FROM contents WHERE titleId = 92 AND "order" = 1) AS first_dua,
+         FROM former_contents WHERE titleId = 92 AND "order" = 1) AS first_dua,
         (SELECT source LIKE '%حاشية: بدأنا بالاستعاذة%'
-         FROM contents WHERE titleId = 92 AND "order" = 2) AS isti_adha_footnote,
-        (SELECT body FROM contents
+         FROM former_contents WHERE titleId = 92 AND "order" = 2) AS isti_adha_footnote,
+        (SELECT body FROM former_contents
          WHERE titleId = 92 AND "order" = 3) AS fatiha,
-        (SELECT source FROM contents
+        (SELECT source FROM former_contents
          WHERE titleId = 92 AND "order" = 19) AS mawquf_source,
-        (SELECT COUNT(*) FROM contents
+        (SELECT COUNT(*) FROM former_contents
          WHERE (titleId = 83 AND "order" = 6 OR titleId = 91 AND "order" = 14)
            AND (search LIKE '٤٩- اللهم إني أسألك بأني أشهد%'
              OR search LIKE '٢٢٣- اللهم إني أسألك بأني أشهد%')) AS nos_49_and_223,
         (SELECT body LIKE '%واجعلني من عبادِكَ المخلَصين.'
-         FROM contents WHERE titleId = 93 AND "order" = 16) AS typo_corrected,
-        (SELECT group_concat(count) FROM contents
+         FROM former_contents WHERE titleId = 93 AND "order" = 16) AS typo_corrected,
+        (SELECT group_concat(count) FROM former_contents
          WHERE titleId = 91 AND "order" IN (28, 29)) AS no_237,
         (SELECT body LIKE 'تمَّ الكِتابُ%' AND count = 0
-         FROM contents WHERE titleId = 91 AND "order" = 33) AS closing,
-        (SELECT COUNT(*) FROM contents
+         FROM former_contents WHERE titleId = 91 AND "order" = 33) AS closing,
+        (SELECT COUNT(*) FROM former_contents
          WHERE titleId IN (92, 82, 83, 84, 93, 86, 87, 88, 89, 90, 91)
            AND (search LIKE '%أفرغ علينا صبرا%'
              OR search LIKE '%ألهمني رشدي%'
@@ -2691,9 +2816,10 @@ void main() {
     ''');
 
     expect(heading.single, {
+      // #220: a chapter of its own at the end, as p464 prints it.
       'nodeType': 'category',
-      'parentId': 158,
-      'order': 4,
+      'parentId': null,
+      'order': 30,
       'wirds': '92,82,83,84,93,86,87,88,89,90,91',
     });
     expect(
@@ -2733,6 +2859,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
     final errata = File('../docs/book-errata.md').readAsStringSync();
     String arabicDigits(int n) => n
         .toString()
@@ -2786,14 +2913,15 @@ void main() {
       (id: 804, page: 437, misprint: 'وانْصُرُنِي', correct: 'وانْصُرْنِي'),
     ];
     expect(
-      (await database.rawQuery('SELECT body FROM contents WHERE id = 1645'))
+      (await database
+              .rawQuery('SELECT body FROM former_contents WHERE id = 1645'))
           .single['body'],
       'وإذا رأى ما يكره',
       reason: 'p135 prints no colon after this line',
     );
     for (final c in corrections) {
       final text = (await database.rawQuery(
-        "SELECT body || '\n' || source AS text FROM contents WHERE id = ?",
+        "SELECT body || '\n' || source AS text FROM former_contents WHERE id = ?",
         [c.id],
       ))
           .single['text']! as String;
@@ -2829,9 +2957,10 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     Future<Map<String, Object?>> row(int id) async => (await database.rawQuery(
-          'SELECT titleId, "order", body, count, source FROM contents '
+          'SELECT titleId, "order", body, count, source FROM former_contents '
           'WHERE id = ?',
           [id],
         ))
@@ -2842,12 +2971,12 @@ void main() {
              SUM(hokm <> '' OR fadl <> '') AS judgments_or_virtues,
              SUM(source NOT LIKE '%. (ص6_)%' AND source NOT LIKE '%. (ص7_)%'
                  AND source NOT LIKE '%. (ص69–70)%') AS unpaged
-      FROM contents
+      FROM former_contents
       WHERE titleId IN (4, 94, 95, 5, 6, 7)
       GROUP BY titleId ORDER BY titleId
     ''');
     final unprinted = await database.rawQuery('''
-      SELECT id FROM contents
+      SELECT id FROM former_contents
       WHERE titleId IN (4, 94, 95, 5, 6, 7)
         AND (source LIKE '%رضي الله عنه%' OR source LIKE '%البخاري%'
              OR source LIKE '%الترمذي%' OR source LIKE '%النور%'
@@ -2855,7 +2984,8 @@ void main() {
              OR source LIKE '%ص 34%' OR body LIKE 'بسم الله%')
     ''');
     final houseTitle = await database.rawQuery(
-      'SELECT name FROM titles WHERE id = 7',
+      'SELECT name FROM titles '
+      'WHERE id = (SELECT parentId FROM titles WHERE id = 7)',
     );
 
     expect(sections, [
@@ -2952,9 +3082,10 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true),
     );
     addTearDown(database.close);
+    await _createFormerContents(database);
 
     Future<Map<String, Object?>> row(int id) async => (await database.rawQuery(
-          'SELECT body, count, source FROM contents WHERE id = ?',
+          'SELECT body, count, source FROM former_contents WHERE id = ?',
           [id],
         ))
             .single;
@@ -2991,7 +3122,7 @@ void main() {
     );
     expect(
       await database.rawQuery('''
-        SELECT id FROM contents
+        SELECT id FROM former_contents
         WHERE titleId = 10 AND count = 10 AND id <> 914
           AND (body NOT LIKE '% [عشرًا]' OR body GLOB '[٠-٩]*')
       '''),
@@ -3014,7 +3145,7 @@ void main() {
     ]) {
       expect(
         await database.rawQuery(
-          'SELECT id FROM contents '
+          'SELECT id FROM former_contents '
           "WHERE substr(source, 1, instr(source || char(10), char(10))) "
           'GLOB ?',
           ['*[[]$count*'],
