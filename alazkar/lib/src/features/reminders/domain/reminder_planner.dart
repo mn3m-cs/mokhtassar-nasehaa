@@ -1,5 +1,6 @@
 import 'package:alazkar/src/features/reminders/data/models/reminder.dart';
 import 'package:alazkar/src/features/reminders/domain/prayer_times_calculator.dart';
+import 'package:alazkar/src/features/reminders/domain/reminder_quotes.dart';
 
 const int kReminderDays = 90;
 const int kRenewHintDays = 7;
@@ -43,7 +44,10 @@ List<PlannedReminder> planReminders({
           at: at,
           titleId: slot.titleId,
           title: titles[slot.titleId] ?? '',
-          body: added >= days - kRenewHintDays ? kRenewHint : '',
+          body: reminderBody(
+            quoteFor(slot.titleId, date),
+            renewHint: added >= days - kRenewHintDays ? kRenewHint : null,
+          ),
         ),
       );
       added++;
