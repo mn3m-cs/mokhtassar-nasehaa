@@ -59,11 +59,11 @@ class _ReminderLaunchListenerState extends State<ReminderLaunchListener>
 
   /// A reminder opens its home card, as the card on the home page does.
   void _open(int titleId) {
-    final card = homeCardById(titleId);
     MyApp.navigatorKey.currentState?.push(
-      card == null
-          ? ZikrContentViewerScreen.route(zikrTitleId: titleId)
-          : ZikrContentViewerScreen.cardRoute(card),
+      ZikrContentViewerScreen.route(
+        zikrTitleId: titleId,
+        card: homeCardById(titleId),
+      ),
     );
   }
 

@@ -22,10 +22,9 @@ class HomeCard {
     this.isDefault = true,
   });
 
-  /// The card's row in `favourite_titles`. A default card is stored under its
-  /// id, as before. Any other card is stored under its negated id, because
-  /// the index section that kept that id is another favourite.
-  int get favouriteId => isDefault ? id : -id;
+  /// The card's row in `favourite_titles`: its negated id, because the index
+  /// section that kept the id, if any, is another favourite.
+  int get favouriteId => -id;
 }
 
 const List<HomeCard> kHomeCards = [
@@ -84,14 +83,6 @@ const List<HomeCard> kHomeCards = [
     isDefault: false,
   ),
 ];
-
-/// The card stored in `favourite_titles` as [favouriteId], if any.
-HomeCard? homeCardByFavouriteId(int favouriteId) {
-  for (final card in kHomeCards) {
-    if (card.favouriteId == favouriteId) return card;
-  }
-  return null;
-}
 
 /// The card that had the section id [id] before #220, if any.
 HomeCard? homeCardById(int id) {

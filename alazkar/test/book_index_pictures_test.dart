@@ -229,6 +229,7 @@ void main() {
                             titlesToShow: titles,
                             isSearching: false,
                             favouriteTitlesIds: favourites,
+                            cardSections: const {},
                           ).favouriteTiles(),
                         ),
                   itemBuilder: (context, row) => IndexRow(row: row),

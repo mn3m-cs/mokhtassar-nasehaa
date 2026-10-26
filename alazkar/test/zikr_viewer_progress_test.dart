@@ -213,7 +213,7 @@ void main() {
   test('a saved zikr no longer listed is ignored, a count is never raised',
       () async {
     await ReadingProgressStorage(box, now: () => now).write(
-      _morning.id,
+      progressIdOf(_morning, null),
       const ReadingProgress(counts: {2: 9, 3: 0, 99: 1}, zikrId: 99),
     );
 

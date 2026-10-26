@@ -122,6 +122,7 @@ class AzkarDBHelper {
 
   /// The azkar with [ids], in the order of [ids].
   Future<List<Zikr>> getContentByIds(List<int> ids) async {
+    if (ids.isEmpty) return [];
     final Database db = await database;
 
     final List<Map<String, dynamic>> maps = await db.rawQuery(

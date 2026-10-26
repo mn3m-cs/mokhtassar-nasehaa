@@ -63,6 +63,9 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
   /// The page's row in `favourite_titles`.
   int get favouriteId => card?.favouriteId ?? zikrTitle.id;
 
+  /// The key the page's counts and place are kept under.
+  int get progressId => progressIdOf(zikrTitle, card);
+
   ZikrContentViewerLoadedState copyWith({
     List<Zikr>? azkar,
     int? activeZikrIndex,

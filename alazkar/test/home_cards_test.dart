@@ -199,7 +199,7 @@ void main() {
   });
 
   test('the default tiles carry the old names, in book order', () async {
-    final state = await home(const [49, 18, 1, 16, 2, 4]);
+    final state = await home(const [-49, -18, -1, -16, -2, -4]);
 
     expect(state.favouriteTiles().map((tile) => tile.name), [
       'أذكار الصباح',
@@ -217,7 +217,7 @@ void main() {
 
   test('a saved card and the index section that kept its id are two tiles',
       () async {
-    final state = await home(const [1, 2, 4, 16, 18, 49, -9, 9, -176]);
+    final state = await home(const [-1, -2, -4, -16, -18, -49, -9, 9, -176]);
 
     expect(
       state.favouriteTiles().map((tile) => tile.name),
@@ -231,9 +231,86 @@ void main() {
 
   test('the defaults are the default cards', () {
     expect(
-      kHomeCards.where((card) => card.isDefault).map((card) => card.id),
+      kHomeCards
+          .where((card) => card.isDefault)
+          .map((card) => card.favouriteId),
       BookmarksDBHelper.defaultTitleIds,
     );
+  });
+
+  test("an index section that kept a card's id is a favourite of its own",
+      () async {
+    final state = await home([...BookmarksDBHelper.defaultTitleIds, 49]);
+
+    expect(
+      state.favouriteTiles().map((tile) => tile.name),
+      containsAllInOrder(['أذكار المسافر', 'ما يقول المسافر ومَن يُودِّعه']),
+    );
+    expect(BookmarksDBHelper.isPinned(-1), isTrue);
+    expect(BookmarksDBHelper.isPinned(1), isFalse);
+  });
+
+  test('the filters do not move a card off the home page', () async {
+    await filterStorage.setEnableHokmFiltersStatus(true);
+
+    final state = await home(BookmarksDBHelper.defaultTitleIds);
+
+    final shownIds = state.titlesToShow.map((title) => title.id);
+    expect(shownIds, isNot(contains(197)),
+        reason: 'the morning card starts in 197');
+    // A card stays while any of its azkar passes the filters, as its
+    // section did before #220.
+    expect(
+      state.favouriteTiles().map((tile) => tile.name),
+      containsAllInOrder(['أذكار الصباح', 'أذكار المساء']),
+    );
+    // The morning card goes on from its hidden first section.
+    expect(state.shownSectionFrom(197, 1)?.id, 1);
+    expect(state.shownSectionFrom(1, -1)?.id, isNot(anyOf(197, 198)));
+  });
+
+  test('a card and the index section that kept its id count apart', () async {
+    final (cardBloc, cardPage) = await open(homeCardById(1)!);
+    final counted = cardPage.azkar.firstWhere(
+      (zikr) => cardPage.isCounted(zikr) && zikr.titleId == 1,
+    );
+    cardBloc.add(ZikrContentViewerDecreaseEvent(counted));
+    await pumpEventQueue();
+
+    final homeBloc = HomeBloc(
+      ZikrSourceFilterCubit(filterStorage),
+      filterStorage,
+      azkarDB,
+      _MemoryBookmarksDB(BookmarksDBHelper.defaultTitleIds),
+    );
+    closers.add(homeBloc.close);
+    final sectionBloc = ZikrContentViewerBloc(
+      homeBloc,
+      SettingsStorage(MemoryStorage()),
+      filterStorage,
+      azkarDB,
+      ReadingProgressStorage(progressBox),
+    );
+    closers.add(sectionBloc.close);
+    sectionBloc.add(const ZikrContentViewerStartEvent(1));
+    final section = await sectionBloc.stream
+            .firstWhere((s) => s is ZikrContentViewerLoadedState)
+        as ZikrContentViewerLoadedState;
+    expect(
+      section.azkar.firstWhere((zikr) => zikr.id == counted.id).count,
+      counted.count,
+      reason: "the section does not take the card's counts",
+    );
+    sectionBloc.add(ZikrContentViewerDecreaseEvent(section.azkar.last));
+    await pumpEventQueue();
+
+    expect(progressBox.read<String>('reading_progress_-1'), isNotNull);
+    final reopened = (await open(homeCardById(1)!)).$2;
+    expect(
+      reopened.azkar.firstWhere((zikr) => zikr.id == counted.id).count,
+      counted.count - 1,
+    );
+    expect(reopened.resumeZikrId, counted.id);
   });
 
   test('the reminders carry the old names', () async {
@@ -270,7 +347,7 @@ void main() {
 
       await BookmarksDBHelper.upgrade(db, 4);
 
-      expect(await stored(db), [-176, -9, 1, 2, 4, 16, 18, 49]);
+      expect(await stored(db), [-176, -49, -18, -16, -9, -4, -2, -1]);
     });
 
     test('a reader who saved neither keeps the defaults alone', () async {
@@ -278,7 +355,7 @@ void main() {
 
       await BookmarksDBHelper.upgrade(db, 4);
 
-      expect(await stored(db), [1, 2, 4, 16, 18, 49]);
+      expect(await stored(db), [-49, -18, -16, -4, -2, -1]);
     });
   });
 }

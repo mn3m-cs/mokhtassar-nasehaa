@@ -45,8 +45,11 @@ const _phase = String.fromEnvironment('PHASE', defaultValue: 'after');
 const double _pixelRatio = 2.625;
 
 /// The defaults, and «أذكار الأذان» as a reader saved it before the update:
-/// before #220 under its section id, after it under its card's.
-const _favourites = [1, 2, 4, 16, 18, 49, if (_phase == 'before') 9 else -9];
+/// before #220 under their section ids, after it under their cards'.
+final _favourites = [
+  for (final id in [1, 2, 4, 16, 18, 49, 9])
+    if (_phase == 'before') id else -id,
+];
 
 /// Stores favourites in memory.
 class _MemoryBookmarksDB implements BookmarksDBHelper {

@@ -33,22 +33,17 @@ class ZikrContentViewerScreen extends StatefulWidget {
     this.card,
   });
 
-  static Route route({required int zikrTitleId, int? zikrOrder}) {
+  /// Opens the section [zikrTitleId], or the home [card] in one page.
+  static Route route({
+    required int zikrTitleId,
+    int? zikrOrder,
+    HomeCard? card,
+  }) {
     return MaterialPageRoute(
       settings: const RouteSettings(name: routeName),
       builder: (_) => ZikrContentViewerScreen(
         zikrTitleId: zikrTitleId,
         zikrOrder: zikrOrder,
-      ),
-    );
-  }
-
-  /// Opens a home card in one page.
-  static Route cardRoute(HomeCard card) {
-    return MaterialPageRoute(
-      settings: const RouteSettings(name: routeName),
-      builder: (_) => ZikrContentViewerScreen(
-        zikrTitleId: card.id,
         card: card,
       ),
     );
@@ -392,17 +387,12 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     );
   }
 
-  /// The section [step] places from the section [currentId] in book order,
-  /// if any.
+  /// The shown section next to the section [currentId] in book order, after
+  /// it for [step] 1 and before it for -1, if any.
   ZikrTitle? _titleAt(int currentId, int step) {
     final homeState = _bloc.homeBloc.state;
     if (homeState is! HomeLoadedState) return null;
-    final titles = homeState.readingOrder();
-    final index = titles.indexWhere((title) => title.id == currentId);
-    if (index == -1) return null;
-    final target = index + step;
-    if (target < 0 || target >= titles.length) return null;
-    return titles[target];
+    return homeState.shownSectionFrom(currentId, step);
   }
 }
 

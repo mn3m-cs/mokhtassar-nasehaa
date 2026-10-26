@@ -13,13 +13,14 @@ class BookmarksDBHelper {
   static const String dbName = "Bookmarks.db";
   static const int dbVersion = 5;
 
-  /// Sections that always stay in favourites and can never be removed:
-  /// morning, evening, waking up, after prayer, sleep.
-  static const List<int> pinnedTitleIds = [1, 2, 4, 16, 18];
+  /// Home cards that always stay in favourites and can never be removed:
+  /// morning, evening, waking up, after prayer, sleep. Each is stored under
+  /// its [HomeCard.favouriteId].
+  static const List<int> pinnedTitleIds = [-1, -2, -4, -16, -18];
 
-  /// Default favourites, in book order: the pinned sections, then travelling,
+  /// Default favourites, in book order: the pinned cards, then travelling,
   /// which is only a default and may be removed.
-  static const List<int> defaultTitleIds = [...pinnedTitleIds, 49];
+  static const List<int> defaultTitleIds = [...pinnedTitleIds, -49];
 
   static bool isPinned(int titleId) => pinnedTitleIds.contains(titleId);
 
@@ -31,7 +32,7 @@ class BookmarksDBHelper {
   /// (#220, Al-Azkar.db 167), each with the section that now holds its first
   /// rows: an introduction that is no line of the index, or a heading the
   /// index does not list. «ورد التسبيح» (176) left it too, and became a home
-  /// card instead ([keepSavedCards]).
+  /// card instead ([savedCardIds]).
   static const Map<int, int> movedTitleIds = {
     139: 49,
     157: 156,
@@ -145,17 +146,33 @@ class BookmarksDBHelper {
     await addDefaultTitles(db);
   }
 
-  /// Keeps a favourite saved before #220 on a section that is now a home card
-  /// other than a default one: the card replaces it, under
-  /// [HomeCard.favouriteId], so it opens what it opened before.
+  /// The sections that became home cards (#220), each with the card's row in
+  /// `favourite_titles`. Written out, not read from [kHomeCards], so a later
+  /// change to the cards cannot change what the upgrade to version 5 does.
+  static const Map<int, int> savedCardIds = {
+    1: -1,
+    2: -2,
+    4: -4,
+    9: -9,
+    16: -16,
+    18: -18,
+    49: -49,
+    176: -176,
+  };
+
+  /// Keeps a favourite saved before #220 on a section that is now a home
+  /// card: the card replaces it, under [savedCardIds], so it opens what it
+  /// opened before, and the index section that kept the id is not a
+  /// favourite unless the reader adds it.
   static Future<void> keepSavedCards(Database db) async {
     final batch = db.batch();
-    for (final card in kHomeCards.where((card) => !card.isDefault)) {
+    savedCardIds.forEach((from, to) {
       batch.rawUpdate(
         'UPDATE OR IGNORE favourite_titles SET titleId = ? WHERE titleId = ?',
-        [card.favouriteId, card.id],
+        [to, from],
       );
-    }
+      batch.rawDelete('DELETE FROM favourite_titles WHERE titleId = ?', [from]);
+    });
     await batch.commit(noResult: true);
   }
 

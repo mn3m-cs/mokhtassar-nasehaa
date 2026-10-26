@@ -14,6 +14,7 @@ void main() {
         titlesToShow: shown ?? titles,
         isSearching: false,
         favouriteTitlesIds: const [],
+        cardSections: const {},
       );
 
   test('next section follows the book, not the local order numbers', () async {
@@ -48,6 +49,7 @@ void main() {
       titlesToShow: titles,
       isSearching: false,
       favouriteTitlesIds: const [74, 209, 9, 197],
+      cardSections: const {},
     );
 
     expect(

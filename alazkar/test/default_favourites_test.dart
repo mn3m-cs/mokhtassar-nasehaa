@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,31 +29,22 @@ void main() {
     return rows.map((row) => row['titleId']! as int).toList();
   }
 
-  test('default favourites are the intended sections of the bundled database',
-      () async {
-    final db = await databaseFactoryFfi.openDatabase(
-      File('assets/db/Al-Azkar.db').absolute.path,
-      options: OpenDatabaseOptions(readOnly: true),
-    );
-    addTearDown(db.close);
-
-    final rows = await db.rawQuery(
-      'SELECT id, name, nodeType FROM titles WHERE id IN '
-      '(${BookmarksDBHelper.defaultTitleIds.join(',')}) ORDER BY id',
-    );
-
-    expect(rows, [
-      {'id': 1, 'name': 'أولًا: أذكار الصَّباح', 'nodeType': 'content'},
-      {'id': 2, 'name': 'ثانيًا: أذكارُ المساء', 'nodeType': 'content'},
-      {'id': 4, 'name': 'ما يقول إذا استيقظَ من نَومِه', 'nodeType': 'content'},
-      {'id': 16, 'name': 'ما يقول بعد الصلاة', 'nodeType': 'content'},
-      {'id': 18, 'name': 'ما يقول إذا أراد النوم', 'nodeType': 'content'},
-      {
-        'id': 49,
-        'name': 'ما يقول المسافر ومَن يُودِّعه',
-        'nodeType': 'content'
-      },
+  test('default favourites are the default home cards', () {
+    expect(BookmarksDBHelper.defaultTitleIds, [
+      for (final card in kHomeCards)
+        if (card.isDefault) card.favouriteId,
     ]);
+    expect(
+      BookmarksDBHelper.defaultTitleIds.map((id) => homeCardById(-id)!.name),
+      [
+        'أذكار الصباح',
+        'أذكار المساء',
+        'أذكار الاستيقاظ',
+        'ما يقول بعد الصلاة',
+        'أذكار النوم',
+        'أذكار المسافر',
+      ],
+    );
   });
 
   for (final oldVersion in [1, 2]) {
@@ -65,7 +55,7 @@ void main() {
 
       await BookmarksDBHelper.upgrade(db, oldVersion);
 
-      expect(await storedIds(db), [1, 2, 4, 16, 18, 49]);
+      expect(await storedIds(db), [-49, -18, -16, -4, -2, -1]);
     });
   }
 
@@ -75,7 +65,7 @@ void main() {
 
     await BookmarksDBHelper.replaceLegacyDefaults(db);
 
-    expect(await storedIds(db), [1, 2, 4, 16, 18, 49]);
+    expect(await storedIds(db), [-49, -18, -16, -4, -2, -1]);
   });
 
   test('a trimmed legacy set is still treated as untouched', () async {
@@ -83,7 +73,7 @@ void main() {
 
     await BookmarksDBHelper.replaceLegacyDefaults(db);
 
-    expect(await storedIds(db), [1, 2, 4, 16, 18, 49]);
+    expect(await storedIds(db), [-49, -18, -16, -4, -2, -1]);
   });
 
   test('personal favourites are never rewritten', () async {
@@ -116,6 +106,7 @@ void main() {
       titlesToShow: [category, section],
       isSearching: false,
       favouriteTitlesIds: [197, 99],
+      cardSections: {},
     );
 
     expect(state.favouriteTiles(), [const HomeTile.section(section)]);

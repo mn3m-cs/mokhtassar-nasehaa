@@ -12,6 +12,8 @@ class HomeHeader extends StatelessWidget {
 
   const HomeHeader({super.key, required this.favourites});
 
+  /// By home card id. A favourite index section shows the bookmark, so it
+  /// is told apart from the card that shares its id.
   static const Map<int, IconData> _icons = {
     1: Icons.wb_twilight,
     2: Icons.nights_stay_outlined,
@@ -83,8 +85,7 @@ class HomeHeader extends StatelessWidget {
                 for (final tile in favourites)
                   _Tile(
                     tile: tile,
-                    icon: _icons[tile.card?.id ?? tile.title!.id] ??
-                        Icons.bookmark,
+                    icon: _icons[tile.card?.id] ?? Icons.bookmark,
                   ),
               ],
             ),
@@ -119,9 +120,10 @@ class _Tile extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: () => Navigator.push(
           context,
-          tile.card == null
-              ? ZikrContentViewerScreen.route(zikrTitleId: tile.title!.id)
-              : ZikrContentViewerScreen.cardRoute(tile.card!),
+          ZikrContentViewerScreen.route(
+            zikrTitleId: tile.id,
+            card: tile.card,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(14),

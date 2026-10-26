@@ -122,7 +122,7 @@ void main() {
       'line of the index', () {
     final lines = indexLines();
     final ids = {
-      ...BookmarksDBHelper.defaultTitleIds,
+      for (final id in BookmarksDBHelper.defaultTitleIds) -id,
       for (final slot in ReminderSlot.values) slot.titleId,
     };
 
@@ -200,9 +200,9 @@ void main() {
         await db.rawQuery('SELECT titleId FROM favourite_titles ORDER BY 1');
     expect(
       rows.map((row) => row['titleId']),
-      [-176, 1, 2, 4, 16, 18, 49, 156],
-      reason: '139 joins 49, which is already there; 157 goes to 156; 176 '
-          'stays the card «ورد التسبيح», stored as -176',
+      [-176, -49, -18, -16, -4, -2, -1, 49, 156],
+      reason: 'the cards are stored negated, -176 for «ورد التسبيح»; 139 '
+          'goes to the index section 49; 157 goes to 156',
     );
   });
 }
