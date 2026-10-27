@@ -74,3 +74,5 @@ Write no attribution to Claude, Claude Code or any other AI tool in what you lea
 ## Content rules
 
 The app must match the book «مختصر النصيحة في الأذكار والأدعية الصحيحة» exactly. Every word a reader sees as content comes from the book verbatim. Nothing is paraphrased, summarised or added in an agent's own words. When the app and the book differ, the book wins. Content not in the book is deleted, not labelled. Detailed content procedure is in `CONTENT_AUDIT_AGENT_PLAN.md`; its section «مطابقة صفحة صفحة» (§9) is the page-by-page method. `docs/book-map.md` records which book chapters were compared with their pages. Never call the app «مطابق للكتاب» except for rows whose status is «قورن».
+
+The database is the source of the section files in `data_pipeline/sections`. A change that alters `titles` or `contents` in `Al-Azkar.db` runs `python3 data_pipeline/export_sections.py` in the same pull request and commits the files it writes; never edit those files by hand. `alazkar/test/section_files_test.dart` fails until every file matches the database (#236).
