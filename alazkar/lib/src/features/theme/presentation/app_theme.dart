@@ -1,3 +1,4 @@
+import 'package:alazkar/src/core/constants/const.dart';
 import 'package:alazkar/src/features/theme/presentation/controller/cubit/theme_cubit.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,7 @@ ThemeData buildAppTheme(ThemeState state) {
     ),
     visualDensity: VisualDensity.adaptivePlatformDensity,
     fontFamily: "Cairo",
+    fontFamilyFallback: kGlyphFallback,
     useMaterial3: state.useMaterial3,
   );
 }

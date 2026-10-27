@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:alazkar/app.dart';
+import 'package:alazkar/src/core/extension/extension_string.dart';
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
 import 'package:alazkar/src/core/manager/vibration_manager.dart';
 import 'package:alazkar/src/core/manager/volume_button_manager.dart';
@@ -259,7 +260,7 @@ class ZikrContentViewerBloc
         : "\n\n-------\nالفضل:\n${activeZikr.fadl}";
     final plainText =
         "${await activeZikr.toPlainText()}\n\n-------\nعدد مرات الذكر:  ${activeZikr.count}$fadlTxt\n\n==============\nالمصدر:\n${activeZikr.source}";
-    return plainText;
+    return plainText.honorificsAsWords;
   }
 
   Future<void> _copy(

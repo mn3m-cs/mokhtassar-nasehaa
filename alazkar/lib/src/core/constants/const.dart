@@ -31,3 +31,22 @@ const double kFontMin = 15;
 const double kFontMax = 45;
 
 const String kDeveloperEmail = "mohamedabdo581@gmail.com";
+
+/// The font that draws the book's honorific glyphs (ﷺ ﵁ ﷿ …) where the
+/// reader's font has none of them (#213).
+const List<String> kGlyphFallback = ['NotoNaskhArabic'];
+
+/// Each honorific glyph the book prints, and the words it stands for. Copied
+/// and sent text, and the screen reader, use the words: the receiving phone
+/// may have no font for the glyphs of 2021 (﵀–﵄).
+const Map<String, String> kHonorificWords = {
+  'ﷺ': 'صلى الله عليه وسلم',
+  '﵄': 'رضي الله عنهما',
+  '﵃': 'رضي الله عنهم',
+  '﵂': 'رضي الله عنها',
+  '﵁': 'رضي الله عنه',
+  '﵀': 'رحمه الله',
+  '﷾': 'سبحانه وتعالى',
+  '﷿': 'عز وجل',
+  'ﷻ': 'جل جلاله',
+};

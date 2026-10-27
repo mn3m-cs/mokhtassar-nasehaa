@@ -23,6 +23,8 @@ import shutil
 import sqlite3
 import sys
 
+from honorific_glyphs import to_words
+
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_DB = os.path.abspath(
     os.path.join(THIS_DIR, "..", "alazkar", "assets", "db", "Al-Azkar.db")
@@ -46,6 +48,8 @@ def normalize_for_search(body: str) -> str:
 
 
 def build_search(body: str) -> str:
+    # `search` keeps the honorifics in words, so they can be searched (#213).
+    body = to_words(body)
     def quran_digits(m):
         return "".join(f"{s}{f}{t}" for s, f, t in QURAN_TUPLE.findall(m.group(0)))
 

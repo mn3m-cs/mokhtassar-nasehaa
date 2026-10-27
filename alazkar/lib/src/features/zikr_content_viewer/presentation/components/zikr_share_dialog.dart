@@ -85,7 +85,7 @@ class _ZikrShareDialogState extends State<ZikrShareDialog> {
     }
     sb.writeln();
     sb.writeln("#زاد_الذاكر");
-    return sb.toString();
+    return sb.toString().honorificsAsWords;
   }
 
   @override

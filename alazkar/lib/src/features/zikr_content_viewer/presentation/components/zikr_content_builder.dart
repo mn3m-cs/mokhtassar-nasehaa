@@ -1,3 +1,4 @@
+import 'package:alazkar/src/core/constants/const.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_extension.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/custom_text_formatter.dart';
@@ -139,6 +140,7 @@ class _ZikrContentTextWithQuranState extends State<ZikrContentTextWithQuran> {
               fontSize: widget.fontSize,
               height: 2,
               fontFamily: widget.fontFamily,
+              fontFamilyFallback: kGlyphFallback,
               color:
                   widget.color ?? Theme.of(context).textTheme.bodyMedium?.color,
             ),

@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:alazkar/src/core/constants/const.dart';
 import 'package:alazkar/src/core/extension/extension_string.dart';
 import 'package:flutter/material.dart';
 
@@ -24,6 +25,7 @@ class StringFormatter extends StatelessWidget {
     final defaultStyle = TextStyle(
       fontSize: fontSize,
       height: 2,
+      fontFamilyFallback: kGlyphFallback,
       color: color ?? Theme.of(context).textTheme.bodyMedium?.color,
     );
     return RichText(
@@ -53,7 +55,7 @@ class StringFormatter extends StatelessWidget {
       final highlightedText = text.substring(match.start, match.end);
 
       if (preMatch.isNotEmpty) {
-        children.add(TextSpan(text: preMatch, style: defaultStyle));
+        children.add(_plainSpan(preMatch, defaultStyle));
       }
 
       children.add(TextSpan(text: highlightedText, style: highlightStyle));
@@ -63,9 +65,19 @@ class StringFormatter extends StatelessWidget {
 
     final postMatch = text.substring(lastMatchEnd);
     if (postMatch.isNotEmpty) {
-      children.add(TextSpan(text: postMatch, style: defaultStyle));
+      children.add(_plainSpan(postMatch, defaultStyle));
     }
 
     return TextSpan(children: children);
+  }
+
+  /// The screen reader reads an honorific glyph as its words.
+  TextSpan _plainSpan(String text, TextStyle style) {
+    final words = text.honorificsAsWords;
+    return TextSpan(
+      text: text,
+      style: style,
+      semanticsLabel: words == text ? null : words,
+    );
   }
 }
