@@ -17,7 +17,10 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'support/memory_storage.dart';
 import 'support/screen_picture.dart';
 
-const _pinned = [1, 2, 4, 16, 18];
+/// The pinned home cards and the travelling one, as `favourite_titles`
+/// stores them: under the negated id of the card.
+const _pinned = [-1, -2, -4, -16, -18];
+const _travelling = -49;
 const _morning = ZikrTitle(id: 1, order: 1, name: 'أذكار الصباح', freq: 'd');
 const _traveller =
     ZikrTitle(id: 49, order: 2, name: 'أذكار المسافر', freq: 'd');
@@ -40,6 +43,13 @@ Zikr _zikr(int titleId) => Zikr(
 class _FakeAzkarDB implements AzkarDBHelper {
   @override
   Future<List<Zikr>> getContentByTitleId(int id) async => [_zikr(id)];
+
+  @override
+  Future<Zikr> getContentById(int id) async => _zikr(id);
+
+  @override
+  Future<List<Zikr>> getContentByIds(List<int> ids) async =>
+      [for (final id in ids) _zikr(id)];
 
   @override
   Future<List<ZikrTitle>> getAllTitles() async => [..._titles];
@@ -111,14 +121,14 @@ void main() {
 
     test('the pinned sections are separate from the travelling default', () {
       expect(BookmarksDBHelper.pinnedTitleIds, _pinned);
-      expect(BookmarksDBHelper.defaultTitleIds, [..._pinned, 49]);
-      expect(BookmarksDBHelper.isPinned(49), isFalse);
+      expect(BookmarksDBHelper.defaultTitleIds, [..._pinned, _travelling]);
+      expect(BookmarksDBHelper.isPinned(_travelling), isFalse);
     });
 
     test('a new install holds the six defaults', () async {
       final db = await favouritesDatabase([]);
       await BookmarksDBHelper.addDefaultTitles(db);
-      expect(await storedIds(db), [1, 2, 4, 16, 18, 49]);
+      expect(await storedIds(db), unorderedEquals([..._pinned, _travelling]));
     });
 
     test('upgrade restores only the missing pinned sections', () async {
@@ -126,15 +136,15 @@ void main() {
 
       await BookmarksDBHelper.upgrade(db, 3);
 
-      expect(await storedIds(db), [1, 2, 4, 16, 18, 99, 140]);
+      expect(await storedIds(db), unorderedEquals([..._pinned, 99, 140]));
     });
 
     test('upgrade does not bring back a removed traveller section', () async {
-      final db = await favouritesDatabase([..._pinned]);
+      final db = await favouritesDatabase([1, 2, 4, 16, 18]);
 
       await BookmarksDBHelper.upgrade(db, 3);
 
-      expect(await storedIds(db), _pinned);
+      expect(await storedIds(db), unorderedEquals(_pinned));
     });
 
     group('with the real helper', () {
@@ -165,15 +175,21 @@ void main() {
         for (final id in _pinned) {
           await helper.deleteTitleFromFavourite(titleId: id);
         }
-        expect(await helper.getAllFavoriteTitles(), [1, 2, 4, 16, 18, 49]);
+        expect(
+          await helper.getAllFavoriteTitles(),
+          unorderedEquals([..._pinned, _travelling]),
+        );
       });
 
       test('travelling can be removed and added again', () async {
-        await helper.deleteTitleFromFavourite(titleId: 49);
-        expect(await helper.getAllFavoriteTitles(), _pinned);
+        await helper.deleteTitleFromFavourite(titleId: _travelling);
+        expect(await helper.getAllFavoriteTitles(), unorderedEquals(_pinned));
 
-        await helper.addTitleToFavourite(titleId: 49);
-        expect(await helper.getAllFavoriteTitles(), [..._pinned, 49]);
+        await helper.addTitleToFavourite(titleId: _travelling);
+        expect(
+          await helper.getAllFavoriteTitles(),
+          unorderedEquals([..._pinned, _travelling]),
+        );
       });
     });
   });
@@ -196,16 +212,16 @@ void main() {
     }
 
     test('unbookmarking a pinned section keeps it', () async {
-      bloc.add(const HomeUnBookmarkTitleEvent(1));
-      expect(await ids(), contains(1));
+      bloc.add(const HomeUnBookmarkTitleEvent(-1));
+      expect(await ids(), contains(-1));
     });
 
     test('travelling goes and comes back', () async {
-      bloc.add(const HomeUnBookmarkTitleEvent(49));
-      expect(await ids(), isNot(contains(49)));
+      bloc.add(const HomeUnBookmarkTitleEvent(_travelling));
+      expect(await ids(), isNot(contains(_travelling)));
 
-      bloc.add(const HomeBookmarkTitleEvent(49));
-      expect(await ids(), contains(49));
+      bloc.add(const HomeBookmarkTitleEvent(_travelling));
+      expect(await ids(), contains(_travelling));
     });
 
     test('an optional favourite is added and removed as before', () async {
@@ -240,7 +256,7 @@ void main() {
 
     testWidgets('a pinned section shows a fixed icon, not a button',
         (tester) async {
-      await show(tester, 1);
+      await show(tester, -1);
 
       expect(find.byType(IconButton), findsNothing);
       expect(find.byIcon(Icons.bookmark), findsOneWidget);
@@ -249,20 +265,20 @@ void main() {
     });
 
     testWidgets('an optional favourite still offers removal', (tester) async {
-      await show(tester, 49);
+      await show(tester, _travelling);
 
       expect(find.byTooltip('إزالة من المفضلة'), findsOneWidget);
     });
 
     testWidgets('removing shows the bar and undo brings the section back',
         (tester) async {
-      await show(tester, 49);
+      await show(tester, _travelling);
 
       await tester.tap(find.byTooltip('إزالة من المفضلة'));
       await tester.pump();
       await tester.pump();
 
-      expect(bookmarks.ids, isNot(contains(49)));
+      expect(bookmarks.ids, isNot(contains(_travelling)));
       expect(find.text('أُزيل من المفضلة'), findsOneWidget);
       expect(find.text('تراجع'), findsOneWidget);
 
@@ -271,13 +287,13 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(bookmarks.ids, contains(49));
+      expect(bookmarks.ids, contains(_travelling));
       expect(find.byTooltip('إزالة من المفضلة'), findsOneWidget);
     });
 
     testWidgets('the bar goes away by itself after six seconds',
         (tester) async {
-      await show(tester, 49);
+      await show(tester, _travelling);
 
       await tester.tap(find.byTooltip('إزالة من المفضلة'));
       await tester.pump();
@@ -288,7 +304,7 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
       expect(find.text('تراجع'), findsNothing);
-      expect(bookmarks.ids, isNot(contains(49)));
+      expect(bookmarks.ids, isNot(contains(_travelling)));
     });
   });
 }

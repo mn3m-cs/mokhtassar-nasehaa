@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
 import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/features/home/presentation/components/bookmark_title_button.dart';
@@ -30,6 +31,14 @@ const _titles = [
   ZikrTitle(id: 69, order: 3, name: 'ورد التهليل', freq: 'd'),
 ];
 
+/// The rows of the picture, each with its row in `favourite_titles`: the
+/// morning and travelling cards, and a section of the index.
+const _rows = [
+  (name: 'أذكار الصباح', favouriteId: -1),
+  (name: 'أذكار المسافر', favouriteId: -49),
+  (name: 'ورد التهليل', favouriteId: 69),
+];
+
 class _FakeAzkarDB implements AzkarDBHelper {
   @override
   Future<List<Zikr>> getContentByTitleId(int id) async => [
@@ -47,6 +56,16 @@ class _FakeAzkarDB implements AzkarDBHelper {
         ),
       ];
 
+  /// A card's azkar sit in the section of the card's id, as before #220.
+  @override
+  Future<List<Zikr>> getContentByIds(List<int> ids) async => [
+        for (final id in ids)
+          (await getContentByTitleId(
+            kHomeCards.firstWhere((card) => card.zikrIds.contains(id)).id,
+          ))
+              .single,
+      ];
+
   @override
   Future<List<ZikrTitle>> getAllTitles() async => [..._titles];
 
@@ -55,7 +74,7 @@ class _FakeAzkarDB implements AzkarDBHelper {
 }
 
 class _MemoryBookmarksDB implements BookmarksDBHelper {
-  final ids = <int>{1, 2, 4, 16, 18, 49, 69};
+  final ids = <int>{...BookmarksDBHelper.defaultTitleIds, 69};
 
   @override
   Future<List<int>> getAllFavoriteTitles() async => ids.toList()..sort();
@@ -135,10 +154,10 @@ void main() {
               appBar: AppBar(title: const Text('المفضلة')),
               body: ListView(
                 children: [
-                  for (final title in _titles)
+                  for (final row in _rows)
                     ListTile(
-                      title: Text(title.name),
-                      trailing: BookmarkTitleButton(titleId: title.id),
+                      title: Text(row.name),
+                      trailing: BookmarkTitleButton(titleId: row.favouriteId),
                     ),
                 ],
               ),

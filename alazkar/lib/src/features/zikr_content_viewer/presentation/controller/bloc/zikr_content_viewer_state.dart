@@ -32,6 +32,14 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
 
   final ProgressKeeping progressKeeping;
 
+  /// The home card the page shows, or null for a section of the index.
+  final HomeCard? card;
+
+  /// For a [card], the index sections its first and last azkar sit in now,
+  /// where the way back and the way on start.
+  final int? firstSectionId;
+  final int? lastSectionId;
+
   const ZikrContentViewerLoadedState({
     required this.zikrTitle,
     required this.azkar,
@@ -41,7 +49,22 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
     this.focusOrder,
     this.resumeZikrId,
     this.progressKeeping = ProgressKeeping.none,
+    this.card,
+    this.firstSectionId,
+    this.lastSectionId,
   });
+
+  /// The section the previous one is counted from.
+  int get previousFromId => firstSectionId ?? zikrTitle.id;
+
+  /// The section the next one is counted from.
+  int get nextFromId => lastSectionId ?? zikrTitle.id;
+
+  /// The page's row in `favourite_titles`.
+  int get favouriteId => card?.favouriteId ?? zikrTitle.id;
+
+  /// The key the page's counts and place are kept under.
+  int get progressId => progressIdOf(zikrTitle, card);
 
   ZikrContentViewerLoadedState copyWith({
     List<Zikr>? azkar,
@@ -56,6 +79,9 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
       focusOrder: focusOrder,
       resumeZikrId: resumeZikrId,
       progressKeeping: progressKeeping,
+      card: card,
+      firstSectionId: firstSectionId,
+      lastSectionId: lastSectionId,
     );
   }
 
@@ -131,5 +157,8 @@ final class ZikrContentViewerLoadedState extends ZikrContentViewerState {
         sectionPath,
         resumeZikrId,
         progressKeeping,
+        card,
+        firstSectionId,
+        lastSectionId,
       ];
 }

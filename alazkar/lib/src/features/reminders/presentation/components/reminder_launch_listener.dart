@@ -1,6 +1,7 @@
 import 'package:alazkar/app.dart';
 import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/features/reminders/data/models/reminder.dart';
 import 'package:alazkar/src/features/reminders/data/reminder_platform.dart';
 import 'package:alazkar/src/features/reminders/presentation/controller/reminders_cubit.dart';
@@ -8,11 +9,13 @@ import 'package:alazkar/src/features/zikr_content_viewer/presentation/screens/zi
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// The section titles exactly as the database holds them.
+/// A reminder's title: the name of the home card it opens, or else the
+/// section title exactly as the database holds it.
 Future<Map<int, String>> loadReminderTitles(AzkarDBHelper db) async {
   return {
     for (final slot in ReminderSlot.values)
-      slot.titleId: (await db.getTitlesById(slot.titleId)).name,
+      slot.titleId: homeCardById(slot.titleId)?.name ??
+          (await db.getTitlesById(slot.titleId)).name,
   };
 }
 
@@ -54,9 +57,13 @@ class _ReminderLaunchListenerState extends State<ReminderLaunchListener>
     if (state == AppLifecycleState.resumed) sl<RemindersCubit>().start();
   }
 
+  /// A reminder opens its home card, as the card on the home page does.
   void _open(int titleId) {
     MyApp.navigatorKey.currentState?.push(
-      ZikrContentViewerScreen.route(zikrTitleId: titleId),
+      ZikrContentViewerScreen.route(
+        zikrTitleId: titleId,
+        card: homeCardById(titleId),
+      ),
     );
   }
 

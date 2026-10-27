@@ -1,8 +1,8 @@
 {
   "title": {
     "id": 96,
-    "order": 12,
-    "name": "الصلاة",
+    "order": 9,
+    "name": "أذكار الصلاة",
     "freq": "d",
     "nodeType": "category"
   },

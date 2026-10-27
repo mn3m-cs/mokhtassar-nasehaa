@@ -1,9 +1,10 @@
 {
   "title": {
-    "name": "أذكار العطاس",
+    "name": "أذكار العُطاس",
     "freq": "d",
-    "order": 22,
-    "nodeType": "content"
+    "order": 7,
+    "nodeType": "content",
+    "parentId": 339
   },
   "items": [
     {

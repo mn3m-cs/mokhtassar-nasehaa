@@ -3,8 +3,8 @@
     "name": "الوقوف بعرفات وآدابه",
     "freq": "d",
     "id": 136,
-    "order": 1,
-    "parentId": 131,
+    "order": 10,
+    "parentId": 128,
     "nodeType": "content"
   },
   "items": [

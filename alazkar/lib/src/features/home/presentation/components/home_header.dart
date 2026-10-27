@@ -1,4 +1,3 @@
-import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
 import 'package:alazkar/src/features/settings/presentation/screens/settings_screen.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/screens/zikr_content_viewer_screen.dart';
@@ -9,10 +8,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// settings; the reader's favourite sections as tiles; and the heading of the
 /// index.
 class HomeHeader extends StatelessWidget {
-  final List<ZikrTitle> favourites;
+  final List<HomeTile> favourites;
 
   const HomeHeader({super.key, required this.favourites});
 
+  /// By home card id. A favourite index section shows the bookmark, so it
+  /// is told apart from the card that shares its id.
   static const Map<int, IconData> _icons = {
     1: Icons.wb_twilight,
     2: Icons.nights_stay_outlined,
@@ -81,8 +82,11 @@ class HomeHeader extends StatelessWidget {
               crossAxisSpacing: 12,
               childAspectRatio: 1.55,
               children: [
-                for (final title in favourites)
-                  _Tile(title: title, icon: _icons[title.id] ?? Icons.bookmark),
+                for (final tile in favourites)
+                  _Tile(
+                    tile: tile,
+                    icon: _icons[tile.card?.id] ?? Icons.bookmark,
+                  ),
               ],
             ),
           ],
@@ -101,10 +105,10 @@ class HomeHeader extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  final ZikrTitle title;
+  final HomeTile tile;
   final IconData icon;
 
-  const _Tile({required this.title, required this.icon});
+  const _Tile({required this.tile, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +120,10 @@ class _Tile extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: () => Navigator.push(
           context,
-          ZikrContentViewerScreen.route(zikrTitleId: title.id),
+          ZikrContentViewerScreen.route(
+            zikrTitleId: tile.id,
+            card: tile.card,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -126,7 +133,7 @@ class _Tile extends StatelessWidget {
             children: [
               Icon(icon, color: colorScheme.primary, size: 28),
               Text(
-                title.name,
+                tile.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(

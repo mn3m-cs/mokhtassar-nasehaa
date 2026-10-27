@@ -4,6 +4,7 @@ import 'package:alazkar/app.dart';
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
 import 'package:alazkar/src/core/manager/vibration_manager.dart';
 import 'package:alazkar/src/core/manager/volume_button_manager.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_extension.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
@@ -68,19 +69,44 @@ class ZikrContentViewerBloc
     final RegExp regExp = RegExp(r'\(.*?\)');
 
     /// get all zikr
+    final card = event.card;
     final List<Zikr> azkarToSet;
-    final azkarFromDB =
-        (await azkarDBHelper.getContentByTitleId(event.zikrTitleId))
-            .map(
-              (e) => showTextInBrackets || e.body.contains("QuranText")
-                  ? e
-                  : e.copyWith(body: e.body.replaceAll(regExp, "")),
-            )
-            .toList();
-    final zikrTitle = await azkarDBHelper.getTitlesById(event.zikrTitleId);
+    final rows = card == null
+        ? await azkarDBHelper.getContentByTitleId(event.zikrTitleId)
+        : await azkarDBHelper.getContentByIds(card.zikrIds);
+    final azkarFromDB = rows
+        .map(
+          (e) => showTextInBrackets || e.body.contains("QuranText")
+              ? e
+              : e.copyWith(body: e.body.replaceAll(regExp, "")),
+        )
+        .toList();
     final allTitles = await azkarDBHelper.getAllTitles();
-    final sectionPath = buildParentPath(zikrTitle, allTitles);
+    final ZikrTitle zikrTitle;
+    final String sectionPath;
+    if (card == null) {
+      zikrTitle = await azkarDBHelper.getTitlesById(event.zikrTitleId);
+      sectionPath = buildParentPath(zikrTitle, allTitles);
+    } else {
+      // A card sits where the section of its first zikr sits, so it keeps
+      // its progress as that section does.
+      final first = rows.isEmpty
+          ? null
+          : allTitles.where((t) => t.id == rows.first.titleId).firstOrNull;
+      if (first == null) {
+        appPrint("home card ${card.id}: its first zikr is in no section");
+      }
+      zikrTitle = ZikrTitle(
+        id: card.id,
+        order: first?.order ?? 0,
+        name: card.name,
+        freq: first?.freq ?? '',
+        parentId: first?.parentId,
+      );
+      sectionPath = '';
+    }
     final progressKeeping = progressKeepingOf(zikrTitle, allTitles);
+    final progressId = progressIdOf(zikrTitle, card);
 
     /// filter out zikr
     final List<Filter> filters = zikrFilterStorage.getAllFilters();
@@ -91,10 +117,9 @@ class ZikrContentViewerBloc
     // is never restored above the book's.
     final progress = switch (progressKeeping) {
       ProgressKeeping.none => null,
-      ProgressKeeping.forToday =>
-        readingProgressStorage.read(event.zikrTitleId),
+      ProgressKeeping.forToday => readingProgressStorage.read(progressId),
       ProgressKeeping.always =>
-        readingProgressStorage.read(event.zikrTitleId, expires: false),
+        readingProgressStorage.read(progressId, expires: false),
     };
     final savedCounts = progress?.counts ?? const <int, int>{};
     final azkar = azkarToSet.map((zikr) {
@@ -127,6 +152,9 @@ class ZikrContentViewerBloc
         focusOrder: event.zikrOrder,
         resumeZikrId: resumeZikrId,
         progressKeeping: progressKeeping,
+        card: card,
+        firstSectionId: card == null ? null : rows.firstOrNull?.titleId,
+        lastSectionId: card == null ? null : rows.lastOrNull?.titleId,
       ),
     );
   }
@@ -136,7 +164,7 @@ class ZikrContentViewerBloc
   Future<void> _saveProgress(ZikrContentViewerLoadedState state) async {
     if (state.progressKeeping == ProgressKeeping.none) return;
     await readingProgressStorage.write(
-      state.zikrTitle.id,
+      state.progressId,
       ReadingProgress(
         counts: {
           for (final zikr in state.azkar)
@@ -214,9 +242,12 @@ class ZikrContentViewerBloc
         sectionPath: state.sectionPath,
         focusOrder: state.focusOrder,
         progressKeeping: state.progressKeeping,
+        card: state.card,
+        firstSectionId: state.firstSectionId,
+        lastSectionId: state.lastSectionId,
       ),
     );
-    await readingProgressStorage.clear(state.zikrTitle.id);
+    await readingProgressStorage.clear(state.progressId);
   }
 
   Future<String> sharedZikrText(Zikr zikr) async {
@@ -292,20 +323,12 @@ class ZikrContentViewerBloc
     final homeState = homeBloc.state;
     if (homeState is! HomeLoadedState) return;
 
-    try {
-      final titles = homeState.readingOrder();
-      final int currentTitleIndex =
-          titles.indexWhere((e) => e.id == state.zikrTitle.id);
-      appPrint(currentTitleIndex);
-      if (currentTitleIndex == -1) return;
-      if (currentTitleIndex == titles.length - 1) {
-        showToast("هذا آخر الكتاب");
-        return;
-      }
-      add(ZikrContentViewerStartEvent(titles[currentTitleIndex + 1].id));
-    } catch (e) {
-      appPrint(e);
+    final next = homeState.shownSectionFrom(state.nextFromId, 1);
+    if (next == null) {
+      showToast("هذا آخر الكتاب");
+      return;
     }
+    add(ZikrContentViewerStartEvent(next.id));
   }
 
   Future<void> _previousTitle(
@@ -318,14 +341,17 @@ class ZikrContentViewerBloc
     final homeState = homeBloc.state;
     if (homeState is! HomeLoadedState) return;
 
-    try {
-      final titles = homeState.readingOrder();
-      final int currentTitleIndex =
-          titles.indexWhere((e) => e.id == state.zikrTitle.id);
-      if (currentTitleIndex == -1 || currentTitleIndex == 0) return;
-      add(ZikrContentViewerStartEvent(titles[currentTitleIndex - 1].id));
-    } catch (e) {
-      appPrint(e);
-    }
+    final previous = homeState.shownSectionFrom(state.previousFromId, -1);
+    if (previous == null) return;
+    add(ZikrContentViewerStartEvent(previous.id));
   }
+}
+
+/// The key a page keeps its counts and place under. A home card keeps the id
+/// its section had before #220, as it did then. An index section that kept
+/// one of those ids keeps its own apart, under the negated id, so the two
+/// pages do not overwrite each other.
+int progressIdOf(ZikrTitle title, HomeCard? card) {
+  if (card == null && homeCardById(title.id) != null) return -title.id;
+  return title.id;
 }

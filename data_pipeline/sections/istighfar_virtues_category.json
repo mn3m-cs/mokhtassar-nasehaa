@@ -1,8 +1,8 @@
 {
   "title": {
     "id": 144,
-    "order": 5,
-    "name": "الاستغفار",
+    "order": 4,
+    "name": "النوع الرابع: الاستغفار",
     "freq": "d",
     "parentId": 140,
     "nodeType": "category"

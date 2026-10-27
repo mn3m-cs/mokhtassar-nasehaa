@@ -2,8 +2,9 @@
   "title": {
     "name": "ما يقول إذا خرج من الخلاء",
     "freq": "d",
-    "order": 5,
-    "nodeType": "content"
+    "order": 3,
+    "nodeType": "content",
+    "parentId": 332
   },
   "items": [
     {

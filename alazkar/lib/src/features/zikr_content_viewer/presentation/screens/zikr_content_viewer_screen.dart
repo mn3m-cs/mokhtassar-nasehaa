@@ -1,5 +1,6 @@
 import 'package:alazkar/src/core/di/dependency_injection.dart';
 import 'package:alazkar/src/core/extension/extension_platform.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/core/storage/kv_storage.dart';
@@ -21,18 +22,29 @@ class ZikrContentViewerScreen extends StatefulWidget {
 
   final int zikrTitleId;
   final int? zikrOrder;
+
+  /// A home card to show in place of the section [zikrTitleId].
+  final HomeCard? card;
+
   const ZikrContentViewerScreen({
     super.key,
     required this.zikrTitleId,
     this.zikrOrder,
+    this.card,
   });
 
-  static Route route({required int zikrTitleId, int? zikrOrder}) {
+  /// Opens the section [zikrTitleId], or the home [card] in one page.
+  static Route route({
+    required int zikrTitleId,
+    int? zikrOrder,
+    HomeCard? card,
+  }) {
     return MaterialPageRoute(
       settings: const RouteSettings(name: routeName),
       builder: (_) => ZikrContentViewerScreen(
         zikrTitleId: zikrTitleId,
         zikrOrder: zikrOrder,
+        card: card,
       ),
     );
   }
@@ -54,8 +66,14 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
   void initState() {
     super.initState();
     _bloc = sl<ZikrContentViewerBloc>()
-      ..add(ZikrContentViewerStartEvent(widget.zikrTitleId,
-          zikrOrder: widget.zikrOrder));
+      ..add(
+        widget.card == null
+            ? ZikrContentViewerStartEvent(
+                widget.zikrTitleId,
+                zikrOrder: widget.zikrOrder,
+              )
+            : ZikrContentViewerStartEvent.card(widget.card!),
+      );
 
     if (PlatformExtension.isPhone) {
       _startShakeDetector();
@@ -326,7 +344,7 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                     icon: const Icon(Icons.flag_outlined),
                     onPressed: _showReportDialog,
                   ),
-                  BookmarkTitleButton(titleId: state.zikrTitle.id),
+                  BookmarkTitleButton(titleId: state.favouriteId),
                 ],
               ),
               body: NotificationListener<ScrollEndNotification>(
@@ -353,8 +371,8 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
                             onReport: _showReportDialog,
                           ),
                         _SectionEnd(
-                          previous: _titleAt(state.zikrTitle, -1),
-                          next: _titleAt(state.zikrTitle, 1),
+                          previous: _titleAt(state.previousFromId, -1),
+                          next: _titleAt(state.nextFromId, 1),
                           mutedColor: mutedColor,
                         ),
                       ],
@@ -369,16 +387,12 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
     );
   }
 
-  /// The section [step] places from [current] in book order, if any.
-  ZikrTitle? _titleAt(ZikrTitle current, int step) {
+  /// The shown section next to the section [currentId] in book order, after
+  /// it for [step] 1 and before it for -1, if any.
+  ZikrTitle? _titleAt(int currentId, int step) {
     final homeState = _bloc.homeBloc.state;
     if (homeState is! HomeLoadedState) return null;
-    final titles = homeState.readingOrder();
-    final index = titles.indexWhere((title) => title.id == current.id);
-    if (index == -1) return null;
-    final target = index + step;
-    if (target < 0 || target >= titles.length) return null;
-    return titles[target];
+    return homeState.shownSectionFrom(currentId, step);
   }
 }
 

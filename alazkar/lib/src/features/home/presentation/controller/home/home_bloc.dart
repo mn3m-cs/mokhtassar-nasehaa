@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:alazkar/src/core/helpers/azkar_helper.dart';
 import 'package:alazkar/src/core/helpers/bookmarks_helper.dart';
+import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/core/utils/app_print.dart';
 import 'package:alazkar/src/features/zikr_source_filter/data/models/zikr_filter.dart';
@@ -58,7 +59,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         await bookmarksDBHelper.getAllFavoriteTitles();
 
     /// Filters
-    titlesToSet = await applyFiltersOnTitles(dbTitles);
+    final filters = zikrFilterStorage.getAllFilters();
+    titlesToSet = await applyFiltersOnTitles(dbTitles, zikrFilters: filters);
 
     emit(
       HomeLoadedState(
@@ -66,8 +68,33 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         titlesToShow: titlesToSet,
         isSearching: false,
         favouriteTitlesIds: favouriteTitlesIds,
+        cardSections: await cardSectionsOf(filters),
       ),
     );
+  }
+
+  /// For each home card with a zikr the [filters] show, the index section its
+  /// first zikr sits in. A card none of whose azkar is in the database is
+  /// left out, and the log says so.
+  Future<Map<int, int>> cardSectionsOf(List<Filter> filters) async {
+    final rows = await azkarDBHelper.getContentByIds([
+      for (final card in kHomeCards) ...card.zikrIds,
+    ]);
+    final byId = {for (final zikr in rows) zikr.id: zikr};
+    final sections = <int, int>{};
+    for (final card in kHomeCards) {
+      final azkar = [
+        for (final id in card.zikrIds)
+          if (byId[id] case final zikr?) zikr,
+      ];
+      if (azkar.isEmpty) {
+        appPrint("home card ${card.id}: none of its azkar is in the database");
+        continue;
+      }
+      if (filters.getFilteredZikr(azkar).isEmpty) continue;
+      sections[card.id] = azkar.first.titleId;
+    }
+    return sections;
   }
 
   Future<List<ZikrTitle>> applyFiltersOnTitles(
@@ -198,6 +225,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(
       state.copyWith(
         titlesToShow: titleToView,
+        cardSections: await cardSectionsOf(event.filters),
       ),
     );
   }

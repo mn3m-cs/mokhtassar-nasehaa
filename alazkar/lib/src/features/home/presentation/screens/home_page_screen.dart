@@ -32,7 +32,7 @@ class HomePageScreen extends StatelessWidget {
           body: SafeArea(
             child: SectionBrowser(
               titles: state.titlesToShow,
-              header: HomeHeader(favourites: state.favouriteTitles()),
+              header: HomeHeader(favourites: state.favouriteTiles()),
               itemBuilder: (context, row) => IndexRow(row: row),
             ),
           ),

@@ -12,7 +12,7 @@ class AzkarDBHelper {
   /* ************* Variables ************* */
 
   static const String dbName = "Al-Azkar.db";
-  static const int dbVersion = 166;
+  static const int dbVersion = 167;
 
   /* ************* Singleton Constructor ************* */
 
@@ -118,6 +118,24 @@ class AzkarDBHelper {
         return Zikr.fromMap(maps[i]);
       }),
     );
+  }
+
+  /// The azkar with [ids], in the order of [ids].
+  Future<List<Zikr>> getContentByIds(List<int> ids) async {
+    if (ids.isEmpty) return [];
+    final Database db = await database;
+
+    final List<Map<String, dynamic>> maps = await db.rawQuery(
+      'SELECT * FROM contents WHERE id IN '
+      '(${List.filled(ids.length, '?').join(',')})',
+      ids,
+    );
+    final byId = {for (final map in maps) map['id'] as int: Zikr.fromMap(map)};
+
+    return flattenZikrBodyText([
+      for (final id in ids)
+        if (byId[id] case final zikr?) zikr,
+    ]);
   }
 
   Future<List<Zikr>> flattenZikrBodyText(List<Zikr> contents) {

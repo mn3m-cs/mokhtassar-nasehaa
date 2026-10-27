@@ -1,9 +1,10 @@
 {
   "title": {
-    "name": "ما يقول إذا أراد دخول الخلاء",
+    "name": "ما يقول إذا أرادَ دخولَ الخلاء",
     "freq": "d",
-    "order": 4,
-    "nodeType": "content"
+    "order": 2,
+    "nodeType": "content",
+    "parentId": 332
   },
   "items": [
     {

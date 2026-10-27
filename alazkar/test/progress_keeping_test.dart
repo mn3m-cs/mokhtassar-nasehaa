@@ -29,10 +29,32 @@ void main() {
 
   test('the fixed ids still name the sections and categories they stand for',
       () {
-    expect(kDailyTitleIds.map(nameOf).toSet(),
-        {'أذكار الصباح', 'أذكار المساء', 'أذكار النوم'});
-    expect(kKeptCategoryIds.map(nameOf).toSet(),
-        {'حول الكتاب', 'الأذكار المطلقة', 'الأدعية المطلقة'});
+    expect(kDailyTitleIds.map(nameOf).toSet(), {
+      'أولًا: أذكار الصَّباح',
+      'ثانيًا: أذكارُ المساء',
+      'ما يقول إذا أراد النوم',
+    });
+    const fourteenthKind = 'النوع الرابعَ عَشَرَ: أدعية القرآن الكريم '
+        'والسُّنَّة الصحيحة (الأدعية المطلقة)';
+    expect(kKeptCategoryIds.map(nameOf).toSet(), {
+      'حول الكتاب',
+      'أنواع وصِيَغ الأوراد المأثورة',
+      fourteenthKind,
+      'جامعُ أدعيةِ القرآنِ المجيدِ والسُّنَّةِ الصحيحة (الأدعية المُطلقة)',
+    });
+  });
+
+  test(
+      'the second part of the book, from its first line to its end, keeps '
+      'everything', () {
+    final roots = titles.where((title) => title.parentId == null).toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
+    final secondPart = roots
+        .skipWhile((title) => title.name != 'ما هي الأذكار المطلقة؟')
+        .map((title) => title.id)
+        .toSet();
+
+    expect(secondPart, {...kKeptTitleIds, ...kKeptCategoryIds}..remove(99));
   });
 
   test('every section under the kept categories, at any depth, is kept',
@@ -46,6 +68,7 @@ void main() {
       SELECT id FROM under
     ''');
     final keptIds = kept.map((row) => row['id']! as int).toSet();
+    keptIds.addAll(kKeptTitleIds);
     final classified = {
       for (final title in titles)
         if (progressKeepingOf(title, titles) == ProgressKeeping.always)

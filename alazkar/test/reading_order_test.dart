@@ -14,6 +14,7 @@ void main() {
         titlesToShow: shown ?? titles,
         isSearching: false,
         favouriteTitlesIds: const [],
+        cardSections: const {},
       );
 
   test('next section follows the book, not the local order numbers', () async {
@@ -26,8 +27,8 @@ void main() {
 
     final ids = stateOf(titles).readingOrder().map((t) => t.id).toList();
 
-    expect(ids.take(6), [171, 102, 104, 1, 2, 3]);
-    expect(ids.indexOf(68), ids.indexOf(67) + 1,
+    expect(ids.take(8), [171, 102, 104, 197, 198, 1, 2, 3]);
+    expect(ids.indexOf(68), ids.indexOf(330) + 1,
         reason: "p242 prints the gathering's dhikr right after the sunna's");
     expect(ids.toSet().length, ids.length);
     expect(
@@ -47,18 +48,17 @@ void main() {
       titles: titles,
       titlesToShow: titles,
       isSearching: false,
-      favouriteTitlesIds: const [49, 18, 1, 16, 2, 4],
+      favouriteTitlesIds: const [74, 209, 9, 197],
+      cardSections: const {},
     );
 
     expect(
-      state.favouriteTitles().map((t) => t.name),
+      state.favouriteTiles().map((t) => t.name),
       [
-        'أذكار الصباح',
-        'أذكار المساء',
-        'أذكار الاستيقاظ',
-        'ما يقول بعد الصلاة',
-        'أذكار النوم',
-        'أذكار المسافر',
+        'ذِكرُ الله عَزَّ وَجَلَّ في الصباح والمساء من أشرف الوظائف اليومية الراتبة',
+        'صِفَةُ الأذان',
+        'ما يقول إذا سَمِعَ المؤذِّنَ',
+        'صِيَغُ التَّسبيحِ في القُرآنِ والسُّنَّة',
       ],
     );
   });
