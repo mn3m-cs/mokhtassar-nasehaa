@@ -1,13 +1,15 @@
 {
   "title": {
+    "id": 36,
+    "order": 5,
     "name": "ما يقول إذا غَلَبَه أمرٌ",
     "freq": "d",
-    "order": 5,
-    "nodeType": "content",
-    "parentId": 162
+    "parentId": 162,
+    "nodeType": "content"
   },
   "items": [
     {
+      "id": 242,
       "body": "قَدَّرَ اللهُ (أو: قَدَرُ اللهِ)، وما شاءَ فَعَلَ",
       "count": 1,
       "hokm": "",

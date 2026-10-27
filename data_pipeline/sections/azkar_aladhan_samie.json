@@ -4,8 +4,8 @@
     "order": 1,
     "name": "صِفَةُ الأذان",
     "freq": "d",
-    "nodeType": "content",
-    "parentId": 336
+    "parentId": 336,
+    "nodeType": "content"
   },
   "items": [
     {

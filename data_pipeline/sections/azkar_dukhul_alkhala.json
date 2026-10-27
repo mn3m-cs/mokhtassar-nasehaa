@@ -1,13 +1,15 @@
 {
   "title": {
+    "id": 94,
+    "order": 2,
     "name": "ما يقول إذا أرادَ دخولَ الخلاء",
     "freq": "d",
-    "order": 2,
-    "nodeType": "content",
-    "parentId": 332
+    "parentId": 332,
+    "nodeType": "content"
   },
   "items": [
     {
+      "id": 889,
       "body": "١- باسم الله",
       "count": 1,
       "hokm": "",
@@ -15,6 +17,7 @@
       "fadl": ""
     },
     {
+      "id": 890,
       "body": "٢- اللهم إنِّي أعوذُ بِكَ من الخُبُثِ والخبائث",
       "count": 1,
       "hokm": "",

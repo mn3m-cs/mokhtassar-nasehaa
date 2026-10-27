@@ -1,13 +1,15 @@
 {
   "title": {
+    "id": 6,
+    "order": 1,
     "name": "ما يقول إذا لَبِسَ ثَوبَه",
     "freq": "d",
-    "order": 1,
-    "nodeType": "content",
-    "parentId": 334
+    "parentId": 334,
+    "nodeType": "content"
   },
   "items": [
     {
+      "id": 63,
       "body": "الحمدُ لله الذي كساني هذا، ورَزَقَنِيه من غير حَولٍ مني ولا قوة",
       "count": 1,
       "hokm": "",
