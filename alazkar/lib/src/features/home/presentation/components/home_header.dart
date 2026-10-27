@@ -112,7 +112,9 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final parent = tile.parent;
     return Material(
       color: homeCardColor(colorScheme),
       borderRadius: BorderRadius.circular(18),
@@ -132,15 +134,29 @@ class _Tile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Icon(icon, color: colorScheme.primary, size: 28),
-              Text(
-                tile.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  height: 1.3,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (parent != null)
+                    Text(
+                      parent.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: .65),
+                      ),
+                    ),
+                  Text(
+                    tile.name,
+                    maxLines: parent == null ? 2 : 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

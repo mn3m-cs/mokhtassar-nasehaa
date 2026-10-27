@@ -15,8 +15,18 @@ final class HomeTile extends Equatable {
   final HomeCard? card;
   final ZikrTitle? title;
 
-  const HomeTile.card(HomeCard this.card) : title = null;
-  const HomeTile.section(ZikrTitle this.title) : card = null;
+  /// The section's parent, named on the tile because the section's own name
+  /// does not say where it is (#230).
+  final ZikrTitle? parent;
+
+  /// The sections whose name alone does not say where they are: the eleven
+  /// wirds of «جامع أدعية القرآن المجيد والسنة الصحيحة» (#230).
+  static const ambiguousTitleIds = {82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 93};
+
+  const HomeTile.card(HomeCard this.card)
+      : title = null,
+        parent = null;
+  const HomeTile.section(ZikrTitle this.title, {this.parent}) : card = null;
 
   String get name => card?.name ?? title!.name;
 
@@ -24,7 +34,7 @@ final class HomeTile extends Equatable {
   int get id => card?.id ?? title!.id;
 
   @override
-  List<Object?> get props => [card?.id, title];
+  List<Object?> get props => [card?.id, title, parent];
 }
 
 final class HomeLoadedState extends HomeState {
@@ -60,7 +70,14 @@ final class HomeLoadedState extends HomeState {
       }
       if (shownIds.contains(title.id) &&
           favouriteTitlesIds.contains(title.id)) {
-        tiles.add(HomeTile.section(title));
+        tiles.add(
+          HomeTile.section(
+            title,
+            parent: HomeTile.ambiguousTitleIds.contains(title.id)
+                ? titles.where((t) => t.id == title.parentId).firstOrNull
+                : null,
+          ),
+        );
       }
     }
     return tiles;
