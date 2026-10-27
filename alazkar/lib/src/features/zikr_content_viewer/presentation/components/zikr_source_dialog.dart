@@ -1,3 +1,4 @@
+import 'package:alazkar/src/core/extension/extension_string.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +18,7 @@ Future<void> showZikrSourceDialog(BuildContext context, Zikr zikr) {
         content: SingleChildScrollView(
           child: Text(
             zikr.source,
+            semanticsLabel: zikr.source.honorificsAsWords,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
           ),

@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:alazkar/src/core/constants/const.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
 import 'package:alazkar/src/features/share_as_image/data/models/shareable_image_card_settings.dart';
@@ -60,6 +61,7 @@ class ShareableImageCard extends StatelessWidget {
     final mainTextStyle = TextStyle(
       fontSize: 150,
       fontFamily: settings.mainFontFamily,
+      fontFamilyFallback: kGlyphFallback,
       color: textColor,
     );
 
@@ -67,6 +69,7 @@ class ShareableImageCard extends StatelessWidget {
       fontSize: 35,
       color: secondaryColor,
       fontFamily: settings.secondaryFontFamily,
+      fontFamilyFallback: kGlyphFallback,
     );
 
     return Container(

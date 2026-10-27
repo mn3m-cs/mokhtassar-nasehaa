@@ -66,9 +66,12 @@ extension ZikrExt on Zikr {
         );
       } else {
         final containAyah = body.contains("﴿");
+        final text = enableDiacritics ? line : line.removeDiacritics;
+        final words = text.honorificsAsWords;
         spans.add(
           TextSpan(
-            text: enableDiacritics ? line : line.removeDiacritics,
+            text: text,
+            semanticsLabel: words == text ? null : words,
             style: containAyah
                 ? TextStyle(
                     fontFamily: containAyah ? "Uthmanic2" : "Kitab",

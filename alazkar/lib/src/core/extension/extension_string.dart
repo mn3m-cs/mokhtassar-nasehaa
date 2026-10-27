@@ -8,6 +8,15 @@ extension StringExtension on String {
     );
   }
 
+  /// The text with each honorific glyph written out in words.
+  String get honorificsAsWords {
+    var text = this;
+    kHonorificWords.forEach((glyph, words) {
+      text = text.replaceAll(glyph, words);
+    });
+    return text;
+  }
+
   String get removeTextInBrackets {
     final RegExp regExp = RegExp(r'\(.*?\)');
     return replaceAll(regExp, "");

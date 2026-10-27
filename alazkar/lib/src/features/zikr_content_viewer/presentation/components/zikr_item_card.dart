@@ -1,3 +1,4 @@
+import 'package:alazkar/src/core/extension/extension_string.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/features/theme/presentation/controller/cubit/theme_cubit.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_content_builder.dart';
@@ -50,6 +51,7 @@ class ZikrItemCard extends StatelessWidget {
           alignment: AlignmentDirectional.centerEnd,
           child: Text(
             zikr.body,
+            semanticsLabel: zikr.body.honorificsAsWords,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontFamily: themeState.zikrFont.family,
@@ -90,6 +92,7 @@ class ZikrItemCard extends StatelessWidget {
                 padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 12, 0),
                 child: Text(
                   zikr.fadl,
+                  semanticsLabel: zikr.fadl.honorificsAsWords,
                   textAlign: TextAlign.start,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     height: 1.7,
@@ -153,6 +156,7 @@ class ZikrItemCard extends StatelessWidget {
                           const EdgeInsetsDirectional.fromSTEB(0, 8, 10, 0),
                       child: Text(
                         zikr.fadl,
+                        semanticsLabel: zikr.fadl.honorificsAsWords,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           height: 1.7,
