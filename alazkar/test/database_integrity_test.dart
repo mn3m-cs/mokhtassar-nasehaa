@@ -332,7 +332,7 @@ void main() {
         SUM("order" IN (20, 23) AND body = 'أو: اللهُ أكبرُ [٣٣ مرة]') AS tasbih_alternatives,
         SUM("order" = 17 AND count = 34) AS first_takbir,
         SUM("order" = 24 AND count = 34) AS third_tasbih,
-        SUM("order" = 26 AND source LIKE '%[موقوفٌ على عائشة رضي الله عنها]%') AS stopped_report,
+        SUM("order" = 26 AND source LIKE '%[موقوفٌ على عائشة ﵂]%') AS stopped_report,
         SUM("order" = 27 AND body LIKE '١٧- يقرأ سورة:%QuranText[(109:1:6)]%حتى يخْتِمَها.') AS kafirun,
         SUM(hokm != '') AS graded,
         SUM(source LIKE '%(ص7_)%' OR source LIKE '%(ص8_)%') AS old_edition_pages
@@ -736,7 +736,7 @@ void main() {
             AND source LIKE '%حاشية: المراد بالاستغفار%وَثُمَّ للترتيبِ بانفصالِ».')
           AS repentance_footnote,
         SUM(titleId = 121 AND "order" = 2 AND count = 0
-            AND body LIKE 'قال الإمام ابن العربي رحمه الله:%'
+            AND body LIKE 'قال الإمام ابن العربي ﵀:%'
             AND source LIKE '%حاشية: «عارضة الأحوذي» (٢/ ١٩٧).') AS ibn_alarabi,
         SUM(titleId = 121 AND "order" = 3 AND body = 'تنبيهان:') AS two_notices_heading,
         SUM(titleId = 121 AND "order" IN (4, 5) AND count = 0
@@ -796,7 +796,7 @@ void main() {
          WHERE titleId = 160 AND body LIKE 'وقال زكريا عليه السلام%') AS zakariyya,
         (SELECT search LIKE '%الدعاء هو العبادة%'
          FROM former_contents WHERE id = 1178) AS worship_hadith,
-        (SELECT body LIKE 'وعنه رضي الله عنه%'
+        (SELECT body LIKE 'وعنه ﵁%'
          FROM former_contents WHERE id = 1183) AS hadith_opens_as_printed,
         (SELECT source LIKE '%حاشية: وذلك لأنه إما قانط%'
              AND source NOT LIKE '%فيض القدير%'
@@ -816,7 +816,7 @@ void main() {
       ORDER BY "order"
     ''');
 
-    expect(await database.getVersion(), 167);
+    expect(await database.getVersion(), 168);
     expect(titleCount.single, {'count': 295});
     expect(foreignKeyViolations, isEmpty);
     expect(
@@ -1465,7 +1465,7 @@ void main() {
           1126, 1127, 1128, 1129, 1130, 1131, 1133, 1134, 1135, 1136, 1137,
           1138)) AS hadiths_not_printed_here,
         (SELECT COUNT(*) FROM former_contents WHERE titleId = 153
-          AND body LIKE 'وعن عائشةَ رضي الله عنها قال%') AS aisha_corrected,
+          AND body LIKE 'وعن عائشةَ ﵂ قال%') AS aisha_corrected,
         (SELECT COUNT(*) FROM former_contents WHERE titleId = 154
           AND body LIKE '%[الكهف: ٤٦]%') AS kahf_reference_corrected,
         (SELECT COUNT(*) FROM former_contents WHERE titleId = 154
@@ -2140,7 +2140,7 @@ void main() {
         (SELECT COUNT(*) FROM former_contents WHERE id = 454
            AND search LIKE '%اهدني لما اختلف فيه من الحق بإذنك%') AS fitna_dua_whole,
         (SELECT COUNT(*) FROM former_contents WHERE id = 458
-           AND source LIKE '%[موقوف عن ابن عمر رضي الله عنهما – ضعيف]%') AS mawquf_in_source,
+           AND source LIKE '%[موقوف عن ابن عمر ﵄ – ضعيف]%') AS mawquf_in_source,
         (SELECT COUNT(*) FROM former_contents WHERE id = 463
            AND search LIKE '%على كثير من خلقه تفضيلا') AS min_khalqihi,
         (SELECT COUNT(*) FROM former_contents WHERE titleId = 67
@@ -2348,7 +2348,7 @@ void main() {
     expect(previous[12]['body'], contains('وخليلِه محمدٍ'));
 
     const headings = [
-      'فضائل ذكر الله عز وجل',
+      'فضائل ذكر الله ﷿',
       'لا بُدَّ من تَلَفُّظِ اللِّسانِ بالذِّكر:',
       'الأدعية الراتبة توقيفيَّة لا يُزاد فيها، ولا يُنقَص منها',
       'من نصوص العلماء في الحثِّ على المأثور وعدم الابتداع في الأذكار والأدعية',
@@ -2438,7 +2438,7 @@ void main() {
       morningIntro.map((row) => row['body']),
       [
         'قَالَ اللهُ تعالى:\nQuranText[(33:41:42)]',
-        'وقال عز وجل:\nQuranText[(7:205:205)]',
+        'وقال ﷿:\nQuranText[(7:205:205)]',
         'وقال سبحانه:\nQuranText[(30:17:17)]',
       ],
       reason: 'p29 quotes these verses whole',
@@ -2841,8 +2841,7 @@ void main() {
       'first_dua': 1,
       'isti_adha_footnote': 1,
       'fatiha': '٣-\nQuranText[(1:1:7)]',
-      'mawquf_source':
-          'الورد الأول. [موقوفٌ عن ابن عمر رضي الله عنهما]. (ص386)',
+      'mawquf_source': 'الورد الأول. [موقوفٌ عن ابن عمر ﵄]. (ص386)',
       'nos_49_and_223': 2,
       'typo_corrected': 1,
       'no_237': '3,3',
@@ -2877,9 +2876,9 @@ void main() {
       (id: 1599, page: 152, misprint: 'أشرنا إليه ', correct: 'أشرنا إليها'),
       (id: 1599, page: 154, misprint: 'المرضي', correct: 'المرضى يتحسنون'),
       (id: 1496, page: 289, misprint: 'ثلثا اليل', correct: 'ثلثا الليل'),
-      (id: 1116, page: 298, misprint: 'عنه قال', correct: 'عنها قال'),
+      (id: 1116, page: 298, misprint: '﵁ قال', correct: '﵂ قال'),
       (id: 1751, page: 309, misprint: '[الكهف: ٤٩]', correct: '[الكهف: ٤٦]'),
-      (id: 1123, page: 312, misprint: 'عمر رضي', correct: 'عمرو رضي'),
+      (id: 1123, page: 312, misprint: 'عمر ﵄', correct: 'عمرو ﵄'),
       (id: 1759, page: 313, misprint: 'أقريءْ', correct: 'أقرئْ'),
       (id: 1826, page: 329, misprint: '[الفاتحة: ١]', correct: '[الفاتحة: ٢]'),
       (
@@ -2978,7 +2977,7 @@ void main() {
     final unprinted = await database.rawQuery('''
       SELECT id FROM former_contents
       WHERE titleId IN (4, 94, 95, 5, 6, 7)
-        AND (source LIKE '%رضي الله عنه%' OR source LIKE '%البخاري%'
+        AND (source GLOB '*[﵁﵂﵃﵄]*' OR source LIKE '%البخاري%'
              OR source LIKE '%الترمذي%' OR source LIKE '%النور%'
              OR source LIKE '%(صحيح)%' OR source LIKE '%(حسن)%'
              OR source LIKE '%ص 34%' OR body LIKE 'بسم الله%')
@@ -3193,15 +3192,20 @@ void main() {
     }
 
     final before = await database.rawQuery('SELECT * FROM contents');
-    await database.execute(
-      File('../data_pipeline/migrations/166_harakat_from_book.sql')
-          .readAsStringSync(),
-    );
+    // Migration 168 writes the honorifics of the same rows as glyphs (#213).
+    for (final migration in [
+      '166_harakat_from_book.sql',
+      '168_honorific_glyphs.sql',
+    ]) {
+      await database.execute(
+        File('../data_pipeline/migrations/$migration').readAsStringSync(),
+      );
+    }
     expect(
       await database.rawQuery('SELECT * FROM contents'),
       before,
       reason: 'migration 166 is applied to the bundled database: running '
-          'it again changes no row',
+          'it again, and 168 after it, changes no row',
     );
   });
 }
