@@ -72,9 +72,10 @@ class ZikrContentViewerBloc
     /// get all zikr
     final card = event.card;
     final List<Zikr> azkarToSet;
-    final rows = card == null
+    final loadedRows = card == null
         ? await azkarDBHelper.getContentByTitleId(event.zikrTitleId)
         : await azkarDBHelper.getContentByIds(card.zikrIds);
+    final rows = card?.visibleAzkar(loadedRows) ?? loadedRows;
     final azkarFromDB = rows
         .map(
           (e) => showTextInBrackets || e.body.contains("QuranText")

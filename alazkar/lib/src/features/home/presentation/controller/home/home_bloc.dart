@@ -83,10 +83,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final byId = {for (final zikr in rows) zikr.id: zikr};
     final sections = <int, int>{};
     for (final card in kHomeCards) {
-      final azkar = [
+      final azkar = card.visibleAzkar([
         for (final id in card.zikrIds)
           if (byId[id] case final zikr?) zikr,
-      ];
+      ]);
       if (azkar.isEmpty) {
         appPrint("home card ${card.id}: none of its azkar is in the database");
         continue;

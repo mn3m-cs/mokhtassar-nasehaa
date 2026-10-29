@@ -79,6 +79,7 @@ Future<void> drawScreenPicture(
   WidgetTester tester, {
   required Widget screen,
   required String path,
+  Future<void> Function(WidgetTester tester)? beforeCapture,
   Size size = const Size(412, 915),
   double pixelRatio = 2.625,
 }) async {
@@ -88,7 +89,15 @@ Future<void> drawScreenPicture(
 
   final key = GlobalKey();
   await tester.pumpWidget(RepaintBoundary(key: key, child: screen));
-  await tester.pumpAndSettle();
+  if (beforeCapture == null) {
+    await tester.pumpAndSettle();
+  } else {
+    // A screen that loads first shows a spinner, which never settles; the
+    // hook waits for the load, and the screen settles after it.
+    await tester.pump();
+    await beforeCapture(tester);
+    await tester.pumpAndSettle();
+  }
 
   await tester.runAsync(() async {
     final boundary =

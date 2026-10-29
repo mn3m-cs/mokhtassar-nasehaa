@@ -17,6 +17,7 @@ import 'package:alazkar/src/features/zikr_content_viewer/presentation/screens/zi
 import 'package:alazkar/src/features/zikr_source_filter/data/repository/zikr_filter_storage.dart';
 import 'package:alazkar/src/features/zikr_source_filter/presentation/controller/cubit/zikr_source_filter_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -38,7 +39,7 @@ Zikr _zikr(int id, String body, int count) => Zikr(
       titleId: 1,
       order: id,
       body: body,
-      source: '',
+      source: 'مرجع الذكر',
       fadl: '',
       hokm: '',
       count: count,
@@ -56,6 +57,10 @@ final _azkar = [
 class _FakeAzkarDB implements AzkarDBHelper {
   @override
   Future<List<Zikr>> getContentByTitleId(int id) async => _azkar;
+
+  @override
+  Future<Zikr> getContentById(int id) async =>
+      _azkar.firstWhere((zikr) => zikr.id == id);
 
   @override
   Future<ZikrTitle> getTitlesById(int id) async => _morning;
@@ -76,17 +81,34 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  late List<String> clipboard;
 
   setUp(() {
+    clipboard = [];
     messenger.setMockMethodCallHandler(
       VolumeButtonManager.channel,
       (_) async => null,
+    );
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        clipboard.add((call.arguments as Map)['text'] as String);
+      }
+      return null;
+    });
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('PonnamKarthik/fluttertoast'),
+      (_) async => true,
     );
   });
 
   tearDown(() async {
     await sl.reset();
     messenger.setMockMethodCallHandler(VolumeButtonManager.channel, null);
+    messenger.setMockMethodCallHandler(SystemChannels.platform, null);
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('PonnamKarthik/fluttertoast'),
+      null,
+    );
   });
 
   /// The reader screen itself, wired as the app wires it, on the section
@@ -156,12 +178,36 @@ void main() {
       (tester) async {
     await openReader(tester);
 
-    await tester.tap(find.byTooltip('خيارات الذكر').at(2));
+    expect(find.byTooltip('خيارات الذكر'), findsNWidgets(2));
+    await tester.longPress(
+      find.text('فائدة تُقرأ ولا تُعد', findRichText: true),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('الإبلاغ عن خطأ'));
     await tester.pumpAndSettle();
 
     expect(inDialog('فائدة تُقرأ ولا تُعد'), findsOneWidget);
+  });
+
+  testWidgets('a passage long press opens all actions and copies to clipboard',
+      (tester) async {
+    await openReader(tester);
+
+    await tester.longPress(
+      find.text('فائدة تُقرأ ولا تُعد', findRichText: true),
+    );
+    await tester.pumpAndSettle();
+
+    for (final action in ['المصدر', 'مشاركة', 'نسخ', 'الإبلاغ عن خطأ']) {
+      expect(find.text(action), findsOneWidget);
+    }
+
+    await tester.tap(find.text('نسخ'));
+    await tester.pumpAndSettle();
+    expect(clipboard, hasLength(1));
+    expect(clipboard.single, contains('فائدة تُقرأ ولا تُعد'));
+    // Let the copy toast's timer run out before the test ends.
+    await tester.pump(const Duration(seconds: 2));
   });
 
   testWidgets('the app bar flag reports the zikr in view', (tester) async {
