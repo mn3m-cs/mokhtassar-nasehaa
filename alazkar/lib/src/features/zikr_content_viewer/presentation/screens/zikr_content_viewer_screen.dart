@@ -1,21 +1,17 @@
 import 'package:alazkar/src/core/di/dependency_injection.dart';
-import 'package:alazkar/src/core/extension/extension_platform.dart';
 import 'package:alazkar/src/core/models/home_card.dart';
 import 'package:alazkar/src/core/models/zikr.dart';
 import 'package:alazkar/src/core/models/zikr_title.dart';
-import 'package:alazkar/src/core/storage/kv_storage.dart';
 import 'package:alazkar/src/core/widgets/keep_screen_on.dart';
 import 'package:alazkar/src/core/widgets/loading.dart';
 import 'package:alazkar/src/features/home/presentation/components/bookmark_title_button.dart';
 import 'package:alazkar/src/features/home/presentation/controller/home/home_bloc.dart';
 import 'package:alazkar/src/features/settings/presentation/controller/cubit/settings_cubit.dart';
-import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/shake_tutorial_dialog.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_item_card.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_report_dialog.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/controller/bloc/zikr_content_viewer_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shake/shake.dart';
 
 class ZikrContentViewerScreen extends StatefulWidget {
   static const String routeName = "ZikrContentViewer";
@@ -55,7 +51,6 @@ class ZikrContentViewerScreen extends StatefulWidget {
 }
 
 class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
-  ShakeDetector? _shakeDetector;
   bool _dialogOpen = false;
   late final ZikrContentViewerBloc _bloc;
   final ScrollController _scrollController = ScrollController();
@@ -74,62 +69,18 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
               )
             : ZikrContentViewerStartEvent.card(widget.card!),
       );
-
-    if (PlatformExtension.isPhone) {
-      _startShakeDetector();
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showShakeTutorialIfNeeded();
-      });
-    }
-  }
-
-  /// The package keeps its shake count after it fires, so one more shake
-  /// would fire again; a fresh detector makes every report take two shakes.
-  void _startShakeDetector() {
-    _shakeDetector?.stopListening();
-    _shakeDetector = ShakeDetector.autoStart(
-      minimumShakeCount: 2,
-      shakeThresholdGravity: 3.0,
-      onPhoneShake: (event) {
-        _startShakeDetector();
-        _showReportDialog();
-      },
-    );
   }
 
   @override
   void dispose() {
-    _shakeDetector?.stopListening();
     _scrollController.dispose();
     _bloc.close();
     super.dispose();
   }
 
-  Future<void> _showShakeTutorialIfNeeded() async {
-    final storage = sl<KVStorage>();
-    const String key = 'has_shown_shake_tutorial';
-    const String opensKey = 'viewer_open_count';
-    final bool hasShown = storage.read<bool>(key) ?? false;
-    if (hasShown) return;
-    final int opens = (storage.read<int>(opensKey) ?? 0) + 1;
-    await storage.write(opensKey, opens);
-
-    /// A first-time reader came to read; the tip waits for the third visit.
-    if (opens >= 3) {
-      if (!mounted) return;
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const ShakeTutorialDialog(),
-      );
-      await storage.write(key, true);
-    }
-  }
-
-  /// The one way into the report dialog, for a shake, the app bar and a
-  /// card's menu alike, so only one dialog is ever open. A shake and the app
-  /// bar report the zikr in view; a card's menu reports its own [target].
+  /// The one way into the report dialog, for the app bar and a card's menu
+  /// alike, so only one dialog is ever open. The app bar reports the zikr in
+  /// view; a card's menu reports its own [target].
   void _showReportDialog([Zikr? target]) {
     if (!mounted || _dialogOpen) return;
 
@@ -155,7 +106,6 @@ class _ZikrContentViewerScreenState extends State<ZikrContentViewerScreen> {
         setState(() {
           _dialogOpen = false;
         });
-        _startShakeDetector();
       }
     });
   }
