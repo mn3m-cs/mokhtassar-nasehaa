@@ -5,6 +5,7 @@ import 'package:alazkar/src/features/theme/presentation/controller/cubit/theme_c
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/components/zikr_item_card.dart';
 import 'package:alazkar/src/features/zikr_content_viewer/presentation/controller/bloc/zikr_content_viewer_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -69,10 +70,24 @@ void main() {
     expect(find.byTooltip('خيارات الذكر'), findsNothing);
   });
 
-  testWidgets('a passage of ordinary style keeps its actions menu',
+  testWidgets('an ordinary passage hides the button and exposes long press',
       (tester) async {
+    final semantics = tester.ensureSemantics();
     await pumpPassage(tester, style: '');
 
-    expect(find.byTooltip('خيارات الذكر'), findsOneWidget);
+    expect(find.byTooltip('خيارات الذكر'), findsNothing);
+    final passageSemantics = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics && widget.properties.hint == 'خيارات الفقرة',
+    );
+    expect(passageSemantics, findsOneWidget);
+    expect(
+      tester
+          .getSemantics(passageSemantics)
+          .getSemanticsData()
+          .hasAction(SemanticsAction.longPress),
+      isTrue,
+    );
+    semantics.dispose();
   });
 }

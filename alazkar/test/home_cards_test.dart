@@ -146,14 +146,51 @@ void main() {
 
   for (final before in _before) {
     test(
-        '«${before.name}» opens the ${before.zikrIds.length} azkar it opened '
-        'at 2688f25, in their order', () async {
+        '«${before.name}» opens its 2688f25 list after leading prose is '
+        'removed by the card rule', () async {
       final (_, page) = await open(homeCardById(before.id)!);
+      final oldRows = await azkarDB.getContentByIds(before.zikrIds);
+      final firstZikr = oldRows.indexWhere(
+        (zikr) => zikr.count > 0 || zikr.body.trimRight().endsWith(':'),
+      );
+      final expected = before.id == 176
+          ? oldRows
+          : oldRows.sublist(firstZikr == -1 ? oldRows.length : firstZikr);
 
       expect(page.zikrTitle.name, before.name);
-      expect(page.azkar.map((zikr) => zikr.id), before.zikrIds);
+      expect(
+          page.azkar.map((zikr) => zikr.id), expected.map((zikr) => zikr.id));
     });
   }
+
+  test('every zikr-based card starts with a zikr or its colon introduction',
+      () async {
+    for (final card in kHomeCards.where((card) => card.startsAtFirstZikr)) {
+      final page = (await open(card)).$2;
+      expect(page.azkar, isNotEmpty, reason: card.name);
+      expect(
+        page.isCounted(page.azkar.first) ||
+            page.azkar.first.body.trimRight().endsWith(':'),
+        isTrue,
+        reason: card.name,
+      );
+    }
+  });
+
+  test('the prose removed from morning and evening cards stays in the index',
+      () async {
+    final morningIntroduction = await azkarDB.getContentByTitleId(197);
+    final timingIntroduction = await azkarDB.getContentByTitleId(198);
+
+    expect(
+      morningIntroduction.map((zikr) => zikr.id),
+      containsAll([1228, 1229, 1230, 1231]),
+    );
+    expect(
+      timingIntroduction.map((zikr) => zikr.id),
+      containsAll([1232, 1235]),
+    );
+  });
 
   test('a card keeps the progress its section kept, under its old id',
       () async {

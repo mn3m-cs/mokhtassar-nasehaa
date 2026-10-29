@@ -1,3 +1,5 @@
+import 'package:alazkar/src/core/models/zikr.dart';
+
 /// A home card as it was before the navigation became the book's index
 /// (#220): its old name, and the azkar it opened, in their old order. The
 /// index split some of these sections and renamed them all; a card still
@@ -15,12 +17,30 @@ class HomeCard {
   /// saved its section before #220.
   final bool isDefault;
 
+  /// Whether opening the card skips prose before its first zikr. A prose
+  /// line ending in a colon is the instruction for the zikr after it, so it
+  /// starts the card instead. Prose-only cards opt out.
+  final bool startsAtFirstZikr;
+
   const HomeCard(
     this.id,
     this.name,
     this.zikrIds, {
     this.isDefault = true,
+    this.startsAtFirstZikr = true,
   });
+
+  /// The part of [azkar] shown when this card opens.
+  ///
+  /// The boundary is derived from the current database rows rather than a
+  /// list of ids, so a new introductory passage is skipped automatically.
+  List<Zikr> visibleAzkar(List<Zikr> azkar) {
+    if (!startsAtFirstZikr) return azkar;
+    final firstZikr = azkar.indexWhere(
+      (zikr) => zikr.count > 0 || zikr.body.trimRight().endsWith(':'),
+    );
+    return azkar.sublist(firstZikr == -1 ? azkar.length : firstZikr);
+  }
 
   /// The card's row in `favourite_titles`: its negated id, because the index
   /// section that kept the id, if any, is another favourite.
@@ -81,6 +101,7 @@ const List<HomeCard> kHomeCards = [
       1773,
     ],
     isDefault: false,
+    startsAtFirstZikr: false,
   ),
 ];
 

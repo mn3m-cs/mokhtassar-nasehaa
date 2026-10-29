@@ -67,41 +67,58 @@ class ZikrItemCard extends StatelessWidget {
       // card: no background, set as a paragraph. Its lines start at the
       // right and are not justified: Flutter justifies Arabic only by
       // widening the spaces, which leaves holes in short lines of long words.
-      return Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(24, 4, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: _ActionsMenu(
-                  zikr: zikr, color: mutedColor, onReport: onReport),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 12),
-              child: ZikrContentBuilder(
-                zikr: zikr,
-                enableDiacritics: true,
-                fontSize: themeState.fontSize,
-                fontFamily: themeState.zikrFont.family,
-                textAlign: TextAlign.start,
-              ),
-            ),
-            if (zikr.fadl.isNotEmpty)
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 12, 0),
-                child: Text(
-                  zikr.fadl,
-                  semanticsLabel: zikr.fadl.honorificsAsWords,
-                  textAlign: TextAlign.start,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.7,
-                    color: colorScheme.primary,
+      Offset? pressPosition;
+      return Builder(
+        builder: (passageContext) {
+          void openMenu() => _showActionsMenu(
+                passageContext,
+                zikr,
+                onReport,
+                position: pressPosition,
+              );
+          return Semantics(
+            hint: 'خيارات الفقرة',
+            onLongPress: openMenu,
+            child: Listener(
+              onPointerDown: (event) => pressPosition = event.position,
+              onPointerUp: (_) => pressPosition = null,
+              onPointerCancel: (_) => pressPosition = null,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                excludeFromSemantics: true,
+                onLongPress: openMenu,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(24, 4, 24, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ZikrContentBuilder(
+                        zikr: zikr,
+                        enableDiacritics: true,
+                        fontSize: themeState.fontSize,
+                        fontFamily: themeState.zikrFont.family,
+                        textAlign: TextAlign.start,
+                      ),
+                      if (zikr.fadl.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(top: 8),
+                          child: Text(
+                            zikr.fadl,
+                            semanticsLabel: zikr.fadl.honorificsAsWords,
+                            textAlign: TextAlign.start,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              height: 1.7,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+          );
+        },
       );
     }
     return AnimatedOpacity(
@@ -195,55 +212,95 @@ class _ActionsMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bloc = context.read<ZikrContentViewerBloc>();
     return PopupMenuButton<_ZikrAction>(
       tooltip: "خيارات الذكر",
       icon: Icon(Icons.more_horiz, color: color),
-      onSelected: (action) {
-        switch (action) {
-          case _ZikrAction.source:
-            showZikrSourceDialog(context, zikr);
-          case _ZikrAction.share:
-            bloc.add(ZikrContentViewerShareEvent(zikr));
-          case _ZikrAction.copy:
-            bloc.add(ZikrContentViewerCopyEvent(zikr));
-          case _ZikrAction.report:
-            onReport?.call(zikr);
-        }
-      },
-      itemBuilder: (context) => [
-        if (zikr.source.isNotEmpty)
-          const PopupMenuItem(
-            value: _ZikrAction.source,
-            child: ListTile(
-              leading: Icon(Icons.menu_book_rounded),
-              title: Text("المصدر"),
-            ),
-          ),
-        const PopupMenuItem(
-          value: _ZikrAction.share,
-          child: ListTile(
-            leading: Icon(Icons.share),
-            title: Text("مشاركة"),
-          ),
-        ),
-        const PopupMenuItem(
-          value: _ZikrAction.copy,
-          child: ListTile(
-            leading: Icon(Icons.copy),
-            title: Text("نسخ"),
-          ),
-        ),
-        if (onReport != null)
-          const PopupMenuItem(
-            value: _ZikrAction.report,
-            child: ListTile(
-              leading: Icon(Icons.flag_outlined),
-              title: Text("الإبلاغ عن خطأ"),
-            ),
-          ),
-      ],
+      onSelected: (action) => _runAction(context, zikr, onReport, action),
+      itemBuilder: (_) => _actionItems(zikr, onReport),
     );
+  }
+}
+
+Future<void> _showActionsMenu(
+  BuildContext context,
+  Zikr zikr,
+  ValueChanged<Zikr>? onReport, {
+  Offset? position,
+}) async {
+  final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
+  final passage = context.findRenderObject()! as RenderBox;
+  final menuPosition = position == null
+      ? passage.localToGlobal(
+          passage.size.center(Offset.zero),
+          ancestor: overlay,
+        )
+      : overlay.globalToLocal(position);
+  final action = await showMenu<_ZikrAction>(
+    context: context,
+    position: RelativeRect.fromRect(
+      Rect.fromCircle(center: menuPosition, radius: 1),
+      Offset.zero & overlay.size,
+    ),
+    items: _actionItems(zikr, onReport),
+  );
+  if (action != null && context.mounted) {
+    _runAction(context, zikr, onReport, action);
+  }
+}
+
+List<PopupMenuEntry<_ZikrAction>> _actionItems(
+  Zikr zikr,
+  ValueChanged<Zikr>? onReport,
+) =>
+    [
+      if (zikr.source.isNotEmpty)
+        const PopupMenuItem(
+          value: _ZikrAction.source,
+          child: ListTile(
+            leading: Icon(Icons.menu_book_rounded),
+            title: Text("المصدر"),
+          ),
+        ),
+      const PopupMenuItem(
+        value: _ZikrAction.share,
+        child: ListTile(
+          leading: Icon(Icons.share),
+          title: Text("مشاركة"),
+        ),
+      ),
+      const PopupMenuItem(
+        value: _ZikrAction.copy,
+        child: ListTile(
+          leading: Icon(Icons.copy),
+          title: Text("نسخ"),
+        ),
+      ),
+      if (onReport != null)
+        const PopupMenuItem(
+          value: _ZikrAction.report,
+          child: ListTile(
+            leading: Icon(Icons.flag_outlined),
+            title: Text("الإبلاغ عن خطأ"),
+          ),
+        ),
+    ];
+
+void _runAction(
+  BuildContext context,
+  Zikr zikr,
+  ValueChanged<Zikr>? onReport,
+  _ZikrAction action,
+) {
+  final bloc = context.read<ZikrContentViewerBloc>();
+  switch (action) {
+    case _ZikrAction.source:
+      showZikrSourceDialog(context, zikr);
+    case _ZikrAction.share:
+      bloc.add(ZikrContentViewerShareEvent(zikr));
+    case _ZikrAction.copy:
+      bloc.add(ZikrContentViewerCopyEvent(zikr));
+    case _ZikrAction.report:
+      onReport?.call(zikr);
   }
 }
 
