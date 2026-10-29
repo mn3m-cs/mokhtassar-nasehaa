@@ -29,20 +29,8 @@ void main() {
     }
   }
 
-  Future<void> dismissTip(WidgetTester tester) async {
-    final gotIt = find.text('فهمت');
-    if (gotIt.evaluate().isNotEmpty) {
-      await tester.tap(gotIt);
-      await tester.pumpAndSettle();
-    }
-  }
-
   Future<void> openSection(WidgetTester tester, String name) async {
     await tester.tap(find.text(name).first);
-    // The shake tip, shown on the third section opened, loops its
-    // animation and never settles, so wait a fixed time before closing it.
-    await tester.pump(const Duration(seconds: 2));
-    await dismissTip(tester);
     await tester.pumpAndSettle();
   }
 
@@ -163,7 +151,6 @@ void main() {
     );
     await tester.tap(find.text('الباب التالي'));
     await tester.pumpAndSettle();
-    await dismissTip(tester);
     expect(find.text('أتممت 0 من 25'), findsOneWidget, reason: 'next section');
     expect(find.text('أذكار المساء'), findsWidgets);
 
